@@ -386,149 +386,17 @@ def MacLearnImgPrepper(cells):
 
 	return cells
 
-def PolygonDrawer(img)
-	#https://stackoverflow.com/questions/37099262/drawing-filled-polygon-using-mouse-events-in-open-cv-using-python
-	shape = img.shape
-	CANVAS_SIZE = (shape[0],shape[1])
 
-	FINAL_LINE_COLOR = (255, 255, 255)
-	WORKING_LINE_COLOR = (127, 127, 127)
-
-	window_name = "Draw your ROIs"
-
-	done = False # Flag signalling we're done
-	current = (0, 0) # Current position, so we can draw the line-in-progress
-	points = [] # List of points defining our polygon
-
-	if done:
-		return
-	if event == cv.EVENT_MOUSEMOVE:
-
-
-def LesionIdenification( OriginalImg, cells, windowsize, threshold = 0, ):
-	#windowsize needs to be odd (75,75 seemed best)
-	#make a binary image the same size and oriImg, where cell centroid locations are marked with a 1
-	#then that imaged is "scanned" at window sized chuncs where density is calculated for each window
-
-	windowArea = ((windowsize[0]/scale) * (windowsize[1]/scale))/1000000
-	densities = []
-	centers_x = []
-	centers_y = []
-	shape = OriginalImg.shape
-	width = shape[1]
-	height = shape[0]
-	cellLocImg = np.zeros((height,width), dtype=int)
+def LesionIdenification(DAPIImg,ROINumber):
+	img = cv.bitwise_not(DAPIImg)
 	
-	for cell in cells:
-		centroid_x = round(cell['centroids'][0])
-		centroid_y = round(cell['centroids'][1])
+	pd = PolygonDrawer("Drawer the specified number of ROIs", img, ROINumber)
+	Lbinarr = pd.run()
 
-		cellLocImg[centroid_y,centroid_x] = 1
-
-	
-	fitCol = math.floor(width/windowsize[0])
-	fitRow = math.floor(height/windowsize[1])
-
-	numWindows = fitCol * fitRow
-
-	remainCol = width - (fitCol * windowsize[0])
-	shiftCol = math.floor(remainCol/2)
-
-	remainRow = height - (fitRow * windowsize[1])
-	shiftRow = math.floor(remainRow/2)
-
-	row = 0
-	col = 0
-	#go over the image and get the number of cells in the window (size of which is set when called)
-	densities = []
-	densityImg = np.zeros((fitRow,fitCol), dtype=int)
-	p=0
-	c=0
-	
-	for y in range(fitRow):
-		y_min = ((y * windowsize[1]) + shiftRow)
-		y_max = ((y * windowsize[1]) + windowsize[1] + shiftRow)		
-		for j in range(fitCol):
-			x_min = ((j * windowsize[0]) + shiftCol)
-			x_max = ((j * windowsize[0]) + windowsize[0] + shiftCol)
-			
-			window = cellLocImg[y_min:y_max,x_min:x_max]
-			
-			center_x = (x_min + math.ceil(windowsize[0]/2))
-			center_y = (y_min + math.ceil(windowsize[1]/2))
-
-			#centers_x.append(center_x)
-			#centers_y.append(center_y)
-			#make this a scaled density, modify windowArea
-			windowDensity = np.sum(window)/windowArea
-			#list of non-Zero densities
-			if windowDensity > 0:
-				densities.append(windowDensity)
-			#making density map
-			densityImg[y, j] = windowDensity
-			if p == 50:
-				value = (c/numWindows)*100
-				formatted_string = "{:.2f}".format(value)
-				float_value = float(formatted_string)
-				p=0
-				c= c+1
-			else:
-				p=p+1
-				c=c+1
-				
-				#print("densityImg = ", sys.getsizeof(densityImg))
-	"""
-	print("          Make and fill in the density map")
-	densityImg = np.zeros((fitRow,fitCol), dtype=int)
-	for density in densities:
-		densityImg[density[0][1], density[0][0]] = density[2]
-	"""
-	#FigureSavePath = os.path.join(SpecificImgFolder, "Lesion_Density_Visualization.pdf")
-	#showDensities(OriginalImg, densities, save = 1, path = FigureSavePath)
-	
-	if not threshold > 0:
-		median = np.median(densities)
-		std = np.std(densities)
-		threshold = median 
-	
-
-	#identify peaks
-	binarr = np.where(densityImg>threshold, 255, 0)
-	#print(binarr.dtype, binarr.shape)
-	binarr = np.uint8(binarr)
-	#print(binarr.dtype, binarr.shape)
-	#get rid of narrow peaks
-	kernel = np.ones((3,3),np.uint8)
-	binarr = cv.morphologyEx(binarr, cv.MORPH_OPEN, kernel,iterations=1)
-	#Smooth binary image
-	#CAN ADD REGION/EDGE DETECTION IN THIS SECTION
-	
-	binarrBlur = cv.GaussianBlur(binarr,(5,5),cv.BORDER_DEFAULT)
-	ret,binarrBlur = cv.threshold(binarrBlur,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
-	#binarrBlur = cv.erode(binarrBlur,kernel,iterations = 2)
-	#binarrBlur = cv.dilate(binarrBlur,kernel,iterations = 2)
-	binarrBlur = np.uint8(binarrBlur)
-	#NOW TAKE THE NEW BINARY IMAGE AND MAKE THAT INTO A MASK TO GET THE LESION BOUNDARY
-
-	Lbinarr = np.zeros((height,width), dtype=int)
-	for i in range(len(binarr)):
-		for y in range(fitRow):
-			y_min = ((y * windowsize[1]) + shiftRow)
-			y_max = ((y * windowsize[1]) + windowsize[1] + shiftRow)		
-			for j in range(fitCol):
-				x_min = ((j * windowsize[0]) + shiftCol)
-				x_max = ((j * windowsize[0]) + windowsize[0] + shiftCol)
-				
-				Lbinarr[y_min:y_max,x_min:x_max] = binarrBlur[y,j] #np.broadcast_to(binarr[y,j], windowsize)
-
-	#smooth binary image so its not so jagged
-	Lbinarr = np.uint8(Lbinarr)
-
-	
 	contours, hierarchy = cv.findContours(Lbinarr, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-	cv.drawContours(OriginalImg, contours, -1, (0,0,255), 6)
+	cv.drawContours(DAPIImg, contours, -1, (0,0,255), 6)
 	#print(Lbinarr.shape)
-	images = [ Lbinarr, OriginalImg]
+	images = [ Lbinarr, DAPIImg]
 	titles = ["Mask","Boarder" ]
 	
 	output = cv.connectedComponentsWithStats(Lbinarr)
@@ -810,6 +678,100 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 	df.to_csv(UpdateResultSave, index = False)
 	print(df.columns)
 				
+class PolygonDrawer(object):
+	def __init__(self, window_name, img, ROINumber):
+		self.window_name = window_name # Name for our window
+		h, w = img.shape[0:2]
+		neww = 800
+		newh = int(neww*(h/w))
+		self.smallShape = (neww, newh)
+		self.img = cv.resize(img, self.smallShape)
+		self.CANVAS_SIZE = (h,w)
+		self.done = False # Flag signalling we're done with one polygon
+		self.doneAll = False # Flag signalling we're done with all polygons
+		self.current = (0, 0) # Current position, so we can draw the line-in-progress
+		self.points = [] # List of points defining our polygon
+		self.polygons = [] # List of all polygons
+		self.FINAL_LINE_COLOR = (255, 255, 255)
+		self.WORKING_LINE_COLOR = (127, 127, 127)
+
+
+	def on_mouse(self, event, x, y, buttons, user_param):
+		# Mouse callback that gets called for every mouse event (i.e. moving, clicking, etc.)
+
+		if self.done: # Nothing more to do
+			return
+
+		if event == cv.EVENT_MOUSEMOVE:
+			# We want to be able to draw the line-in-progress, so update current mouse position
+			self.current = (x, y)
+
+		elif event == cv.EVENT_LBUTTONDOWN:
+			# Left click means adding a point at current position to the list of points
+			print("Adding point #%d with position(%d,%d)" % (len(self.points), x, y))
+			self.points.append((x, y))
+
+		elif event == cv.EVENT_RBUTTONDOWN:
+			# Right click means we're done
+			print("Completing polygon with %d points." % len(self.points))
+			self.done = True
+
+
+	def run(self):
+		# Let's create our working window and set a mouse callback to handle events
+		cv.namedWindow(self.window_name, flags=cv.WINDOW_AUTOSIZE)
+		cv.imshow(self.window_name, np.zeros(self.CANVAS_SIZE, np.uint8))
+		cv.waitKey(1)
+		cv.setMouseCallback(self.window_name, self.on_mouse)
+		i = 0
+		for i in range(ROINumber):
+			self.done = False
+			if i == 0:
+				Polycanvas = np.copy(self.img, subok= True)
+			while(not self.done):
+				# This is our drawing loop, we just continuously draw new images
+				# and show them in the named window
+				canvas = np.copy(Polycanvas, subok= True)
+				if (len(self.points) > 0):
+					# Draw all the current polygon segments
+					cv.polylines(canvas, np.array([self.points]), False, self.FINAL_LINE_COLOR, 1)
+					# And  also show what the current segment would look like
+					cv.line(canvas, self.points[-1], self.current, self.WORKING_LINE_COLOR)
+				# Update the window
+				cv.imshow(self.window_name, canvas)
+				# And wait 50ms before next iteration (this will pump window messages meanwhile)
+				if cv.waitKey(50) == 27: # ESC hit
+					self.done = True
+
+			# User finised entering the polygon points, so let's make the final drawing
+			print(i)
+
+			# of a filled polygon
+			if (len(self.points) > 0):
+				print("points",self.points)
+
+				cv.fillPoly(Polycanvas, np.array([self.points]), self.FINAL_LINE_COLOR)
+			# And show it
+			cv.imshow(self.window_name, Polycanvas)
+
+			self.polygons.append(self.points)
+			self.points = []
+
+			# Waiting for the user to press any key
+			i = i+1
+
+			print(self.polygons)
+
+		cv.destroyWindow(self.window_name)
+		bincanvas = np.zeros(self.smallShape, dtype= np.uint8)
+		for polygon in self.polygons:
+			polygon = np.array([polygon])
+			print(polygon, polygon.dtype)
+			cv.fillPoly(bincanvas, polygon, self.FINAL_LINE_COLOR)
+		bincanvas = cv.resize(bincanvas, self.CANVAS_SIZE)
+		return bincanvas
+
+
 
 """_____________________________________________________________________________________________________________________________"""
 
@@ -867,6 +829,9 @@ namChannels = ["DAPI_ch","488_ch","594_ch","647_ch"]
 
 #Desired cell image size
 cropsize = 46
+
+#How many ROIs do you want to define?
+ROINumber = 2
 
 
 debug = False
@@ -987,7 +952,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			cells = getCells(Vischannels, Rawchannels, centroids, markers)
 
 			print("Image ",ImageID, " of ", TotalImage,": Identifying Areas of High Density")
-			output = LesionIdenification(Vischannels[0], cells, windowsize=(55,55))
+			output = LesionIdenification(DAPIImg=Vischannels[0],ROINumber = ROINumber)
 			(numLabels, labels, stats, centroids) = output
 			
 			print("Image ",ImageID, " of ", TotalImage,": Measuring Pixel Intensity for Each Cell")

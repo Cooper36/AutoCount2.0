@@ -1,6 +1,5 @@
 import numpy as np
 import cv2
-from pynput.keyboard import Key, Listener
 # ============================================================================
 path = "C:\\Users\\jjmc1\\Desktop\\Python\\AutoCount2.0\\[Original]RB5 S132 LsUN DAPI+Olig2+CC1 L1 Image ID 38.tif"
 img = cv2.imread(path)
@@ -13,7 +12,7 @@ CANVAS_SIZE = (shape[0],shape[1])
 
 FINAL_LINE_COLOR = (255, 255, 255)
 WORKING_LINE_COLOR = (127, 127, 127)
-
+ROINumber = 2
 # ============================================================================
 
 class PolygonDrawer(object):
@@ -55,7 +54,7 @@ class PolygonDrawer(object):
         cv2.waitKey(1)
         cv2.setMouseCallback(self.window_name, self.on_mouse)
         i = 0
-        while(not self.doneAll):
+        for i in range(ROINumber):
             self.done = False
             if i == 0:
                 Polycanvas = np.copy(img, subok= True)
@@ -88,10 +87,6 @@ class PolygonDrawer(object):
 
             # Waiting for the user to press any key
             i = i+1
-            
-            #Press enter to keep entering ROIs or backspace to finish
-            with Listener(on_press = show) as listener:
-                listener.join()
 
             print(self.polygons)
 
