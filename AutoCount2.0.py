@@ -819,7 +819,7 @@ scale = 1.5385
 
 
 #Path to image folder
-ImgFolderPath = "C:\\Users\\jjmc1\\Desktop\\Python\\AutoCount2.0"
+ImgFolderPath = "/Users/james/Desktop/Working Folder/AutoCount2.0"
 
 #What are the channels?
 namChannels = ["DAPI_ch","488_ch","594_ch","647_ch"]
@@ -969,7 +969,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			print(" ")
 			print("Image ",ImageID, " of ", TotalImage,": Begining Keras Analysis")
 			print(" ")
-			model = loadKerasModel("\\Users\\james\\Documents\\GitHub\\KerasModels\\CC1counting_wMar_5.8.h5")
+			model = loadKerasModel("/Users/james/Documents/GitHub/KerasModels/CC1counting_wMar_5.8.h5")
 			cells = getPredictions(cells, model)
 			print(" ")
 			print("End Keras")
