@@ -861,13 +861,27 @@ if not os.path.exists(SpecificImgResultsPath):
 
 AllresultsSave = os.path.join(ResultsFolderPath, "AllCellSpecificResultsGood.csv")
 
-#User Defined ROIs, and save those points in a dictionary that can be called later (Replace LesionDetection later on)
+#Build the appropriate file structures and User Defined ROIs
 #https://stackoverflow.com/questions/37099262/drawing-filled-polygon-using-mouse-events-in-open-cv-using-python
 ImageID = 0
 TotalImage = 0
 for oriImgName in os.listdir(ImgFolderPath):
 	fullpath = os.path.join(ImgFolderPath, oriImgName)
 	if oriImgName.endswith('.tif'):
+
+		SpecificImgFolder = os.path.join(SpecificImgResultsPath, oriImgName[:-4] + " Results")
+		if not os.path.exists(SpecificImgFolder):
+			os.mkdir(SpecificImgFolder)
+
+		SampleCellsFolder = os.path.join(SpecificImgFolder,"Sample_Cells")
+		if not os.path.exists(SampleCellsFolder):
+			os.mkdir(SampleCellsFolder)
+		Img = cv.imreadmulti(fullpath, flags = -1)
+		Dapi =[]
+		Img = proccessNuclearImage(oriImg[1][0])
+		gamma = 0.35
+		Img = adjust_gamma(Img, gamma)
+		Vischannels = np.array(Vischannels)
 		TotalImage = TotalImage+1
 
 
@@ -878,13 +892,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 	fullpath = os.path.join(ImgFolderPath, oriImgName)
 	
 	if oriImgName.endswith('.tif'):
-		SpecificImgFolder = os.path.join(SpecificImgResultsPath, oriImgName[:-4] + " Results")
-		if not os.path.exists(SpecificImgFolder):
-			os.mkdir(SpecificImgFolder)
 
-		SampleCellsFolder = os.path.join(SpecificImgFolder,"Sample_Cells")
-		if not os.path.exists(SampleCellsFolder):
-			os.mkdir(SampleCellsFolder)
 
 		ImageResultsSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResults.csv")
 		
@@ -952,11 +960,14 @@ for oriImgName in os.listdir(ImgFolderPath):
 			cells = getCells(Vischannels, Rawchannels, centroids, markers)
 
 			print("Image ",ImageID, " of ", TotalImage,": Identifying Areas of High Density")
-			output = LesionIdenification(DAPIImg=Vischannels[0],ROINumber = ROINumber)
-			(numLabels, labels, stats, centroids) = output
+			UserROIs = LesionIdenification(DAPIImg=Vischannels[0],ROINumber = ROINumber)
+
+			#Add find contours here
+
+			(numLabels, labelsUserROI, stats, centroids) = UserROIs
 			
 			print("Image ",ImageID, " of ", TotalImage,": Measuring Pixel Intensity for Each Cell")
-			cells = AddStats(cells, labels, stats)
+			cells = AddStats(cells, labelsUserROI, stats)
 
 			print("Image ",ImageID, " of ", TotalImage,": Prepping Images for Keras")
 			cells = MacLearnImgPrepper(cells)
