@@ -861,7 +861,7 @@ if not os.path.exists(SpecificImgResultsPath):
 
 AllresultsSave = os.path.join(ResultsFolderPath, "AllCellSpecificResultsGood.csv")
 
-#Build the appropriate file structures and User Defined ROIs
+#Build the appropriate image-specific structures and User Defined ROIs
 #https://stackoverflow.com/questions/37099262/drawing-filled-polygon-using-mouse-events-in-open-cv-using-python
 ImageID = 0
 TotalImage = 0
@@ -876,6 +876,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 		SampleCellsFolder = os.path.join(SpecificImgFolder,"Sample_Cells")
 		if not os.path.exists(SampleCellsFolder):
 			os.mkdir(SampleCellsFolder)
+
 		Img = cv.imreadmulti(fullpath, flags = -1)
 		Dapi =[]
 		Img = proccessNuclearImage(oriImg[1][0])
