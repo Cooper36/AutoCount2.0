@@ -21,8 +21,6 @@ import random
 from scipy.stats import gaussian_kde
 
 
-
-
 def openVSI(fullpath):
     images = bioformats.load_image(fullpath, rescale=False)
     images = cv.split(images)
@@ -878,11 +876,14 @@ for oriImgName in os.listdir(ImgFolderPath):
 			os.mkdir(SampleCellsFolder)
 
 		Img = cv.imreadmulti(fullpath, flags = -1)
-		Dapi =[]
-		Img = proccessNuclearImage(oriImg[1][0])
+		Dapi = proccessNuclearImage(Dapi[1][0])
 		gamma = 0.35
-		Img = adjust_gamma(Img, gamma)
-		Vischannels = np.array(Vischannels)
+		Dapi = adjust_gamma(Dapi, gamma)
+		Dapi = np.array(Dapi)
+		pd = PolygonDrawer("Draw the specified number of ROIs", DAPI, ROINumber)
+		Lbinarr = pd.run()
+		BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.tif")
+		cv.imwrite(BinarySave,Lbinarr)
 		TotalImage = TotalImage+1
 
 
