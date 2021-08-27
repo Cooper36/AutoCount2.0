@@ -385,19 +385,15 @@ def MacLearnImgPrepper(cells):
 	return cells
 
 
-def LesionIdenification(DAPIImg,ROINumber):
-	img = cv.bitwise_not(DAPIImg)
-	
-	pd = PolygonDrawer("Drawer the specified number of ROIs", img, ROINumber)
-	Lbinarr = pd.run()
-
-	contours, hierarchy = cv.findContours(Lbinarr, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+def LesionIdenification(DAPIImg,UserROIs):
+	UserROIs = cv.cvtColor(UserROIs, cv.COLOR_BGR2GRAY)
+	contours, hierarchy = cv.findContours(UserROIs, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 	cv.drawContours(DAPIImg, contours, -1, (0,0,255), 6)
 	#print(Lbinarr.shape)
-	images = [ Lbinarr, DAPIImg]
+	images = [ UserROIs, DAPIImg]
 	titles = ["Mask","Boarder" ]
 	
-	output = cv.connectedComponentsWithStats(Lbinarr)
+	output = cv.connectedComponentsWithStats(UserROIs)
 	(numLabels, labels, stats, centroids) = output
 	
 	FigureSavePath = os.path.join(SpecificImgFolder, "Lesion_Boarder_Visualization.pdf")
@@ -679,14 +675,16 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 class PolygonDrawer(object):
 	def __init__(self, window_name, img, ROINumber):
 		self.window_name = window_name # Name for our window
-		h, w = img.shape[0:2]
-		neww = 800
-		newh = int(neww*(h/w))
-		self.smallShape = (neww, newh)
-		self.img = cv.resize(img, self.smallShape)
-		self.CANVAS_SIZE = (h,w)
+		self.img = img
+		self.imgheight, self.imgwidth = self.img.shape[0:2]
+		
+		self.smallwidth = 800
+		self.smallheight = int(self.smallwidth*(self.imgheight/self.imgwidth))
+		self.smallImg = cv.resize(self.img, (self.smallwidth,self.smallheight))
+
 		self.done = False # Flag signalling we're done with one polygon
 		self.doneAll = False # Flag signalling we're done with all polygons
+
 		self.current = (0, 0) # Current position, so we can draw the line-in-progress
 		self.points = [] # List of points defining our polygon
 		self.polygons = [] # List of all polygons
@@ -718,14 +716,14 @@ class PolygonDrawer(object):
 	def run(self):
 		# Let's create our working window and set a mouse callback to handle events
 		cv.namedWindow(self.window_name, flags=cv.WINDOW_AUTOSIZE)
-		cv.imshow(self.window_name, np.zeros(self.CANVAS_SIZE, np.uint8))
+		cv.imshow(self.window_name, np.zeros((self.imgheight, self.imgwidth), np.uint8))
 		cv.waitKey(1)
 		cv.setMouseCallback(self.window_name, self.on_mouse)
 		i = 0
 		for i in range(ROINumber):
 			self.done = False
 			if i == 0:
-				Polycanvas = np.copy(self.img, subok= True)
+				Polycanvas = np.copy(self.smallImg, subok= True)
 			while(not self.done):
 				# This is our drawing loop, we just continuously draw new images
 				# and show them in the named window
@@ -761,12 +759,12 @@ class PolygonDrawer(object):
 			print(self.polygons)
 
 		cv.destroyWindow(self.window_name)
-		bincanvas = np.zeros(self.smallShape, dtype= np.uint8)
+		bincanvas = np.zeros((self.smallheight,self.smallwidth), dtype= np.uint8)
 		for polygon in self.polygons:
 			polygon = np.array([polygon])
 			print(polygon, polygon.dtype)
 			cv.fillPoly(bincanvas, polygon, self.FINAL_LINE_COLOR)
-		bincanvas = cv.resize(bincanvas, self.CANVAS_SIZE)
+		bincanvas = cv.resize(bincanvas, (self.imgwidth, self.imgheight))
 		return bincanvas
 
 
@@ -817,8 +815,8 @@ scale = 1.5385
 
 
 #Path to image folder
-ImgFolderPath = "/Users/james/Desktop/Working Folder/AutoCount2.0"
-
+#ImgFolderPath = "/Users/james/Desktop/Working Folder/AutoCount2.0"
+ImgFolderPath ="C:\\Users\\jjmc1\\Desktop\\Python\\AutoCount2.0"
 #What are the channels?
 namChannels = ["DAPI_ch","488_ch","594_ch","647_ch"]
 
@@ -875,20 +873,24 @@ for oriImgName in os.listdir(ImgFolderPath):
 		if not os.path.exists(SampleCellsFolder):
 			os.mkdir(SampleCellsFolder)
 
-		Img = cv.imreadmulti(fullpath, flags = -1)
-		Dapi = proccessNuclearImage(Dapi[1][0])
-		gamma = 0.35
-		Dapi = adjust_gamma(Dapi, gamma)
-		Dapi = np.array(Dapi)
-		pd = PolygonDrawer("Draw the specified number of ROIs", DAPI, ROINumber)
-		Lbinarr = pd.run()
 		BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.tif")
-		cv.imwrite(BinarySave,Lbinarr)
-		TotalImage = TotalImage+1
+		if not os.path.exists(BinarySave):
+			img = cv.imreadmulti(fullpath, flags = -1)
+			Dapi = proccessNuclearImage(img[1][0])
+			gamma = 0.35
+			Dapi = adjust_gamma(Dapi, gamma)
+			Dapi = cv.bitwise_not(Dapi)
+			Dapi = np.array(Dapi)
+			windowname = str(oriImgName) +" : Draw " + str(ROINumber) + " ROIs"
+			polyDr = PolygonDrawer(windowname, Dapi, ROINumber)
+			Lbinarr = polyDr.run()
+			
+			cv.imwrite(BinarySave,Lbinarr)
+			TotalImage = TotalImage + 1
 
 
 
-print("Finished making folder structures")
+
 
 for oriImgName in os.listdir(ImgFolderPath):
 	fullpath = os.path.join(ImgFolderPath, oriImgName)
@@ -961,12 +963,12 @@ for oriImgName in os.listdir(ImgFolderPath):
 			cells = []
 			cells = getCells(Vischannels, Rawchannels, centroids, markers)
 
-			print("Image ",ImageID, " of ", TotalImage,": Identifying Areas of High Density")
-			UserROIs = LesionIdenification(DAPIImg=Vischannels[0],ROINumber = ROINumber)
+			print("Image ",ImageID, " of ", TotalImage,": Processing User ROIs")
+			BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.tif")
+			UserROIs = cv.imread(BinarySave)
+			UserROIsOutput = LesionIdenification(DAPIImg=Vischannels[0],UserROIs = UserROIs )
 
-			#Add find contours here
-
-			(numLabels, labelsUserROI, stats, centroids) = UserROIs
+			(numLabels, labelsUserROI, stats, centroids) = UserROIsOutput
 			
 			print("Image ",ImageID, " of ", TotalImage,": Measuring Pixel Intensity for Each Cell")
 			cells = AddStats(cells, labelsUserROI, stats)
