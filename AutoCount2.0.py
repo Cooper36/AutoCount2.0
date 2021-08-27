@@ -886,17 +886,23 @@ for oriImgName in os.listdir(ImgFolderPath):
 			Lbinarr = polyDr.run()
 			
 			cv.imwrite(BinarySave,Lbinarr)
-			TotalImage = TotalImage + 1
+		TotalImage = TotalImage + 1
 
 
 
 
-
+#Main For Loop
 for oriImgName in os.listdir(ImgFolderPath):
 	fullpath = os.path.join(ImgFolderPath, oriImgName)
 	
 	if oriImgName.endswith('.tif'):
+		SpecificImgFolder = os.path.join(SpecificImgResultsPath, oriImgName[:-4] + " Results")
+		if not os.path.exists(SpecificImgFolder):
+			os.mkdir(SpecificImgFolder)
 
+		SampleCellsFolder = os.path.join(SpecificImgFolder,"Sample_Cells")
+		if not os.path.exists(SampleCellsFolder):
+			os.mkdir(SampleCellsFolder)
 
 		ImageResultsSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResults.csv")
 		
@@ -981,14 +987,12 @@ for oriImgName in os.listdir(ImgFolderPath):
 					print(cells[3000][key])
 					print(" ")
 
-			print(" ")
+			
 			print("Image ",ImageID, " of ", TotalImage,": Begining Keras Analysis")
-			print(" ")
-			model = loadKerasModel("/Users/james/Documents/GitHub/KerasModels/CC1counting_wMar_5.8.h5")
+			model = loadKerasModel("C:\\Users\\jjmc1\\Desktop\\Python\\AutoCount2.0\\CC1counting_wMar_5.8.h5")
 			cells = getPredictions(cells, model)
-			print(" ")
 			print("End Keras")
-			print(" ")
+			
 
 			print("Image ",ImageID, " of ", TotalImage,": Saveing a Sample of the Cells for")
 			#Uncomment this to save x number of random cells (for survaying)
@@ -997,25 +1001,17 @@ for oriImgName in os.listdir(ImgFolderPath):
 			print("Image ",ImageID, " of ", TotalImage,": Crafting the DataFrame and Saving the .csv file")
 			#Build the Dataframe to analyse the data
 			Resultsdf = Cells_to_df(cells)
-
-			#make or updata AllCellSpecificResults (one excel with all the cell results)
-			if AllCellSpecificResults.empty:
-				AllCellSpecificResults = Resultsdf
-			else:
-				dfs = [AllCellSpecificResults, Resultsdf]
-				AllCellSpecificResults = pd.concat(dfs)
-
-			
+	
 			Resultsdf.to_csv(ImageResultsSave, index = False)
 
 			#Get Summary data from Resultsdf for the lesions and save that to a persisting dataframe to construct the Summary.csv file
-			if not os.path.exists(AllresultsSave):
-				AllCellSpecificResults.to_csv(AllresultsSave, index = False)
-			else:
-				olddf = pd.read_csv(AllresultsSave)
+		
+		#Shift to individual image analysis, as in just work with the current csv
+		if Resultsdf.empty :
+			Resultsdf = pd.read_csv(ImageResultsSave)	
 
-				AllCellSpecificResults = pd.concat([olddf, AllCellSpecificResults])
-				AllCellSpecificResults.to_csv(AllresultsSave, index = False)
+
+
 
 print("All Images Analysed, begining results processing")
 print("Opening AllCellSpecificResults")
