@@ -21,7 +21,6 @@ import random
 from scipy.stats import gaussian_kde
 from keras.models import load_model
 
-
 def openVSI(fullpath):
     images = bioformats.load_image(fullpath, rescale=False)
     images = cv.split(images)
@@ -627,18 +626,20 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 			df[MacLearnThreshedTitle] = np.where((df[MacLearnPredTitle] >= 0.5), 1, 0)
 
 
-		#Rank the cells by how likely they are to be positive (3 means very positive, 0 means negative)
-		if i > 0:
-			Postivity_RankTitle = ch + " Postivity_Rank"
+		#Identify different types of positivity
+		# 1 means just maclearn predicted
+		# 2 means predicted positive in the traditional sense
+		# 3 both maclearn and traditional positive
+
+		Postivity_RankTitle = ch + " Postivity_Rank"
+		if i == 0:
+			df[Postivity_RankTitle] = np.where((df[IntensColumnTitle] > 0), 1, 0)
+		else:
 			df[Postivity_RankTitle] = 0
 			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 0) & (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1) & (df[MeanThreshedTitle] == 1), 2, df[Postivity_RankTitle])
-			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1) & (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1) & (df[MeanThreshedTitle] == 1), 3, df[Postivity_RankTitle])
-		
-
-
-
-
+			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 0) & (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1) & (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+	
 
 		ToHisto = [AreaColumnTitle,IntensColumnTitle,MeanNewcolumnTitle,RelNewcolumnTitle]
 		#debug Histograms to show distribution of values for each channel, have the threshold appear on that histogram
@@ -646,7 +647,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		fig, axes = plt.subplots(len(ToHisto),figsize = (10,10))
 		fig.tight_layout(h_pad=2)
 		for i in range(len(ToHisto)):
-			axes[i].hist(dfnonan[ToHisto[i]], alpha = 0.5, bins = 80,label="Main")
+			axes[i].hist(dfnonan[ToHisto[i]], alpha = 0.5, bins = 80, label="Main")
 			Mean = np.mean(dfnonan[ToHisto[i]])
 			Std = np.std(dfnonan[ToHisto[i]])
 			axes[i].title.set_text(ToHisto[i])
@@ -672,8 +673,47 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		if debugProcessRawResults or debug:
 			plt.show()
 		plt.close(fig)
-	df.to_csv(UpdateResultSave, index = False)
 	
+
+	#Visual Validation? Need to load cells
+
+	#Define positive cell types
+	df['Cell_Type'] = "Not Classified"
+	for i in range(len(cell_types_to_analyze)):
+		conditions = []
+		celltypename = cell_types_to_analyze[i]
+		Definitions = cell_type_conditions[celltypename]
+		#make a boolean array for each condition then compare the booleans at each positon
+		for j in range(len(Definitions)):
+			ch_nam = Definitions[j][0]
+			val = Definitions[j][1]
+			Postivity_RankTitle = ch_nam + " Postivity_Rank"
+			conditions.append(df[Postivity_RankTitle] == val)
+
+		#reshape the resulting boolean arrays to stay consistent
+		conditions = np.array(conditions)
+		conditions = np.rot90(conditions,k=-1)
+		conditions = np.fliplr(conditions)
+
+		
+		#callapse the boolean arrays to a single boolean array
+		callapsedConditions =[]
+		for row in conditions:
+			callapsedConditions.append(all(row))
+
+		callapsedConditions = np.array(callapsedConditions)
+
+		df['Cell_Type'] = np.where(callapsedConditions,celltypename, df['Cell_Type'])
+
+	df.to_csv(UpdateResultSave, index = False)
+
+		
+
+
+
+
+
+
 				
 class PolygonDrawer(object):
 	def __init__(self, window_name, img, ROINumber):
@@ -767,8 +807,6 @@ class PolygonDrawer(object):
 		bincanvas = cv.resize(bincanvas, (self.imgwidth, self.imgheight))
 		return bincanvas
 
-
-
 """_____________________________________________________________________________________________________________________________"""
 
 #Operational code
@@ -818,7 +856,7 @@ scale = 1.5385
 #ImgFolderPath = "/Users/james/Desktop/Working Folder/AutoCount2.0"
 ImgFolderPath ="C:\\Users\\jjmc1\\Desktop\\Python\\AutoCount2.0"
 #What are the channels?
-namChannels = ["DAPI_ch","488_ch","594_ch","647_ch"]
+namChannels = ["DAPI_ch","CC1","594_ch","Olig2"]
 
 #What cell types are you looking to analyze?
 #cell_types_to_analyze = ['OPC', 'Oligo', 'NonOligo']
@@ -830,10 +868,10 @@ cropsize = 46
 ROINumber = 2
 
 
-overwirte = False
-overwirteMain = True
-overwirteROIS = False
-overwirteProcessing = True
+overwrite = False
+overwriteCells_Pred = False
+overwriteROIS = False
+overwriteProcessing = True
 
 debug = False
 debugThreshold = False
@@ -880,7 +918,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			os.mkdir(SampleCellsFolder)
 
 		BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.tif")
-		if not os.path.exists(BinarySave) or overwirteROIS or overwirte:
+		if not os.path.exists(BinarySave) or overwriteROIS or overwrite:
 			img = cv.imreadmulti(fullpath, flags = -1)
 			Dapi = proccessNuclearImage(img[1][0])
 			gamma = 0.35
@@ -912,7 +950,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 		ImageResultsSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResults.csv")
 		
-		if not os.path.exists(ImageResultsSave) or overwirteMain or overwirte:
+		if not os.path.exists(ImageResultsSave) or overwriteCells_Pred or overwrite:
 			
 			ImageID = ImageID+1
 			#Additional folder structures
@@ -1017,46 +1055,24 @@ for oriImgName in os.listdir(ImgFolderPath):
 			Resultsdf = pd.read_csv(ImageResultsSave)	
 
 		UpdateResultSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResultsUpdate.csv")
-		if not os.path.exists(UpdateResultSave) or overwirteProcessing or overwirte:
+		if not os.path.exists(UpdateResultSave) or overwriteProcessing or overwrite:
 			#Define which cell types too look at for this analysis
 			cell_types_to_analyze = ['OPC', 'Oligo', 'NonOligo']
 			#Define cell types. Channel names must match those defined in namChannel exactly.
 			#1 indicates positive, 0 indictes negative
 			cell_type_conditions = {
-			'OPC' : {
-					'DAPI': 1,
-					'CC1' : 0,
-					'Olig2' : 1
-					},
+			'OPC' : [['DAPI_ch', 1], ['CC1', 0], ['Olig2', 1]],
+					
+			'Oligo' : [['DAPI_ch', 1], ['CC1', 1], ['Olig2', 1]],
 
-			'Oligo' : {
-					'DAPI': 1,
-					'CC1' : 1,
-					'Olig2' : 1
-					},
+			'ActiveOPC' : [['DAPI_ch', 1], ['Olig2', 1], ['Sox2', 1]],
 
-			'ActiveOPC' : {
-					'DAPI': 1,
-					'Olig2' : 1,
-					'Sox2' : 1
-					},
+			'ProlifOligo' : [['DAPI_ch', 1], ['Olig2', 1], ['Ki67', 1]],
 
-			'ProlifOligo' : {
-					'DAPI': 1,
-					'Olig2' : 1,
-					'Ki67' : 1
-					},
+			'Sox2Astro' : [['DAPI_ch', 1], ['Olig2', 0], ['Sox2', 1]],
 
-			'Sox2Astro' : {
-					'DAPI': 1,
-					'Olig2' : 0,
-					'Sox2' : 1
-					},
+			'NonOligo' : [['DAPI_ch', 1], ['Olig2', 0]],
 
-			'NonOligo' : {
-					'DAPI': 1,
-					'Olig2' : 0
-					}
 			}
 			ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 
