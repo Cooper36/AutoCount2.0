@@ -626,7 +626,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 			df[MacLearnThreshedTitle] = np.where((df[MacLearnPredTitle] >= 0.5), 1, 0)
 
 
-		#Identify different types of positivity
+		#Identify different types of positivity FUNCTIONALITY NOT CURRENTLY BEING USED
 		# 1 means just maclearn predicted
 		# 2 means predicted positive in the traditional sense
 		# 3 both maclearn and traditional positive
@@ -707,13 +707,17 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 	df.to_csv(UpdateResultSave, index = False)
 
-		
+	#Build Summary
+	Summary.append({'Original Filename': df['Original Filename'][0], 
+					'Background Area (mm^2)': df['Original Filename'][0],
+					})
+	for i in range(ROINumber):
+		ROI = i+1
+		title = 'Lesion '+ ROI +' Area (mm^2)'
 
+		Summary[-1][title] = df[title][0]
 
-
-
-
-
+		#HOW IS LESION DEFINED? MAKE SURE 1 IS 1 AND 2 IS TWO FOR LOCATION
 				
 class PolygonDrawer(object):
 	def __init__(self, window_name, img, ROINumber):
@@ -886,7 +890,7 @@ debugLesionIdenification2 = False
 debugProcessRawResults = False
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
-Summary = {}
+Summary = []
 
 AllCellSpecificResults = pd.DataFrame()
 Resultsdf = pd.DataFrame()
