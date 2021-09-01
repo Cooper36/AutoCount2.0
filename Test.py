@@ -9,7 +9,7 @@ UserROIs = np.zeros((20,20))
 points = [(1,1),(1,4),(4,4),(4,1)]
 cv.fillPoly(UserROIs, np.array([points]), 2)
 
-points = [(19,1),(16,1),(16,4),(19,4)]
+points = [(19,1),(16,1),(16,8),(19,8)]
 cv.fillPoly(UserROIs, np.array([points]), 1)
 
 ret, Thresh1 = cv.threshold(UserROIs, 0, 255, cv.THRESH_BINARY)

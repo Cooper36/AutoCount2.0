@@ -386,8 +386,8 @@ def MacLearnImgPrepper(cells):
 
 def Reorder(UserROIs,output):
 	(numLabels, labelsUserROI, stats, centroids) = output
-	reorderstats = [[0,0,0,0,0]] * numLabels
-	reordercentroids = [[0,0]] * numLabels
+	reorderstats = [stats[0]] * numLabels
+	reordercentroids = [centroids[0]] * numLabels
 	for i in range(numLabels):
 		if i > 0:
 			ix = int(math.floor(centroids[i][0]))
@@ -403,7 +403,9 @@ def Reorder(UserROIs,output):
 	reordercentroids = np.array(reordercentroids)
 	reorderstats = np.array(reorderstats)
 
-	return reordercentroids, reorderstats
+	output2 = numLabels, labelsUserROI, reorderstats, reordercentroids 
+
+	return output2
 
 def LesionFigSave(DAPIImg,UserROIs):
 	ret, thresh1 = cv.threshold(UserROIs, 0, 255, cv.THRESH_BINARY)
@@ -417,14 +419,15 @@ def LesionFigSave(DAPIImg,UserROIs):
 	
 	output = cv.connectedComponentsWithStats(thresh1)
 	(numLabels, labels, stats, centroids) = output
-
+	print(" ")
+	print(" ")
+	print(stats)
 	#reorder stats and centroids to match the order in which the user drew them
-	reordercentroids, reorderstats = Reorder(UserROIs,output)
-
-	stats = reorderstats
-
-	centroids = reordercentroids
-
+	output = Reorder(UserROIs,output)
+	(numLabels, labels, stats, centroids) = output
+	print(" ")
+	print(stats)
+	
 	FigureSavePath = os.path.join(SpecificImgFolder, "Lesion_Boarder_Visualization.pdf")
 	showImages(images, titles, save = 1, path = FigureSavePath, text_coords = centroids)
 
@@ -738,10 +741,26 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 	df.to_csv(UpdateResultSave, index = False)
 
 	#Build Summary
+
 	Summary.append({'Original Filename': df['Original Filename'][0], 
 					'Background Area (mm^2)': df['Background Area (mm^2)'][0],
 					})
-	for cell_type in cell_types_to_analyze
+	cell_types = cell_types_to_analyze
+	cell_types.append("Not Classified")
+
+	for i in range(len(namChannels)):
+		ch = namChannels[i]
+		Postivity_RankTitle = ch + " Postivity_Rank"
+		df['Quantification'] = np.where((df[Postivity_RankTitle] == 1) & (df["location"] == 0), 1, 0)
+		cellNumber = np.sum(df['Quantification'])
+		area = df['Background Area (mm^2)'][0]
+		density = cellNumber/area
+		cellnumtitle = 'Background ' + ch + ' Positive Cell Number'
+		celldenstitle = 'Background ' + ch + ' Positive Cells Density (cells/mm^2)'
+		Summary[-1][cellnumtitle] = cellNumber
+		Summary[-1][celldenstitle] = density
+
+	for cell_type in cell_types:
 		df['Quantification'] = np.where((df['Cell_Type'] == cell_type) & (df["location"] == 0), 1, 0)
 		cellNumber = np.sum(df['Quantification'])
 		area = df['Background Area (mm^2)'][0]
@@ -753,21 +772,30 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 	for i in range(ROINumber):
 		ROI = i+1
-		title = 'Lesion '+ str(ROI) +' Area (mm^2)'
-
-		for cell_type in cell_types_to_analyze
-			lesTitle = 'Lesion '+ ROI +' Area (mm^2)'
-			df['Quantification'] = np.where((df['Cell_Type'] == cell_type) & (df["location"] == 0), 1, 0)
+		lesTitle = 'Lesion '+ str(ROI) +' Area (mm^2)'
+		area = df[lesTitle][0]
+		Summary[-1][lesTitle] = area
+		for y in range(len(namChannels)):
+			ch = namChannels[y]
+			Postivity_RankTitle = ch + " Postivity_Rank"
+			df['Quantification'] = np.where((df[Postivity_RankTitle] == 1) & (df["location"] == ROI), 1, 0)
 			cellNumber = np.sum(df['Quantification'])
-			
-			area = df[lesTitle][0]
 			density = cellNumber/area
-			'Lesion 1 Area (mm^2)'
-
-			cellnumtitle = 'Lesion '+ ROI +' ' + cell_type + ' Number'
-			celldenstitle = 'Lesion '+ ROI +' ' + cell_type + ' Density (cells/mm^2)'
+			cellnumtitle = 'Lesion '+ str(ROI) +' ' + ch + ' Positive Cell Number'
+			celldenstitle = 'Lesion '+ str(ROI) +' ' + ch + ' Positive Cells Density (cells/mm^2)'
 			Summary[-1][cellnumtitle] = cellNumber
 			Summary[-1][celldenstitle] = density
+
+		for cell_type in cell_types:
+			df['Quantification'] = np.where((df['Cell_Type'] == cell_type) & (df["location"] == ROI), 1, 0)
+			cellNumber = np.sum(df['Quantification'])
+			density = cellNumber/area
+			cellnumtitle = 'Lesion '+ str(ROI) +' ' + cell_type + ' Number'
+			celldenstitle = 'Lesion '+ str(ROI) +' ' + cell_type + ' Density (cells/mm^2)'
+			Summary[-1][cellnumtitle] = cellNumber
+			Summary[-1][celldenstitle] = density
+
+	return Summary
 
 		
 				
@@ -927,7 +955,7 @@ ROINumber = 2
 
 
 overwrite = False
-overwriteCells_Pred = False
+overwriteCells_Pred = True
 overwriteROIS = False
 overwriteProcessing = True
 
@@ -1110,11 +1138,9 @@ for oriImgName in os.listdir(ImgFolderPath):
 			Resultsdf.to_csv(ImageResultsSave, index = False)
 
 			#Get Summary data from Resultsdf for the lesions and save that to a persisting dataframe to construct the Summary.csv file
-		
 		#Shift to individual image analysis, as in just work with the current csv
 		if Resultsdf.empty :
 			Resultsdf = pd.read_csv(ImageResultsSave)	
-
 		UpdateResultSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResultsUpdate.csv")
 		if not os.path.exists(UpdateResultSave) or overwriteProcessing or overwrite:
 			#Define which cell types too look at for this analysis
@@ -1135,6 +1161,13 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'NonOligo' : [['DAPI_ch', 1], ['Olig2', 0]],
 
 			}
-			ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
+
+			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
+
+		#clear Resultsdf
+		Resultsdf = pd.DataFrame()
+SummarySave = os.path.join(ResultsFolderPath,'Summary.csv')
+Summarydf = pd.DataFrame(Summary)
+Summarydf.to_csv(SummarySave)
 
 print("All Done!")
