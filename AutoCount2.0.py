@@ -248,7 +248,7 @@ def RandomSampler(cells, NumberWant, path):
 		cellimg = np.array(cells[randcellID]['cellimg'][1])
 		imageio.mimwrite(savepa,cellimg)
 
-def AddStats(cells, labels, AreaStats):
+def AddStats(cells, labels, centroids, AreaStats):
 	#isolate the pixels of the nuclei and bakground regions using masking, the report area and intensity data for each channel
 	AreaStatsPix = AreaStats[:,4]
 	AreaStatsmm2 = []
@@ -384,17 +384,47 @@ def MacLearnImgPrepper(cells):
 
 	return cells
 
-def LesionIdenification(DAPIImg,UserROIs):
-	UserROIs = cv.cvtColor(UserROIs, cv.COLOR_BGR2GRAY)
-	contours, hierarchy = cv.findContours(UserROIs, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+def Reorder(UserROIs,output):
+	(numLabels, labelsUserROI, stats, centroids) = output
+	reorderstats = [[0,0,0,0,0]] * numLabels
+	reordercentroids = [[0,0]] * numLabels
+	for i in range(numLabels):
+		if i > 0:
+			ix = int(math.floor(centroids[i][0]))
+			iy = int(math.floor(centroids[i][1]))
+			for j in range(numLabels):
+				if j > 0:
+					jx = int(math.floor(centroids[j][0]))
+					jy = int(math.floor(centroids[j][1]))
+					if UserROIs[iy,ix] == labelsUserROI[jy,jx]:
+						val = int(UserROIs[iy,ix])
+						reorderstats[val] = stats[i]
+						reordercentroids[val] = centroids[i]
+	reordercentroids = np.array(reordercentroids)
+	reorderstats = np.array(reorderstats)
+
+	return reordercentroids, reorderstats
+
+def LesionFigSave(DAPIImg,UserROIs):
+	ret, thresh1 = cv.threshold(UserROIs, 0, 255, cv.THRESH_BINARY)
+	thresh1 = np.uint8(thresh1)
+
+	contours, hierarchy = cv.findContours(thresh1, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 	cv.drawContours(DAPIImg, contours, -1, (0,0,255), 6)
 	#print(Lbinarr.shape)
-	images = [ UserROIs, DAPIImg]
+	images = [ thresh1, DAPIImg]
 	titles = ["Mask","Boarder" ]
 	
-	output = cv.connectedComponentsWithStats(UserROIs)
+	output = cv.connectedComponentsWithStats(thresh1)
 	(numLabels, labels, stats, centroids) = output
-	
+
+	#reorder stats and centroids to match the order in which the user drew them
+	reordercentroids, reorderstats = Reorder(UserROIs,output)
+
+	stats = reorderstats
+
+	centroids = reordercentroids
+
 	FigureSavePath = os.path.join(SpecificImgFolder, "Lesion_Boarder_Visualization.pdf")
 	showImages(images, titles, save = 1, path = FigureSavePath, text_coords = centroids)
 
@@ -476,9 +506,9 @@ def getPredictions(cells, model):
 					img = np.expand_dims(img, axis=0)
 
 					#Comment these out to make the code go faster when debugging
-					predict = model.predict(img)
-					predict = predict[0][0]
-					#predict = 0
+					#predict = model.predict(img)
+					#predict = predict[0][0]
+					predict = 0
 					cell['RGBs'][namChannels[i]].append(predict)
 		
 	return cells
@@ -709,15 +739,37 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 	#Build Summary
 	Summary.append({'Original Filename': df['Original Filename'][0], 
-					'Background Area (mm^2)': df['Original Filename'][0],
+					'Background Area (mm^2)': df['Background Area (mm^2)'][0],
 					})
+	for cell_type in cell_types_to_analyze
+		df['Quantification'] = np.where((df['Cell_Type'] == cell_type) & (df["location"] == 0), 1, 0)
+		cellNumber = np.sum(df['Quantification'])
+		area = df['Background Area (mm^2)'][0]
+		density = cellNumber/area
+		cellnumtitle = 'Background ' + cell_type + ' Number'
+		celldenstitle = 'Background ' + cell_type + ' Density (cells/mm^2)'
+		Summary[-1][cellnumtitle] = cellNumber
+		Summary[-1][celldenstitle] = density
+
 	for i in range(ROINumber):
 		ROI = i+1
-		title = 'Lesion '+ ROI +' Area (mm^2)'
+		title = 'Lesion '+ str(ROI) +' Area (mm^2)'
 
-		Summary[-1][title] = df[title][0]
+		for cell_type in cell_types_to_analyze
+			lesTitle = 'Lesion '+ ROI +' Area (mm^2)'
+			df['Quantification'] = np.where((df['Cell_Type'] == cell_type) & (df["location"] == 0), 1, 0)
+			cellNumber = np.sum(df['Quantification'])
+			
+			area = df[lesTitle][0]
+			density = cellNumber/area
+			'Lesion 1 Area (mm^2)'
 
-		#HOW IS LESION DEFINED? MAKE SURE 1 IS 1 AND 2 IS TWO FOR LOCATION
+			cellnumtitle = 'Lesion '+ ROI +' ' + cell_type + ' Number'
+			celldenstitle = 'Lesion '+ ROI +' ' + cell_type + ' Density (cells/mm^2)'
+			Summary[-1][cellnumtitle] = cellNumber
+			Summary[-1][celldenstitle] = density
+
+		
 				
 class PolygonDrawer(object):
 	def __init__(self, window_name, img, ROINumber):
@@ -805,9 +857,11 @@ class PolygonDrawer(object):
 
 		cv.destroyWindow(self.window_name)
 		bincanvas = np.zeros((self.smallheight,self.smallwidth), dtype= np.uint8)
-		for polygon in self.polygons:
+		for i in range(len(self.polygons)):
+			polygon = self.polygons[i]
 			polygon = np.array([polygon])
-			cv.fillPoly(bincanvas, polygon, self.FINAL_LINE_COLOR)
+			fill = i+1
+			cv.fillPoly(bincanvas, polygon, fill)
 		bincanvas = cv.resize(bincanvas, (self.imgwidth, self.imgheight))
 		return bincanvas
 
@@ -909,6 +963,8 @@ AllresultsSave = os.path.join(ResultsFolderPath, "AllCellSpecificResultsGood.csv
 #https://stackoverflow.com/questions/37099262/drawing-filled-polygon-using-mouse-events-in-open-cv-using-python
 ImageID = 0
 TotalImage = 0
+
+
 for oriImgName in os.listdir(ImgFolderPath):
 	fullpath = os.path.join(ImgFolderPath, oriImgName)
 	if oriImgName.endswith('.tif'):
@@ -921,7 +977,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 		if not os.path.exists(SampleCellsFolder):
 			os.mkdir(SampleCellsFolder)
 
-		BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.tif")
+		BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 		if not os.path.exists(BinarySave) or overwriteROIS or overwrite:
 			img = cv.imreadmulti(fullpath, flags = -1)
 			Dapi = proccessNuclearImage(img[1][0])
@@ -933,7 +989,8 @@ for oriImgName in os.listdir(ImgFolderPath):
 			polyDr = PolygonDrawer(windowname, Dapi, ROINumber)
 			Lbinarr = polyDr.run()
 			
-			cv.imwrite(BinarySave,Lbinarr)
+			np.save(BinarySave, Lbinarr, allow_pickle=True, fix_imports=True)
+			#cv.imwrite(BinarySave,Lbinarr)
 		TotalImage = TotalImage + 1
 
 
@@ -1018,14 +1075,14 @@ for oriImgName in os.listdir(ImgFolderPath):
 			cells = getCells(Vischannels, Rawchannels, centroids, markers)
 
 			print("Image ",ImageID, " of ", TotalImage,": Processing User ROIs")
-			BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.tif")
-			UserROIs = cv.imread(BinarySave)
-			UserROIsOutput = LesionIdenification(DAPIImg=Vischannels[0],UserROIs = UserROIs )
+			BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
+			UserROIs = np.load(BinarySave)
+			UserROIsOutput = LesionFigSave(DAPIImg=Vischannels[0], UserROIs = UserROIs )
 
 			(numLabels, labelsUserROI, stats, centroids) = UserROIsOutput
-			
+		
 			print("Image ",ImageID, " of ", TotalImage,": Measuring Pixel Intensity for Each Cell")
-			cells = AddStats(cells, labelsUserROI, stats)
+			cells = AddStats(cells, UserROIs, centroids, stats)
 
 			print("Image ",ImageID, " of ", TotalImage,": Prepping Images for Keras")
 			cells = MacLearnImgPrepper(cells)
