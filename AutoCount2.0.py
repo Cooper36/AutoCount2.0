@@ -509,9 +509,9 @@ def getPredictions(cells, model):
 					img = np.expand_dims(img, axis=0)
 
 					#Comment these out to make the code go faster when debugging
-					#predict = model.predict(img)
-					#predict = predict[0][0]
-					predict = 0
+					predict = model.predict(img)
+					predict = predict[0][0]
+					#predict = 0
 					cell['RGBs'][namChannels[i]].append(predict)
 		
 	return cells
@@ -1161,7 +1161,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'NonOligo' : [['DAPI_ch', 1], ['Olig2', 0]],
 
 			}
-
+			if os.path.exists(SummarySave)
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 
 		#clear Resultsdf
