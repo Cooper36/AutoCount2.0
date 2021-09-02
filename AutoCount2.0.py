@@ -361,12 +361,27 @@ def MacLearnImgPrepper(cells):
 		if skipped == "No":
 			i = 1
 			for i in range(len(namChannels)):
-				if i > 0:
-					
-
+				ch = namChannels[i]
+				if i > 0 & ch != 'CC1':
 					blue = DAPI_ch
 					green = img[i]
 					red = img[i]
+					rgb = []
+					rgb.append(cv.merge((blue,green,red)))
+					
+
+					if debugImgPrepper or debug:
+						print(i)
+						print(rgb[0].shape)
+						print(rgb[0])
+						cv.imshow("sfsf", rgb[0])
+						cv.waitKey(0)
+
+					RGBs[namChannels[i]] = rgb
+				else:
+					blue = DAPI_ch
+					green = img[i]
+					red = img[3]
 					rgb = []
 					rgb.append(cv.merge((blue,green,red)))
 					
