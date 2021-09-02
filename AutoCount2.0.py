@@ -19,9 +19,7 @@ import imageio
 import pandas as pd
 import random
 from scipy.stats import gaussian_kde
-
-
-
+from keras.models import load_model
 
 def openVSI(fullpath):
     images = bioformats.load_image(fullpath, rescale=False)
@@ -250,7 +248,7 @@ def RandomSampler(cells, NumberWant, path):
 		cellimg = np.array(cells[randcellID]['cellimg'][1])
 		imageio.mimwrite(savepa,cellimg)
 
-def AddStats(cells, labels, AreaStats):
+def AddStats(cells, labels, centroids, AreaStats):
 	#isolate the pixels of the nuclei and bakground regions using masking, the report area and intensity data for each channel
 	AreaStatsPix = AreaStats[:,4]
 	AreaStatsmm2 = []
@@ -386,21 +384,49 @@ def MacLearnImgPrepper(cells):
 
 	return cells
 
+def Reorder(UserROIs,output):
+	(numLabels, labelsUserROI, stats, centroids) = output
+	reorderstats = [stats[0]] * numLabels
+	reordercentroids = [centroids[0]] * numLabels
+	for i in range(numLabels):
+		if i > 0:
+			ix = int(math.floor(centroids[i][0]))
+			iy = int(math.floor(centroids[i][1]))
+			for j in range(numLabels):
+				if j > 0:
+					jx = int(math.floor(centroids[j][0]))
+					jy = int(math.floor(centroids[j][1]))
+					if UserROIs[iy,ix] == labelsUserROI[jy,jx]:
+						val = int(UserROIs[iy,ix])
+						reorderstats[val] = stats[i]
+						reordercentroids[val] = centroids[i]
+	reordercentroids = np.array(reordercentroids)
+	reorderstats = np.array(reorderstats)
 
-def LesionIdenification(DAPIImg,ROINumber):
-	img = cv.bitwise_not(DAPIImg)
-	
-	pd = PolygonDrawer("Drawer the specified number of ROIs", img, ROINumber)
-	Lbinarr = pd.run()
+	output2 = numLabels, labelsUserROI, reorderstats, reordercentroids 
 
-	contours, hierarchy = cv.findContours(Lbinarr, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+	return output2
+
+def LesionFigSave(DAPIImg,UserROIs):
+	ret, thresh1 = cv.threshold(UserROIs, 0, 255, cv.THRESH_BINARY)
+	thresh1 = np.uint8(thresh1)
+
+	contours, hierarchy = cv.findContours(thresh1, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 	cv.drawContours(DAPIImg, contours, -1, (0,0,255), 6)
 	#print(Lbinarr.shape)
-	images = [ Lbinarr, DAPIImg]
+	images = [ thresh1, DAPIImg]
 	titles = ["Mask","Boarder" ]
 	
-	output = cv.connectedComponentsWithStats(Lbinarr)
+	output = cv.connectedComponentsWithStats(thresh1)
 	(numLabels, labels, stats, centroids) = output
+	print(" ")
+	print(" ")
+	print(stats)
+	#reorder stats and centroids to match the order in which the user drew them
+	output = Reorder(UserROIs,output)
+	(numLabels, labels, stats, centroids) = output
+	print(" ")
+	print(stats)
 	
 	FigureSavePath = os.path.join(SpecificImgFolder, "Lesion_Boarder_Visualization.pdf")
 	showImages(images, titles, save = 1, path = FigureSavePath, text_coords = centroids)
@@ -453,8 +479,6 @@ def PlotHistogram(data):
 	# Show plot
 	plt.show()
 
-from keras.models import load_model
-
 def loadKerasModel(filename):
     """Load h5 model file."""
     return load_model(filename)
@@ -485,9 +509,9 @@ def getPredictions(cells, model):
 					img = np.expand_dims(img, axis=0)
 
 					#Comment these out to make the code go faster when debugging
-					#predict = model.predict(img)
-					#predict = predict[0][0]
-					predict = 0
+					predict = model.predict(img)
+					predict = predict[0][0]
+					#predict = 0
 					cell['RGBs'][namChannels[i]].append(predict)
 		
 	return cells
@@ -592,103 +616,202 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 	#Calculate image-specific thresholds
 	#https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html
-	files = df["Original Filename"].to_numpy()
-	unique = set(files)
-	#remove nan from unique titles
-	for uni in unique:
-		if uni != uni:
-			nan = uni
-	unique.discard(nan)
 	
-	for Image in unique:
-		SpecificImgResultsPath = os.path.join(ResultsFolderPath,"Image_Specific_Results")
-		SpecificImgFolder = os.path.join(SpecificImgResultsPath, Image[:-4] + " Results")
+	"""	SpecificImgResultsPath = os.path.join(ResultsFolderPath,"Image_Specific_Results")
+	SpecificImgFolder = os.path.join(SpecificImgResultsPath, Image[:-4] + " Results")"""
+	
+	for i in range(len(namChannels)):
+		ToHisto = []
+		ch = namChannels[i]
+		AreaColumnTitle = ch + " Main Nuclei Area (pixels^2)"
+		IntensColumnTitle = ch + " Main Nuclei Pixel Intensity"
+		MeanNewcolumnTitle = ch + " Main Cell Mean Fluorescence (Intensity/pix^2)"
+		RelNewcolumnTitle = ch + " Relative Fluorescence (Main/Bkg)"
+		MacLearnPredTitle = ch + " Machine Learning Prediction"
+		bkgIntensTitle = ch + " Background Pixel Intensity"
+		bkgMeanTitle = ch + " Bkg Mean Fluorescence (Intensity/pix^2)"
+
+		#Define Threshold values for all of the parameters (size, mean intensity, relative intensity, maclearn(well its 1))
+		#sizethresh is set at 10 to 250 pix^2, or ~4um^2 to ~105um^2
+		sizeThresh = [10,250]
+		df["SizeThreshed"] = np.where((df[AreaColumnTitle] > sizeThresh[0]) & (df[AreaColumnTitle] < sizeThresh[1]), 1, 0)
+
+		IntensMean = np.mean(df[IntensColumnTitle])
+		IntensStd = np.std(df[IntensColumnTitle])		
+		IntensThresh = IntensMean + (0.25*IntensStd)
+		IntensThreshedTitle = ch + " IntensThreshed"
+		df[IntensThreshedTitle] = np.where((df[IntensColumnTitle] >= IntensThresh), 1, 0)
+
+		#based on bkg mean intensity
+		MeanThresh = np.mean(df[bkgMeanTitle]) + (0.5 * np.std(df[bkgMeanTitle]))
+		MeanThreshedTitle = ch + " MeanThreshed"
+		df[MeanThreshedTitle] = np.where((df[MeanNewcolumnTitle] >= MeanThresh), 1, 0)
+
+		#assuming most will be about 1
+		RelMean = np.mean(df[RelNewcolumnTitle])
+		RelStd = np.std(df[RelNewcolumnTitle])		
+		RelIntensThresh = RelMean + (0.25*RelStd)
+		RelThreshedTitle = ch + " RelThreshed"
+		df[RelThreshedTitle] = np.where((df[RelNewcolumnTitle] >= RelIntensThresh), 1, 0)
+
+		if i > 0:
+			MacLearnThreshedTitle = ch + " MacLearnThreshed"
+			df[MacLearnThreshedTitle] = np.where((df[MacLearnPredTitle] >= 0.5), 1, 0)
+
+
+		#Identify different types of positivity FUNCTIONALITY NOT CURRENTLY BEING USED
+		# 1 means just maclearn predicted
+		# 2 means predicted positive in the traditional sense
+		# 3 both maclearn and traditional positive
+
+		Postivity_RankTitle = ch + " Postivity_Rank"
+		if i == 0:
+			df[Postivity_RankTitle] = np.where((df[IntensColumnTitle] > 0), 1, 0)
+		else:
+			df[Postivity_RankTitle] = 0
+			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 0) & (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1) & (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+	
+
+		ToHisto = [AreaColumnTitle,IntensColumnTitle,MeanNewcolumnTitle,RelNewcolumnTitle]
+		#debug Histograms to show distribution of values for each channel, have the threshold appear on that histogram
+		dfnonan= df.fillna(0)
+		fig, axes = plt.subplots(len(ToHisto),figsize = (10,10))
+		fig.tight_layout(h_pad=2)
+		for i in range(len(ToHisto)):
+			axes[i].hist(dfnonan[ToHisto[i]], alpha = 0.5, bins = 80, label="Main")
+			Mean = np.mean(dfnonan[ToHisto[i]])
+			Std = np.std(dfnonan[ToHisto[i]])
+			axes[i].title.set_text(ToHisto[i])
+			if i == 0:
+				axes[i].axvline(x=10, color='orange', linestyle='dashed', linewidth=1)
+				axes[i].axvline(x=250, color='orange', linestyle='dashed', linewidth=1)
+				axes[i].text(10,0,'Threshold',color='orange')
+			elif i == 2:
+				axes[i].hist(dfnonan[bkgMeanTitle],alpha = 0.5, color='pink', bins = 20, label="bkg mean")
+				axes[i].axvline(x=MeanThresh, color='orange', linestyle='dashed', linewidth=1)
+				axes[i].text(MeanThresh,0,'Threshold',color='orange')
+				axes[i].legend(loc='upper right')
+			else:
+				axes[i].axvline(x=Mean, color='blue', linestyle='dashed', linewidth=1)
+				axes[i].text(Mean,0,'mean',color='blue')
+				axes[i].axvline(x=Mean+Std, color='red', linestyle='dashed', linewidth=1)
+				axes[i].text(Mean+Std,0,'mean + 1std',color='red')
+				axes[i].axvline(x=Mean+(Std*0.25), color='orange', linestyle='dashed', linewidth=1)
+				axes[i].text(Mean+(Std*0.25),0,'Threshold',color='orange')
+			figname = ch + " Thresholding_Histograms"
+			FigureSavePath = os.path.join(SpecificImgFolder,figname)
+		plt.savefig(FigureSavePath)
+		if debugProcessRawResults or debug:
+			plt.show()
+		plt.close(fig)
+	
+
+	#Visual Validation? Need to load cells
+
+	#Define positive cell types
+	df['Cell_Type'] = "Not Classified"
+	for i in range(len(cell_types_to_analyze)):
+		conditions = []
+		celltypename = cell_types_to_analyze[i]
+		Definitions = cell_type_conditions[celltypename]
+		#make a boolean array for each condition then compare the booleans at each positon
+		for j in range(len(Definitions)):
+			ch_nam = Definitions[j][0]
+			val = Definitions[j][1]
+			Postivity_RankTitle = ch_nam + " Postivity_Rank"
+			conditions.append(df[Postivity_RankTitle] == val)
+
+		#reshape the resulting boolean arrays to stay consistent
+		conditions = np.array(conditions)
+		conditions = np.rot90(conditions,k=-1)
+		conditions = np.fliplr(conditions)
+
 		
-		Imagedf = df[(df == Image).any(axis=1)].copy(deep=False)
-		for i in range(len(namChannels)):
-			ToHisto = []
-			ch = namChannels[i]
-			AreaColumnTitle = ch + " Main Nuclei Area (pixels^2)"
-			IntensColumnTitle = ch + " Main Nuclei Pixel Intensity"
-			MeanNewcolumnTitle = ch + " Main Cell Mean Fluorescence (Intensity/pix^2)"
-			RelNewcolumnTitle = ch + " Relative Fluorescence (Main/Bkg)"
-			MacLearnPredTitle = ch + " Machine Learning Prediction"
-			bkgIntensTitle = ch + " Background Pixel Intensity"
-			bkgMeanTitle = ch + " Bkg Mean Fluorescence (Intensity/pix^2)"
+		#callapse the boolean arrays to a single boolean array
+		callapsedConditions =[]
+		for row in conditions:
+			callapsedConditions.append(all(row))
 
-			#Define Threshold values for all of the parameters (size, mean intensity, relative intensity, maclearn(well its 1))
-			#sizethresh is set at 10 to 250 pix^2, or ~4um^2 to ~105um^2
-			sizeThresh = [10,250]
-			df["SizeThreshed"] = np.where((df["Original Filename"] == Image) & (df[AreaColumnTitle] > sizeThresh[0]) & (df[AreaColumnTitle] < sizeThresh[1]), 1, 0)
+		callapsedConditions = np.array(callapsedConditions)
 
-			IntensMean = np.mean(Imagedf[IntensColumnTitle])
-			IntensStd = np.std(Imagedf[IntensColumnTitle])		
-			IntensThresh = IntensMean + (0.25*IntensStd)
-			df["IntensThreshed"] = np.where((df["Original Filename"] == Image) & (df[IntensColumnTitle] >= IntensThresh), 1, 0)
+		df['Cell_Type'] = np.where(callapsedConditions,celltypename, df['Cell_Type'])
 
-			#based on bkg mean intensity
-			MeanThresh = np.mean(Imagedf[bkgMeanTitle]) + (0.5 * np.std(Imagedf[bkgMeanTitle]))
-			df["MeanThreshed"] = np.where((df["Original Filename"] == Image) & (df[MeanNewcolumnTitle] >= MeanThresh), 1, 0)
-
-			#assuming most will be about 1
-			RelMean = np.mean(Imagedf[RelNewcolumnTitle])
-			RelStd = np.std(Imagedf[RelNewcolumnTitle])		
-			RelIntensThresh = RelMean + (0.25*RelStd)
-			df["RelThreshed"] = np.where((df["Original Filename"] == Image) & (df[RelNewcolumnTitle] >= RelIntensThresh), 1, 0)
-
-			if i > 0:
-				df["MacLearnThreshed"] = np.where((df["Original Filename"] == Image) & (df[MacLearnPredTitle] >= 0.5), 1, 0)
-
-
-
-
-			ToHisto = [AreaColumnTitle,IntensColumnTitle,MeanNewcolumnTitle,RelNewcolumnTitle]
-			#debug Histograms to show distribution of values for each channel, have the threshold appear on that histogram
-			Imagedfnonan= Imagedf.fillna(0)
-			fig, axes = plt.subplots(len(ToHisto),figsize = (10,10))
-			fig.tight_layout(h_pad=2)
-			for i in range(len(ToHisto)):
-				axes[i].hist(Imagedfnonan[ToHisto[i]], alpha = 0.5, bins = 80,label="Main")
-				Mean = np.mean(Imagedfnonan[ToHisto[i]])
-				Std = np.std(Imagedfnonan[ToHisto[i]])
-				axes[i].title.set_text(ToHisto[i])
-				if i == 0:
-					axes[i].axvline(x=10, color='orange', linestyle='dashed', linewidth=1)
-					axes[i].axvline(x=250, color='orange', linestyle='dashed', linewidth=1)
-					axes[i].text(10,0,'Threshold',color='orange')
-				elif i == 2:
-					axes[i].hist(Imagedfnonan[bkgMeanTitle],alpha = 0.5, color='pink', bins = 20, label="bkg mean")
-					axes[i].axvline(x=MeanThresh, color='orange', linestyle='dashed', linewidth=1)
-					axes[i].text(MeanThresh,0,'Threshold',color='orange')
-					axes[i].legend(loc='upper right')
-				else:
-					axes[i].axvline(x=Mean, color='blue', linestyle='dashed', linewidth=1)
-					axes[i].text(Mean,0,'mean',color='blue')
-					axes[i].axvline(x=Mean+Std, color='red', linestyle='dashed', linewidth=1)
-					axes[i].text(Mean+Std,0,'mean + 1std',color='red')
-					axes[i].axvline(x=Mean+(Std*0.25), color='orange', linestyle='dashed', linewidth=1)
-					axes[i].text(Mean+(Std*0.25),0,'Threshold',color='orange')
-				figname = ch + " Thresholding_Histograms"
-				FigureSavePath = os.path.join(SpecificImgFolder,figname)
-			plt.savefig(FigureSavePath)
-			if debugProcessRawResults or debug:
-				plt.show()
-			plt.close(fig)
-	UpdateResultSave = os.path.join(ResultsFolderPath, "AllCellSpecificResultsUpdated.csv")
 	df.to_csv(UpdateResultSave, index = False)
-	print(df.columns)
+
+	#Build Summary
+
+	Summary.append({'Original Filename': df['Original Filename'][0], 
+					'Background Area (mm^2)': df['Background Area (mm^2)'][0],
+					})
+	cell_types = cell_types_to_analyze
+	cell_types.append("Not Classified")
+
+	for i in range(len(namChannels)):
+		ch = namChannels[i]
+		Postivity_RankTitle = ch + " Postivity_Rank"
+		df['Quantification'] = np.where((df[Postivity_RankTitle] == 1) & (df["location"] == 0), 1, 0)
+		cellNumber = np.sum(df['Quantification'])
+		area = df['Background Area (mm^2)'][0]
+		density = cellNumber/area
+		cellnumtitle = 'Background ' + ch + ' Positive Cell Number'
+		celldenstitle = 'Background ' + ch + ' Positive Cells Density (cells/mm^2)'
+		Summary[-1][cellnumtitle] = cellNumber
+		Summary[-1][celldenstitle] = density
+
+	for cell_type in cell_types:
+		df['Quantification'] = np.where((df['Cell_Type'] == cell_type) & (df["location"] == 0), 1, 0)
+		cellNumber = np.sum(df['Quantification'])
+		area = df['Background Area (mm^2)'][0]
+		density = cellNumber/area
+		cellnumtitle = 'Background ' + cell_type + ' Number'
+		celldenstitle = 'Background ' + cell_type + ' Density (cells/mm^2)'
+		Summary[-1][cellnumtitle] = cellNumber
+		Summary[-1][celldenstitle] = density
+
+	for i in range(ROINumber):
+		ROI = i+1
+		lesTitle = 'Lesion '+ str(ROI) +' Area (mm^2)'
+		area = df[lesTitle][0]
+		Summary[-1][lesTitle] = area
+		for y in range(len(namChannels)):
+			ch = namChannels[y]
+			Postivity_RankTitle = ch + " Postivity_Rank"
+			df['Quantification'] = np.where((df[Postivity_RankTitle] == 1) & (df["location"] == ROI), 1, 0)
+			cellNumber = np.sum(df['Quantification'])
+			density = cellNumber/area
+			cellnumtitle = 'Lesion '+ str(ROI) +' ' + ch + ' Positive Cell Number'
+			celldenstitle = 'Lesion '+ str(ROI) +' ' + ch + ' Positive Cells Density (cells/mm^2)'
+			Summary[-1][cellnumtitle] = cellNumber
+			Summary[-1][celldenstitle] = density
+
+		for cell_type in cell_types:
+			df['Quantification'] = np.where((df['Cell_Type'] == cell_type) & (df["location"] == ROI), 1, 0)
+			cellNumber = np.sum(df['Quantification'])
+			density = cellNumber/area
+			cellnumtitle = 'Lesion '+ str(ROI) +' ' + cell_type + ' Number'
+			celldenstitle = 'Lesion '+ str(ROI) +' ' + cell_type + ' Density (cells/mm^2)'
+			Summary[-1][cellnumtitle] = cellNumber
+			Summary[-1][celldenstitle] = density
+
+	return Summary
+
+		
 				
 class PolygonDrawer(object):
 	def __init__(self, window_name, img, ROINumber):
 		self.window_name = window_name # Name for our window
-		h, w = img.shape[0:2]
-		neww = 800
-		newh = int(neww*(h/w))
-		self.smallShape = (neww, newh)
-		self.img = cv.resize(img, self.smallShape)
-		self.CANVAS_SIZE = (h,w)
+		self.img = img
+		self.imgheight, self.imgwidth = self.img.shape[0:2]
+		
+		self.smallwidth = 800
+		self.smallheight = int(self.smallwidth*(self.imgheight/self.imgwidth))
+		self.smallImg = cv.resize(self.img, (self.smallwidth,self.smallheight))
+
 		self.done = False # Flag signalling we're done with one polygon
 		self.doneAll = False # Flag signalling we're done with all polygons
+
 		self.current = (0, 0) # Current position, so we can draw the line-in-progress
 		self.points = [] # List of points defining our polygon
 		self.polygons = [] # List of all polygons
@@ -720,14 +843,14 @@ class PolygonDrawer(object):
 	def run(self):
 		# Let's create our working window and set a mouse callback to handle events
 		cv.namedWindow(self.window_name, flags=cv.WINDOW_AUTOSIZE)
-		cv.imshow(self.window_name, np.zeros(self.CANVAS_SIZE, np.uint8))
+		cv.imshow(self.window_name, np.zeros((self.imgheight, self.imgwidth), np.uint8))
 		cv.waitKey(1)
 		cv.setMouseCallback(self.window_name, self.on_mouse)
 		i = 0
 		for i in range(ROINumber):
 			self.done = False
 			if i == 0:
-				Polycanvas = np.copy(self.img, subok= True)
+				Polycanvas = np.copy(self.smallImg, subok= True)
 			while(not self.done):
 				# This is our drawing loop, we just continuously draw new images
 				# and show them in the named window
@@ -744,7 +867,6 @@ class PolygonDrawer(object):
 					self.done = True
 
 			# User finised entering the polygon points, so let's make the final drawing
-			print(i)
 
 			# of a filled polygon
 			if (len(self.points) > 0):
@@ -760,18 +882,16 @@ class PolygonDrawer(object):
 			# Waiting for the user to press any key
 			i = i+1
 
-			print(self.polygons)
 
 		cv.destroyWindow(self.window_name)
-		bincanvas = np.zeros(self.smallShape, dtype= np.uint8)
-		for polygon in self.polygons:
+		bincanvas = np.zeros((self.smallheight,self.smallwidth), dtype= np.uint8)
+		for i in range(len(self.polygons)):
+			polygon = self.polygons[i]
 			polygon = np.array([polygon])
-			print(polygon, polygon.dtype)
-			cv.fillPoly(bincanvas, polygon, self.FINAL_LINE_COLOR)
-		bincanvas = cv.resize(bincanvas, self.CANVAS_SIZE)
+			fill = i+1
+			cv.fillPoly(bincanvas, polygon, fill)
+		bincanvas = cv.resize(bincanvas, (self.imgwidth, self.imgheight))
 		return bincanvas
-
-
 
 """_____________________________________________________________________________________________________________________________"""
 
@@ -819,10 +939,10 @@ scale = 1.5385
 
 
 #Path to image folder
-ImgFolderPath = "/Users/james/Desktop/Working Folder/AutoCount2.0"
-
+#ImgFolderPath = "/Users/james/Desktop/Working Folder/AutoCount2.0"
+ImgFolderPath ="C:\\Users\\jjmc1\\Desktop\\Python\\AutoCount2.0"
 #What are the channels?
-namChannels = ["DAPI_ch","488_ch","594_ch","647_ch"]
+namChannels = ["DAPI_ch","CC1","594_ch","Olig2"]
 
 #What cell types are you looking to analyze?
 #cell_types_to_analyze = ['OPC', 'Oligo', 'NonOligo']
@@ -833,6 +953,11 @@ cropsize = 46
 #How many ROIs do you want to define?
 ROINumber = 2
 
+
+overwrite = False
+overwriteCells_Pred = True
+overwriteROIS = False
+overwriteProcessing = True
 
 debug = False
 debugThreshold = False
@@ -847,9 +972,10 @@ debugLesionIdenification2 = False
 debugProcessRawResults = False
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
-Summary = {}
+Summary = []
 
 AllCellSpecificResults = pd.DataFrame()
+Resultsdf = pd.DataFrame()
 #Make the appropriate folder structure
 ResultsFolderPath = os.path.join(ImgFolderPath,"Results")
 if not os.path.exists(ResultsFolderPath):
@@ -861,19 +987,44 @@ if not os.path.exists(SpecificImgResultsPath):
 
 AllresultsSave = os.path.join(ResultsFolderPath, "AllCellSpecificResultsGood.csv")
 
-#User Defined ROIs, and save those points in a dictionary that can be called later (Replace LesionDetection later on)
+#Build the appropriate image-specific structures and User Defined ROIs
 #https://stackoverflow.com/questions/37099262/drawing-filled-polygon-using-mouse-events-in-open-cv-using-python
 ImageID = 0
 TotalImage = 0
+
+
 for oriImgName in os.listdir(ImgFolderPath):
 	fullpath = os.path.join(ImgFolderPath, oriImgName)
 	if oriImgName.endswith('.tif'):
-		TotalImage = TotalImage+1
+
+		SpecificImgFolder = os.path.join(SpecificImgResultsPath, oriImgName[:-4] + " Results")
+		if not os.path.exists(SpecificImgFolder):
+			os.mkdir(SpecificImgFolder)
+
+		SampleCellsFolder = os.path.join(SpecificImgFolder,"Sample_Cells")
+		if not os.path.exists(SampleCellsFolder):
+			os.mkdir(SampleCellsFolder)
+
+		BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
+		if not os.path.exists(BinarySave) or overwriteROIS or overwrite:
+			img = cv.imreadmulti(fullpath, flags = -1)
+			Dapi = proccessNuclearImage(img[1][0])
+			gamma = 0.35
+			Dapi = adjust_gamma(Dapi, gamma)
+			Dapi = cv.bitwise_not(Dapi)
+			Dapi = np.array(Dapi)
+			windowname = str(oriImgName) +" : Draw " + str(ROINumber) + " ROIs"
+			polyDr = PolygonDrawer(windowname, Dapi, ROINumber)
+			Lbinarr = polyDr.run()
+			
+			np.save(BinarySave, Lbinarr, allow_pickle=True, fix_imports=True)
+			#cv.imwrite(BinarySave,Lbinarr)
+		TotalImage = TotalImage + 1
 
 
 
-print("Finished making folder structures")
 
+#Main For Loop
 for oriImgName in os.listdir(ImgFolderPath):
 	fullpath = os.path.join(ImgFolderPath, oriImgName)
 	
@@ -888,7 +1039,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 		ImageResultsSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResults.csv")
 		
-		if not os.path.exists(ImageResultsSave):
+		if not os.path.exists(ImageResultsSave) or overwriteCells_Pred or overwrite:
 			
 			ImageID = ImageID+1
 			#Additional folder structures
@@ -951,12 +1102,15 @@ for oriImgName in os.listdir(ImgFolderPath):
 			cells = []
 			cells = getCells(Vischannels, Rawchannels, centroids, markers)
 
-			print("Image ",ImageID, " of ", TotalImage,": Identifying Areas of High Density")
-			output = LesionIdenification(DAPIImg=Vischannels[0],ROINumber = ROINumber)
-			(numLabels, labels, stats, centroids) = output
-			
+			print("Image ",ImageID, " of ", TotalImage,": Processing User ROIs")
+			BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
+			UserROIs = np.load(BinarySave)
+			UserROIsOutput = LesionFigSave(DAPIImg=Vischannels[0], UserROIs = UserROIs )
+
+			(numLabels, labelsUserROI, stats, centroids) = UserROIsOutput
+		
 			print("Image ",ImageID, " of ", TotalImage,": Measuring Pixel Intensity for Each Cell")
-			cells = AddStats(cells, labels, stats)
+			cells = AddStats(cells, UserROIs, centroids, stats)
 
 			print("Image ",ImageID, " of ", TotalImage,": Prepping Images for Keras")
 			cells = MacLearnImgPrepper(cells)
@@ -966,14 +1120,12 @@ for oriImgName in os.listdir(ImgFolderPath):
 					print(cells[3000][key])
 					print(" ")
 
-			print(" ")
+			
 			print("Image ",ImageID, " of ", TotalImage,": Begining Keras Analysis")
-			print(" ")
-			model = loadKerasModel("/Users/james/Documents/GitHub/KerasModels/CC1counting_wMar_5.8.h5")
+			model = loadKerasModel("C:\\Users\\jjmc1\\Desktop\\Python\\AutoCount2.0\\CC1counting_wMar_5.8.h5")
 			cells = getPredictions(cells, model)
-			print(" ")
 			print("End Keras")
-			print(" ")
+			
 
 			print("Image ",ImageID, " of ", TotalImage,": Saveing a Sample of the Cells for")
 			#Uncomment this to save x number of random cells (for survaying)
@@ -982,74 +1134,40 @@ for oriImgName in os.listdir(ImgFolderPath):
 			print("Image ",ImageID, " of ", TotalImage,": Crafting the DataFrame and Saving the .csv file")
 			#Build the Dataframe to analyse the data
 			Resultsdf = Cells_to_df(cells)
-
-			#make or updata AllCellSpecificResults (one excel with all the cell results)
-			if AllCellSpecificResults.empty:
-				AllCellSpecificResults = Resultsdf
-			else:
-				dfs = [AllCellSpecificResults, Resultsdf]
-				AllCellSpecificResults = pd.concat(dfs)
-
-			
+	
 			Resultsdf.to_csv(ImageResultsSave, index = False)
 
 			#Get Summary data from Resultsdf for the lesions and save that to a persisting dataframe to construct the Summary.csv file
-			if not os.path.exists(AllresultsSave):
-				AllCellSpecificResults.to_csv(AllresultsSave, index = False)
-			else:
-				olddf = pd.read_csv(AllresultsSave)
+		#Shift to individual image analysis, as in just work with the current csv
+		if Resultsdf.empty :
+			Resultsdf = pd.read_csv(ImageResultsSave)	
+		UpdateResultSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResultsUpdate.csv")
+		if not os.path.exists(UpdateResultSave) or overwriteProcessing or overwrite:
+			#Define which cell types too look at for this analysis
+			cell_types_to_analyze = ['OPC', 'Oligo', 'NonOligo']
+			#Define cell types. Channel names must match those defined in namChannel exactly.
+			#1 indicates positive, 0 indictes negative
+			cell_type_conditions = {
+			'OPC' : [['DAPI_ch', 1], ['CC1', 0], ['Olig2', 1]],
+					
+			'Oligo' : [['DAPI_ch', 1], ['CC1', 1], ['Olig2', 1]],
 
-				AllCellSpecificResults = pd.concat([olddf, AllCellSpecificResults])
-				AllCellSpecificResults.to_csv(AllresultsSave, index = False)
+			'ActiveOPC' : [['DAPI_ch', 1], ['Olig2', 1], ['Sox2', 1]],
 
-print("All Images Analysed, begining results processing")
-print("Opening AllCellSpecificResults")
-if AllCellSpecificResults.empty:
-	AllCellSpecificResults = pd.read_csv(AllresultsSave)
+			'ProlifOligo' : [['DAPI_ch', 1], ['Olig2', 1], ['Ki67', 1]],
 
+			'Sox2Astro' : [['DAPI_ch', 1], ['Olig2', 0], ['Sox2', 1]],
 
+			'NonOligo' : [['DAPI_ch', 1], ['Olig2', 0]],
 
-#Define which cell types too look at for this analysis
-cell_types_to_analyze = ['OPC', 'Oligo', 'NonOligo']
-#Define cell types. Channel names must match those defined in namChannel exactly.
-#1 indicates positive, 0 indictes negative
-cell_type_conditions = {
-'OPC' : {
-		'DAPI': 1,
-		'CC1' : 0,
-		'Olig2' : 1
-		},
+			}
+			if os.path.exists(SummarySave)
+			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 
-'Oligo' : {
-		'DAPI': 1,
-		'CC1' : 1,
-		'Olig2' : 1
-		},
-
-'ActiveOPC' : {
-		'DAPI': 1,
-		'Olig2' : 1,
-		'Sox2' : 1
-		},
-
-'ProlifOligo' : {
-		'DAPI': 1,
-		'Olig2' : 1,
-		'Ki67' : 1
-		},
-
-'Sox2Astro' : {
-		'DAPI': 1,
-		'Olig2' : 0,
-		'Sox2' : 1
-		},
-
-'NonOligo' : {
-		'DAPI': 1,
-		'Olig2' : 0
-		}
-}
-
-ProcessRawResults(df = AllCellSpecificResults,Summary=Summary,cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
+		#clear Resultsdf
+		Resultsdf = pd.DataFrame()
+SummarySave = os.path.join(ResultsFolderPath,'Summary.csv')
+Summarydf = pd.DataFrame(Summary)
+Summarydf.to_csv(SummarySave)
 
 print("All Done!")
