@@ -20,6 +20,7 @@ import pandas as pd
 import random
 from scipy.stats import gaussian_kde
 from keras.models import load_model
+import csv
 
 def openVSI(fullpath):
     images = bioformats.load_image(fullpath, rescale=False)
@@ -940,7 +941,7 @@ scale = 1.5385
 
 #Path to image folder
 #ImgFolderPath = "/Users/james/Desktop/Working Folder/AutoCount2.0"
-ImgFolderPath ="C:\\Users\\jjmc1\\Desktop\\Python\\AutoCount2.0"
+ImgFolderPath ="\\Users\\jjmc\\Desktop\\Working Folder\\Normal and Cuprizone DCO\\Images"
 #What are the channels?
 namChannels = ["DAPI_ch","CC1","594_ch","Olig2"]
 
@@ -951,7 +952,7 @@ namChannels = ["DAPI_ch","CC1","594_ch","Olig2"]
 cropsize = 46
 
 #How many ROIs do you want to define?
-ROINumber = 2
+ROINumber = 1
 
 
 overwrite = False
@@ -980,6 +981,8 @@ Resultsdf = pd.DataFrame()
 ResultsFolderPath = os.path.join(ImgFolderPath,"Results")
 if not os.path.exists(ResultsFolderPath):
 	os.mkdir(ResultsFolderPath)
+
+SummarySave = os.path.join(ResultsFolderPath,'Summary.csv')
 
 SpecificImgResultsPath = os.path.join(ResultsFolderPath,"Image_Specific_Results")
 if not os.path.exists(SpecificImgResultsPath):
@@ -1161,12 +1164,17 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'NonOligo' : [['DAPI_ch', 1], ['Olig2', 0]],
 
 			}
-			if os.path.exists(SummarySave)
+			#open existing summary as list of dictionaries
+			if not os.path.exists(SummarySave):
+				with open(SummarySave) as f:
+					Summary = [{k: int(v) for k, v in row.items()}
+						for row in csv.DictReader(f, skipinitialspace=True)]
+				
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 
 		#clear Resultsdf
 		Resultsdf = pd.DataFrame()
-SummarySave = os.path.join(ResultsFolderPath,'Summary.csv')
+
 Summarydf = pd.DataFrame(Summary)
 Summarydf.to_csv(SummarySave)
 
