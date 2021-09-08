@@ -963,7 +963,7 @@ ROINumber = setup['ROINumber']
 
 
 overwrite = False
-overwriteCells_Pred = True
+overwriteCells_Pred = False
 overwriteROIS = False
 overwriteProcessing = True
 
@@ -1199,9 +1199,9 @@ for oriImgName in os.listdir(ImgFolderPath):
 			}
 			#open existing summary as list of dictionaries
 			if os.path.exists(SummarySave):
+				sumthere = True
 				with open(SummarySave) as f:
-					Summary = [{k: int(v) for k, v in row.items()}
-						for row in csv.DictReader(f, skipinitialspace=True)]
+				    Summary = [{k : v for k, v in row.items()} for row in csv.DictReader(f, skipinitialspace=True)]
 				
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 
@@ -1209,6 +1209,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 		Resultsdf = pd.DataFrame()
 
 Summarydf = pd.DataFrame(Summary)
-Summarydf.to_csv(SummarySave)
+
+Summarydf.to_csv(SummarySave, index=False)
 
 print("All Done!")

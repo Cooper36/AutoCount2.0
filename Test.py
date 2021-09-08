@@ -56,5 +56,14 @@ print(reorderstats)
 """___________________________________________________________________________________________________________________________________________________________"""
 
 
-import keras
+import csv
+
+with open('test.csv') as f:
+    Summary = [{k : v for k, v in row.items()} for row in csv.DictReader(f, skipinitialspace=True)]
+
+print(a)
+
+
+
+
 
