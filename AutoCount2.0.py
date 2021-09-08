@@ -1,3 +1,5 @@
+
+print("Loading Packages")
 #Put all 10x images that you want counted into a single folder 
 #All images in the folder need to have the same number and order of stained Vischannels
 import cv2 as cv
@@ -9,6 +11,7 @@ import xml.etree.ElementTree as ET
 import math
 import os, errno
 from pathlib import Path
+import shutil
 
 # to enable VSI file support
 #import javabridge
@@ -21,6 +24,12 @@ import random
 from scipy.stats import gaussian_kde
 from keras.models import load_model
 import csv
+
+from settings import Settings
+
+settings = Settings()
+
+
 
 def openVSI(fullpath):
     images = bioformats.load_image(fullpath, rescale=False)
@@ -420,14 +429,10 @@ def LesionFigSave(DAPIImg,UserROIs):
 	
 	output = cv.connectedComponentsWithStats(thresh1)
 	(numLabels, labels, stats, centroids) = output
-	print(" ")
-	print(" ")
-	print(stats)
+
 	#reorder stats and centroids to match the order in which the user drew them
 	output = Reorder(UserROIs,output)
 	(numLabels, labels, stats, centroids) = output
-	print(" ")
-	print(stats)
 	
 	FigureSavePath = os.path.join(SpecificImgFolder, "Lesion_Boarder_Visualization.pdf")
 	showImages(images, titles, save = 1, path = FigureSavePath, text_coords = centroids)
@@ -602,6 +607,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		AreaColumnTitle2 = ch + " Main Nuclei Area (pixels^2)"
 		df[MeanNewcolumnTitle] = df[IntensColumnTitle1] / df[AreaColumnTitle2]
 		ToHisto.extend([AreaColumnTitle2, MeanNewcolumnTitle])
+
 		#Calculate bkg Mean florecence for each channel 
 		NewcolumnTitle = ch + " Bkg Mean Fluorescence (Intensity/pix^2)"
 		ColumnTitle1 = ch + " Background Pixel Intensity"
@@ -939,20 +945,21 @@ class PolygonDrawer(object):
 scale = 1.5385
 
 
-#Path to image folder
-#ImgFolderPath = "/Users/james/Desktop/Working Folder/AutoCount2.0"
-ImgFolderPath ="\\Users\\jjmc\\Desktop\\Working Folder\\Normal and Cuprizone DCO\\Images"
+setup = settings.folder_dicts[0]
+
+ImgFolderPath = setup['Path']
+
 #What are the channels?
-namChannels = ["DAPI_ch","CC1","594_ch","Olig2"]
+namChannels = setup['channels']
 
 #What cell types are you looking to analyze?
 #cell_types_to_analyze = ['OPC', 'Oligo', 'NonOligo']
 
 #Desired cell image size
-cropsize = 46
+cropsize = setup['cropsize']
 
 #How many ROIs do you want to define?
-ROINumber = 1
+ROINumber = setup['ROINumber']
 
 
 overwrite = False
@@ -995,7 +1002,33 @@ AllresultsSave = os.path.join(ResultsFolderPath, "AllCellSpecificResultsGood.csv
 ImageID = 0
 TotalImage = 0
 
+# check to make sure each image has the specified number of channels
+print("Checking Images for Uniformity")
+badfiles = []
+for oriImgName in os.listdir(ImgFolderPath):
+	fullpath = os.path.join(ImgFolderPath, oriImgName)
+	if oriImgName.endswith('.tif'):
+		img = cv.imreadmulti(fullpath, flags = -1)
+		img = img[1]
+		img = np.array(img)
+		chanNum = img.shape[0]
+		sizeh = img.shape[1]
+		sizew = img.shape[2]
+		if chanNum != len(namChannels) or sizeh == 512 or sizew ==512:
+			badfiles.append(oriImgName)
 
+# move bad files to a new folder
+if len(badfiles) > 0:
+	badfilespath = os.path.join(ImgFolderPath,"BadFiles")
+	if not os.path.exists(badfilespath):
+		os.mkdir(badfilespath)
+	print(len(badfiles)," files were identified as bad and were moved to an adjoining folder")
+	for file in badfiles:
+		oldpath = os.path.join(ImgFolderPath, file)
+		newpath = os.path.join(badfilespath, file)
+		shutil.move(oldpath, newpath)
+
+print('Draw ROIs')
 for oriImgName in os.listdir(ImgFolderPath):
 	fullpath = os.path.join(ImgFolderPath, oriImgName)
 	if oriImgName.endswith('.tif'):
@@ -1125,7 +1158,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			
 			print("Image ",ImageID, " of ", TotalImage,": Begining Keras Analysis")
-			model = loadKerasModel("C:\\Users\\jjmc1\\Desktop\\Python\\AutoCount2.0\\CC1counting_wMar_5.8.h5")
+			model = loadKerasModel(os.path.join(os.getcwd(), "CC1counting_wMar_5.8.h5"))
 			cells = getPredictions(cells, model)
 			print("End Keras")
 			
@@ -1165,7 +1198,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			}
 			#open existing summary as list of dictionaries
-			if not os.path.exists(SummarySave):
+			if os.path.exists(SummarySave):
 				with open(SummarySave) as f:
 					Summary = [{k: int(v) for k, v in row.items()}
 						for row in csv.DictReader(f, skipinitialspace=True)]
