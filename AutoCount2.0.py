@@ -672,8 +672,11 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		# 3 both maclearn and traditional positive
 
 		Postivity_RankTitle = ch + " Postivity_Rank"
+		df[Postivity_RankTitle] = 0
 		if i == 0:
 			df[Postivity_RankTitle] = np.where((df[IntensColumnTitle] > 0), 1, 0)
+		elif ch == 'CC1':
+			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 		else:
 			df[Postivity_RankTitle] = 0
 			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
@@ -752,7 +755,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 	Summary.append({'Original Filename': df['Original Filename'][0], 
 					'Background Area (mm^2)': df['Background Area (mm^2)'][0],
 					})
-	cell_types = cell_types_to_analyze
+	cell_types = cell_types_to_analyze.copy()
 	cell_types.append("Not Classified")
 
 	for i in range(len(namChannels)):
@@ -989,7 +992,7 @@ ResultsFolderPath = os.path.join(ImgFolderPath,"Results")
 if not os.path.exists(ResultsFolderPath):
 	os.mkdir(ResultsFolderPath)
 
-SummarySave = os.path.join(ResultsFolderPath,'Summary.csv')
+SummarySave = os.path.join(ResultsFolderPath,'SummaryGood.csv')
 
 SpecificImgResultsPath = os.path.join(ResultsFolderPath,"Image_Specific_Results")
 if not os.path.exists(SpecificImgResultsPath):
@@ -1065,6 +1068,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 	fullpath = os.path.join(ImgFolderPath, oriImgName)
 	
 	if oriImgName.endswith('.tif'):
+		ImageID = ImageID+1
 		SpecificImgFolder = os.path.join(SpecificImgResultsPath, oriImgName[:-4] + " Results")
 		if not os.path.exists(SpecificImgFolder):
 			os.mkdir(SpecificImgFolder)
@@ -1077,7 +1081,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 		
 		if not os.path.exists(ImageResultsSave) or overwriteCells_Pred or overwrite:
 			
-			ImageID = ImageID+1
+			
 			#Additional folder structures
 
 			print("Image ",ImageID, " of ", TotalImage,": Reading Image ")
@@ -1180,7 +1184,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 		UpdateResultSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResultsUpdate.csv")
 		if not os.path.exists(UpdateResultSave) or overwriteProcessing or overwrite:
 			#Define which cell types too look at for this analysis
-			cell_types_to_analyze = ['OPC', 'Oligo', 'NonOligo']
+			cell_types_to_analyze = setup['cell_types_to_analyze']
 			#Define cell types. Channel names must match those defined in namChannel exactly.
 			#1 indicates positive, 0 indictes negative
 			cell_type_conditions = {
@@ -1196,13 +1200,14 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			'NonOligo' : [['DAPI_ch', 1], ['Olig2', 0]],
 
+
 			}
 			#open existing summary as list of dictionaries
 			if os.path.exists(SummarySave):
 				sumthere = True
 				with open(SummarySave) as f:
 				    Summary = [{k : v for k, v in row.items()} for row in csv.DictReader(f, skipinitialspace=True)]
-				
+			print("Image ",ImageID, " of ", TotalImage,": Processing Results")
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 
 		#clear Resultsdf

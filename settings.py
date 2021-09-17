@@ -18,7 +18,10 @@ class Settings:
                 'channels' : ["DAPI_ch","CC1","594_ch","Olig2"],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "/Users/jjmc/Desktop/Working Folder/Normal and Cuprizone DCO/Images"
+                'Path' : "/Users/jjmc/Desktop/Working Folder/Normal and Cuprizone DCO/Images",
+
+                # Cell types to analyze
+                'cell_types_to_analyze' : ['OPC', 'Oligo', 'NonOligo']
             },
         ]
 
