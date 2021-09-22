@@ -1,4 +1,4 @@
-import numpy as np
+"""import numpy as np
 import sys
 import cv2 as cv
 import math
@@ -52,4 +52,18 @@ print(" ")
 print(stats)
 
 print(reorderstats)
+"""
+"""___________________________________________________________________________________________________________________________________________________________"""
+
+
+import csv
+
+with open('test.csv') as f:
+    Summary = [{k : v for k, v in row.items()} for row in csv.DictReader(f, skipinitialspace=True)]
+
+print(a)
+
+
+
+
 
