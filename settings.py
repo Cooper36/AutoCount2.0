@@ -23,6 +23,25 @@ class Settings:
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['OPC', 'Oligo', 'NonOligo']
             },
+
+            {
+                'name' : 'LargeLesionDCO',
+
+                # Define size of individual cell images (in pixels, defines both height and width, so a square)
+                'cropsize' : 46,
+            
+                # Define the number of ROIs you want to draw
+                'ROINumber' : 2,
+
+                # Name each channel present (must be consistent for all images)
+                'channels' : ["DAPI_ch","CC1","594_ch","Olig2"],
+
+                # Path to folder containing images to be analyzed
+                'Path' : "\\Users\\jjmc1\\Desktop\\Python\\AutoCount2.0\\LargeLesionDCO",
+
+                # Cell types to analyze
+                'cell_types_to_analyze' : ['OPC', 'Oligo', 'NonOligo']
+            },
         ]
 
 

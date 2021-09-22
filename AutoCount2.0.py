@@ -371,8 +371,11 @@ def MacLearnImgPrepper(cells):
 		if skipped == "No":
 			i = 1
 			for i in range(len(namChannels)):
+				print(" ")
+				print(i)
 				ch = namChannels[i]
-				if i > 0 & ch != 'CC1':
+				print(ch)
+				if i > 0 and str(ch) != 'CC1':
 					blue = DAPI_ch
 					green = img[i]
 					red = img[i]
@@ -830,8 +833,20 @@ class PolygonDrawer(object):
 		self.img = img
 		self.imgheight, self.imgwidth = self.img.shape[0:2]
 		
-		self.smallwidth = 800
+		import ctypes
+		user32 = ctypes.windll.user32
+		screensize = [user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)]
+		print(screensize)
+
+		self.smallwidth = int(screensize[0] * 0.8)
 		self.smallheight = int(self.smallwidth*(self.imgheight/self.imgwidth))
+		
+		print(self.smallheight)
+		if self.smallheight > screensize[1]:
+			self.smallheight = int(screensize[1] * 0.8)
+			self.smallwidth = int(self.smallheight*(self.imgwidth/self.imgheight))
+			print(self.smallheight)
+
 		self.smallImg = cv.resize(self.img, (self.smallwidth,self.smallheight))
 
 		self.done = False # Flag signalling we're done with one polygon
@@ -963,7 +978,7 @@ class PolygonDrawer(object):
 scale = 1.5385
 
 
-setup = settings.folder_dicts[0]
+setup = settings.folder_dicts[1]
 
 ImgFolderPath = setup['Path']
 
