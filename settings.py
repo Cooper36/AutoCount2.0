@@ -22,8 +22,10 @@ class Settings:
 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['OPC', 'Oligo', 'NonOligo']
-            },
 
+                # Do you want to use the keras models (slow)
+                'useKeras' : True
+            },
             {
                 'name' : 'LargeLesionDCO',
 
@@ -41,6 +43,30 @@ class Settings:
 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['OPC', 'Oligo', 'NonOligo']
+
+                # Do you want to use the keras models (slow)
+                'useKeras' : True
+            },
+            {
+                'name' : 'FMSize calculation',
+
+                # Define size of individual cell images (in pixels, defines both height and width, so a square)
+                'cropsize' : 46,
+            
+                # Define the number of ROIs you want to draw
+                'ROINumber' : 1,
+
+                # Name each channel present (must be consistent for all images)
+                'channels' : ["DAPI_ch","FM","blank","blank"],
+
+                # Path to folder containing images to be analyzed
+                'Path' : "\\Users\\jjmc1\\Documents\\Small Lesion FM",
+
+                # Cell types to analyze
+                'cell_types_to_analyze' : []
+
+                # Do you want to use the keras models (slow)
+                'useKeras' : True
             },
         ]
 
