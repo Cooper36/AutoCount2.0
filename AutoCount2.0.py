@@ -258,15 +258,13 @@ def RandomSampler(cells, NumberWant, path):
 		cellimg = np.array(cells[randcellID]['cellimg'][1])
 		imageio.mimwrite(savepa,cellimg)
 
-def AddStats(cells, labels, centroids, AreaStats):
+def AddStats(Rawchannels, cells, labels, centroids, AreaStats):
 	#isolate the pixels of the nuclei and bakground regions using masking, the report area and intensity data for each channel
 	AreaStatsPix = AreaStats[:,4]
 	AreaStatsmm2 = []
 	np.array(AreaStats)
 	for area in AreaStatsPix:
 		AreaStatsmm2.append((area/(scale**2))/1000000)
-
-
 
 
 	for cell in cells:
@@ -371,12 +369,30 @@ def MacLearnImgPrepper(cells):
 		if skipped == "No":
 			i = 1
 			for i in range(len(namChannels)):
-				if i > 0:
-					
-
+				print(" ")
+				print(i)
+				ch = namChannels[i]
+				print(ch)
+				if i > 0 and str(ch) != 'CC1':
 					blue = DAPI_ch
 					green = img[i]
 					red = img[i]
+					rgb = []
+					rgb.append(cv.merge((blue,green,red)))
+					
+
+					if debugImgPrepper or debug:
+						print(i)
+						print(rgb[0].shape)
+						print(rgb[0])
+						cv.imshow("sfsf", rgb[0])
+						cv.waitKey(0)
+
+					RGBs[namChannels[i]] = rgb
+				else:
+					blue = DAPI_ch
+					green = img[i]
+					red = img[3]
 					rgb = []
 					rgb.append(cv.merge((blue,green,red)))
 					
@@ -430,6 +446,8 @@ def LesionFigSave(DAPIImg,UserROIs):
 	output = cv.connectedComponentsWithStats(thresh1)
 	(numLabels, labels, stats, centroids) = output
 
+	GeneralROIIntensity(Rawchannels, labels)
+	
 	#reorder stats and centroids to match the order in which the user drew them
 	output = Reorder(UserROIs,output)
 	(numLabels, labels, stats, centroids) = output
@@ -515,9 +533,11 @@ def getPredictions(cells, model):
 					img = np.expand_dims(img, axis=0)
 
 					#Comment these out to make the code go faster when debugging
-					predict = model.predict(img)
-					predict = predict[0][0]
-					#predict = 0
+					if useKeras:
+						predict = model.predict(img)
+						predict = predict[0][0]
+					else :
+						predict = 0
 					cell['RGBs'][namChannels[i]].append(predict)
 		
 	return cells
@@ -722,6 +742,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 	#Define positive cell types
 	df['Cell_Type'] = "Not Classified"
+
 	for i in range(len(cell_types_to_analyze)):
 		conditions = []
 		celltypename = cell_types_to_analyze[i]
@@ -815,8 +836,20 @@ class PolygonDrawer(object):
 		self.img = img
 		self.imgheight, self.imgwidth = self.img.shape[0:2]
 		
-		self.smallwidth = 800
+		import ctypes
+		user32 = ctypes.windll.user32
+		screensize = [user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)]
+		print(screensize)
+
+		self.smallwidth = int(screensize[0] * 0.8)
 		self.smallheight = int(self.smallwidth*(self.imgheight/self.imgwidth))
+		
+		print(self.smallheight)
+		if self.smallheight > screensize[1]:
+			self.smallheight = int(screensize[1] * 0.8)
+			self.smallwidth = int(self.smallheight*(self.imgwidth/self.imgheight))
+			print(self.smallheight)
+
 		self.smallImg = cv.resize(self.img, (self.smallwidth,self.smallheight))
 
 		self.done = False # Flag signalling we're done with one polygon
@@ -903,6 +936,26 @@ class PolygonDrawer(object):
 		bincanvas = cv.resize(bincanvas, (self.imgwidth, self.imgheight))
 		return bincanvas
 
+def GeneralROIIntensity(Rawchannels, labels, centroids):
+	intensitStats =[]
+	for i in range(len(centroids)):
+		mask = np.copy(labels)
+		mask[mask > i] = 0
+		mask[mask < i] = 0
+		mask[mask == i] = 1
+		mask = np.uint8(mask)
+		for j in range(len(namChannels))
+		chnam = namChannels[i]
+		chIntensity = {}
+		channel = Rawchannels[j]
+			channelmasked = cv.bitwise_and(channel, channel, mask=mask)
+			intensity = np.sum(channelmasked)
+			chIntensity[chnam] = intensity
+
+		
+		intensitStats.append(chIntensity)
+
+
 """_____________________________________________________________________________________________________________________________"""
 
 #Operational code
@@ -948,7 +1001,7 @@ class PolygonDrawer(object):
 scale = 1.5385
 
 
-setup = settings.folder_dicts[0]
+setup = settings.folder_dicts[1]
 
 ImgFolderPath = setup['Path']
 
@@ -963,6 +1016,9 @@ cropsize = setup['cropsize']
 
 #How many ROIs do you want to define?
 ROINumber = setup['ROINumber']
+
+#Do you want to use the keras model?
+useKeras = setup['useKeras']
 
 
 overwrite = False
@@ -1150,7 +1206,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			(numLabels, labelsUserROI, stats, centroids) = UserROIsOutput
 		
 			print("Image ",ImageID, " of ", TotalImage,": Measuring Pixel Intensity for Each Cell")
-			cells = AddStats(cells, UserROIs, centroids, stats)
+			cells = AddStats(Rawchannels ,cells, UserROIs, centroids, stats)
 
 			print("Image ",ImageID, " of ", TotalImage,": Prepping Images for Keras")
 			cells = MacLearnImgPrepper(cells)
