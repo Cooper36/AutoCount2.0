@@ -100,7 +100,7 @@ def showImages(images, titles='', save = 0, path = ' ', text_coords = []):
 					x = text_coords[i][0]
 					y = text_coords[i][1]
 					s = str(i)
-					plt.text(x, y, s, fontsize= 20, color='white')
+					plt.text(x, y, s, fontsize=12)
 	plt.tight_layout()
 	plt.suptitle("press 'Q' to move to next step", verticalalignment="bottom")
 
@@ -840,10 +840,11 @@ class PolygonDrawer(object):
 		self.smallwidth = int(screensize[0] * 0.8)
 		self.smallheight = int(self.smallwidth*(self.imgheight/self.imgwidth))
 		
+		print(self.smallheight)
 		if self.smallheight > screensize[1]:
 			self.smallheight = int(screensize[1] * 0.8)
 			self.smallwidth = int(self.smallheight*(self.imgwidth/self.imgheight))
-			
+			print(self.smallheight)
 
 		self.smallImg = cv.resize(self.img, (self.smallwidth,self.smallheight))
 
@@ -920,9 +921,16 @@ class PolygonDrawer(object):
 			# Waiting for the user to press any key
 			i = i+1
 
-		cv.destroyWindow(self.window_name)
 
-		return self.polygons
+		cv.destroyWindow(self.window_name)
+		bincanvas = np.zeros((self.smallheight,self.smallwidth), dtype= np.uint8)
+		for i in range(len(self.polygons)):
+			polygon = self.polygons[i]
+			polygon = np.array([polygon])
+			fill = i+1
+			cv.fillPoly(bincanvas, polygon, fill)
+		bincanvas = cv.resize(bincanvas, (self.imgwidth, self.imgheight))
+		return bincanvas
 
 def GeneralROIIntensity(Rawchannels, labels, centroids):
 	intensitStats =[]
@@ -944,69 +952,27 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 	return intensitStats
 
 def LesionFigSave(DAPIImg,UserROIs):
-	DAPIImg = cv.bitwise_not(DAPIImg)
-	statsT = []
-	centroidsT = []
-	IntensityStatsT = []
+	ret, thresh1 = cv.threshold(UserROIs, 0, 255, cv.THRESH_BINARY)
+	thresh1 = np.uint8(thresh1)
 
-	imgheight, imgwidth = DAPIImg.shape[0:2]
-	import ctypes
-	root = tkinter.Tk()
-	width = root.winfo_screenwidth()
-	height = root.winfo_screenheight()
-	screensize = [width, height]
-
-	smallwidth = int(screensize[0] * 0.8)
-	smallheight = int(smallwidth*(imgheight/imgwidth))
+	contours, hierarchy = cv.findContours(thresh1, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+	cv.drawContours(DAPIImg, contours, -1, (0,0,255), 6)
+	#print(Lbinarr.shape)
+	images = [ thresh1, DAPIImg]
+	titles = ["Mask","Boarder" ]
 	
-	if smallheight > screensize[1]:
-		smallheight = int(screensize[1] * 0.8)
-		smallwidth = int(smallheight*(imgwidth/imgheight))
-		
+	output = cv.connectedComponentsWithStats(thresh1)
+	(numLabels, labels, stats, centroids) = output
 
-	smallImg = cv.resize(DAPIImg, (smallwidth,smallheight))
-	boarders = np.copy(smallImg, subok = False)
-	labelsT = np.zeros((smallheight,smallwidth), dtype= np.uint8)
+	IntensityStats = GeneralROIIntensity(Rawchannels, labels, centroids)
 
-	for i in range(len(UserROIs)):
-		bincanvas = np.zeros((smallheight,smallwidth), dtype= np.uint8)
-		polygon = UserROIs[i]
-		polygon = np.array([polygon])
-		fill = i+1
-		cv.fillPoly(bincanvas, polygon, fill)
-		labelsT = np.where(labelsT == 0, bincanvas, labelsT)
-
-		bincanvas = cv.resize(bincanvas, (imgwidth, imgheight))
-		boarders = cv.polylines(boarders, polygon, True, (255, 255, 255), 1)
+	#reorder stats and centroids to match the order in which the user drew them
+	output = Reorder(UserROIs,output, IntensityStats)
+	(numLabels, labels, stats, centroids, IntensityStats) = output
 	
-
-		ret, thresh1 = cv.threshold(bincanvas, 0, 255, cv.THRESH_BINARY)
-		thresh1 = np.uint8(thresh1)
-
-		contours, hierarchy = cv.findContours(thresh1, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-		
-		outputTrans = cv.connectedComponentsWithStats(thresh1)
-		(numLabels, labels, stats, centroids) = outputTrans
-
-		IntensityStats = GeneralROIIntensity(Rawchannels, labels, centroids)
-
-		if i == 0:
-			statsT = [stats[0]]
-			centroidsT = [centroids[0]]
-			IntensityStatsT.append(IntensityStats[0])
-		
-		statsT = np.append(statsT, [stats[1]], axis= 0)
-		centroidsT = np.append(centroidsT, [centroids[1]], axis= 0)
-		IntensityStatsT.append(IntensityStats[1])
-
-	boarders = cv.resize(boarders, (imgwidth, imgheight))
-	images = [DAPIImg, boarders]
-	titles = ["Original", "ROI Boarders"]
 	FigureSavePath = os.path.join(SpecificImgFolder, "Lesion_Boarder_Visualization.pdf")
-	showImages(images, titles, save = 1, path = FigureSavePath, text_coords = centroidsT)
-	numLabels = len(UserROIs)+1
-	labelsT = cv.resize(labelsT, (imgwidth, imgheight))
-	output = (numLabels,labelsT, statsT, centroidsT, IntensityStatsT)
+	showImages(images, titles, save = 1, path = FigureSavePath, text_coords = centroids)
+
 	return output
 
 """_____________________________________________________________________________________________________________________________"""
@@ -1167,9 +1133,9 @@ for oriImgName in os.listdir(ImgFolderPath):
 			Dapi = np.array(Dapi)
 			windowname = str(oriImgName) +" : Draw " + str(ROINumber) + " ROIs"
 			polyDr = PolygonDrawer(windowname, Dapi, ROINumber)
-			ROIs = polyDr.run()
+			Lbinarr = polyDr.run()
 			
-			np.save(BinarySave, ROIs)
+			np.save(BinarySave, Lbinarr, allow_pickle=True, fix_imports=True)
 			#cv.imwrite(BinarySave,Lbinarr)
 		TotalImage = TotalImage + 1
 
@@ -1257,16 +1223,16 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			print("Image ",ImageID, " of ", TotalImage,": Processing User ROIs")
 			BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
-			UserROIs = np.load(BinarySave, allow_pickle=True)
+			UserROIs = np.load(BinarySave)
 			UserROIsOutput = LesionFigSave(DAPIImg=Vischannels[0], UserROIs = UserROIs )
 
-			(numLabels,labels, stats, centroids, IntensityStats) = UserROIsOutput
+			(numLabels, labelsUserROI, stats, centroids, IntensityStats) = UserROIsOutput
 			print('numLabels')
 			print(numLabels)
 			print('centroids')
 			print(centroids)		
 			print("Image ",ImageID, " of ", TotalImage,": Measuring Pixel Intensity for Each Cell")
-			cells = AddStats(Rawchannels ,cells, labels, centroids, stats, IntensityStats)
+			cells = AddStats(Rawchannels ,cells, UserROIs, centroids, stats, IntensityStats)
 
 			print("Image ",ImageID, " of ", TotalImage,": Prepping Images for Keras")
 			cells = MacLearnImgPrepper(cells)

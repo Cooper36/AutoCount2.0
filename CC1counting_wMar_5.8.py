@@ -6,7 +6,7 @@ from keras import layers
 # Keras with data augmentation
 
 model = models.Sequential()
-model.add(layers.Conv2D(32, (5,5), padding="same", activation='relu', input_shape=(46,46,3)))
+model.add(layers.Conv2D(32,   padding="same", activation='relu', input_shape=(46,46,3)))
 model.add(layers.Conv2D(32, (5,5), padding="same", activation='relu'))
 model.add(layers.MaxPooling2D((2,2)))
 model.add(layers.Conv2D(64, (5,5), padding="same", activation='relu'))
