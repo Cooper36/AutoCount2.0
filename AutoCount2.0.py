@@ -19,6 +19,7 @@ import shutil
 from PIL import Image 
 import PIL 
 import imageio
+from PIL import Image
 import pandas as pd
 import random
 from scipy.stats import gaussian_kde
@@ -250,14 +251,24 @@ def adjust_gamma(image, gamma=1.0):
     # apply gamma correction using the lookup table
     return cv.LUT(image, table)
 
-def RandomSampler(cells, NumberWant, path):
+def RandomSampler(cells, NumberWant, path, df):
 	#Save a specified number of random cells to servay code
 	randomlist = random.sample(range(len(cells)), NumberWant)
 	for randcellID in randomlist:
-		filename = cells[randcellID]['CellID'] + '.tif'
-		savepa = os.path.join(path,filename)
-		cellimg = np.array(cells[randcellID]['cellimg'][1])
-		imageio.mimwrite(savepa,cellimg)
+		if cells[randcellID]['skipped'] == "No":
+			#FIGURE OUT COMPLEX SLICEING OF DATAFRAME TO ACCURATLY PULL THE CELL TYPE
+			cell_type = df['Cell_Type'][randcellID]
+			for i in range(len(namChannels)):
+				chnam = namChannels[i]
+				if i > 0:
+					filename = 'Cell ID '+ cells[randcellID]['CellID'] +" "+ cell_type + " "+chnam+ '.tif'
+					savepa = os.path.join(path,filename)
+					cellimg = np.array(cells[randcellID]['RGBs'][chnam][0])
+					
+					#imageio.mimwrite(savepa,cellimg)
+					
+					im = Image.fromarray(cellimg)
+					im.save(savepa)
 
 def AddStats(Rawchannels, cells, labels, centroids, AreaStats, IntensityStats):
 	#isolate the pixels of the nuclei and bakground regions using masking, the report area and intensity data for each channel
@@ -373,40 +384,45 @@ def MacLearnImgPrepper(cells):
 			i = 1
 			for i in range(len(namChannels)):
 				ch = namChannels[i]
-				if i > 0 and str(ch) != 'CC1':
-					blue = DAPI_ch
-					green = img[i]
-					red = img[i]
-					rgb = []
-					rgb.append(cv.merge((blue,green,red)))
-					
+				if i > 0 :
+					if str(ch) != 'CC1':
+						blue = DAPI_ch
+						green = img[i]
+						red = img[i]
+						rgb = []
+						rgb.append(cv.merge((blue,green,red)))
+						
 
-					if debugImgPrepper or debug:
-						print(i)
-						print(rgb[0].shape)
-						print(rgb[0])
-						cv.imshow("sfsf", rgb[0])
-						cv.waitKey(0)
+						if debugImgPrepper or debug:
+							print(i)
+							print(rgb)
+							print(rgb[0].shape)
+							print(rgb[0])
+							cv.imshow("sfsf", rgb[0])
+							cv.waitKey(0)
+
+						RGBs[namChannels[i]] = rgb
+					elif str(ch) == 'CC1':
+						blue = DAPI_ch
+						green = adjust_gamma(img[i], gamma = 0.75) 
+						red = img[-1]
+						rgb = []
+						rgb.append(cv.merge((blue,green,red)))
+						
+
+						if debugImgPrepper or debug:
+							print(i)
+							print(rgb)
+							print(rgb[0].shape)
+							print(rgb[0])
+							cv.imshow("sfsf", rgb[0])
+							cv.waitKey(0)
 
 					RGBs[namChannels[i]] = rgb
-				else:
-					blue = DAPI_ch
-					green = img[i]
-					red = img[3]
-					rgb = []
-					rgb.append(cv.merge((blue,green,red)))
 					
-
-					if debugImgPrepper or debug:
-						print(i)
-						print(rgb[0].shape)
-						print(rgb[0])
-						cv.imshow("sfsf", rgb[0])
-						cv.waitKey(0)
-
-					RGBs[namChannels[i]] = rgb
 
 		cell['RGBs'] = RGBs
+		
 
 	return cells
 
@@ -507,18 +523,24 @@ def getPredictions(cells, model):
 				c=c+1
 			for i in range(len(namChannels)):
 				if i > 0:
-					img = cell['RGBs'][namChannels[i]][0]
-					img = img.astype('float64')
-					img = np.expand_dims(img, axis=0)
+					chnam = namChannels[i]
+					if chnam == 'CC1':
+						img = cell['RGBs'][chnam][0]
+						img = img.astype('float64')
+						img = np.expand_dims(img, axis=0)
 
-					#Comment these out to make the code go faster when debugging
-					if useKeras:
-						predict = model.predict(img)
-						predict = predict[0][0]
-					else :
+						if useKeras:
+							predict = model.predict(img)
+							predict = predict[0][0]
+						else :
+							predict = 0
+					else:
+						img = cell['RGBs'][chnam][0]
+						img = img.astype('float64')
+						img = np.expand_dims(img, axis=0)
 						predict = 0
-					cell['RGBs'][namChannels[i]].append(predict)
-		
+
+					cell['RGBs'][chnam].append(predict)
 	return cells
 
 def Cells_to_df(cells):
@@ -549,8 +571,7 @@ def Cells_to_df(cells):
 	columnTitles.extend(TitlesIA)
 
 	LesTitles = []
-	print('numLabels')
-	print(numLabels)
+
 	for i in range(numLabels):
 		if i == 0:
 			LesAreaNam = "Background Area (mm^2)"
@@ -693,9 +714,9 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 		else:
 			df[Postivity_RankTitle] = 0
-			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 0) & (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1) & (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+			#df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+			df[Postivity_RankTitle] = np.where((df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+			#df[Postivity_RankTitle] = np.where((df["SizeThreshed"] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 	
 
 		ToHisto = [AreaColumnTitle,IntensColumnTitle,MeanNewcolumnTitle,RelNewcolumnTitle]
@@ -1074,7 +1095,7 @@ def LesionFigSave(Img,UserROIs):
 
 
 
-setup = settings.folder_dicts[3]
+setup = settings.folder_dicts[4]
 
 ImgFolderPath = setup['Path']
 
@@ -1082,7 +1103,7 @@ ImgFolderPath = setup['Path']
 namChannels = setup['channels']
 
 #What cell types are you looking to analyze?
-#cell_types_to_analyze = ['OPC', 'Oligo', 'NonOligo']
+cell_types_to_analyze = setup['cell_types_to_analyze']
 
 #Desired cell image size
 cropsize = setup['cropsize']
@@ -1098,8 +1119,8 @@ useKeras = setup['useKeras']
 scale = setup['scale']
 
 
-overwrite = True
-overwriteCells_Pred = False
+overwrite = False
+overwriteCells_Pred = True
 overwriteROIS = False
 overwriteProcessing = True
 
@@ -1125,7 +1146,7 @@ ResultsFolderPath = os.path.join(ImgFolderPath,"Results")
 if not os.path.exists(ResultsFolderPath):
 	os.mkdir(ResultsFolderPath)
 
-SummarySave = os.path.join(ResultsFolderPath,'SummaryGood.csv')
+SummarySave = os.path.join(ResultsFolderPath,'Summary.csv')
 
 SpecificImgResultsPath = os.path.join(ResultsFolderPath,"Image_Specific_Results")
 if not os.path.exists(SpecificImgResultsPath):
@@ -1281,15 +1302,14 @@ for oriImgName in os.listdir(ImgFolderPath):
 			UserROIsOutput = LesionFigSave(Img = Vischannels, UserROIs = UserROIs )
 
 			(numLabels,labels, stats, centroids, IntensityStats) = UserROIsOutput
-			print('numLabels')
-			print(numLabels)
-			print('centroids')
-			print(centroids)		
+					
 			print("Image ",ImageID, " of ", TotalImage,": Measuring Pixel Intensity for Each Cell")
 			cells = AddStats(Rawchannels ,cells, labels, centroids, stats, IntensityStats)
 
 			print("Image ",ImageID, " of ", TotalImage,": Prepping Images for Keras")
 			cells = MacLearnImgPrepper(cells)
+
+			
 
 			if debugcells or debug:
 				for key in cells[3000]:
@@ -1305,7 +1325,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			print("Image ",ImageID, " of ", TotalImage,": Saveing a Sample of the Cells for")
 			#Uncomment this to save x number of random cells (for survaying)
-			RandomSampler(cells, 100, SampleCellsFolder)
+			
 
 			print("Image ",ImageID, " of ", TotalImage,": Crafting the DataFrame and Saving the .csv file")
 			#Build the Dataframe to analyse the data
@@ -1320,7 +1340,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 		UpdateResultSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResultsUpdate.csv")
 		if not os.path.exists(UpdateResultSave) or overwriteProcessing or overwrite:
 			#Define which cell types too look at for this analysis
-			cell_types_to_analyze = setup['cell_types_to_analyze']
+			
 			#Define cell types. Channel names must match those defined in namChannel exactly.
 			#1 indicates positive, 0 indictes negative
 			cell_type_conditions = {
@@ -1336,15 +1356,22 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			'NonOligo' : [['DAPI_ch', 1], ['Olig2', 0]],
 
+			'CC1+Olig2-' : [['DAPI_ch', 1], ['CC1', 1], ['Olig2', 0]],
+
 
 			}
 			#open existing summary as list of dictionaries
-			if os.path.exists(SummarySave):
-				sumthere = True
-				with open(SummarySave) as f:
-				    Summary = [{k : v for k, v in row.items()} for row in csv.DictReader(f, skipinitialspace=True)]
+			if len(Summary) == 0:
+				if os.path.exists(SummarySave):
+					sumthere = True
+					with open(SummarySave) as f:
+					    Summary = [{k : v for k, v in row.items()} for row in csv.DictReader(f, skipinitialspace=True)]
 			print("Image ",ImageID, " of ", TotalImage,": Processing Results")
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
+			#try:
+			RandomSampler(cells, 100, SampleCellsFolder, Resultsdf)
+			#except:
+			#	print("cells does not exist")
 
 		#clear Resultsdf
 		Resultsdf = pd.DataFrame()
