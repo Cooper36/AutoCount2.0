@@ -769,6 +769,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 	Summary.append({'Original Filename': df['Original Filename'][0], 
 					'Background Area (mm^2)': df['Background Area (mm^2)'][0],
+					'Background Intensity': df['Background Area (mm^2)'][0],
 
 					})
 	cell_types = cell_types_to_analyze.copy()
@@ -943,8 +944,23 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 		intensitStats.append(chIntensity)
 	return intensitStats
 
-def LesionFigSave(DAPIImg,UserROIs):
-	DAPIImg = cv.bitwise_not(DAPIImg)
+def Staincheck(Vischannels):
+	images = []
+	titles = []
+	for i in range(len(namChannels)):
+		chnam = namChannels[i]
+		ch = cv.bitwise_not(Vischannels[i])
+		y,x = ch.shape
+		size = 500
+		sample = ch[int((y/2)-(size/2)):int((y/2)+(size/2)),int((x/2)-(size/2)):int((x/2)+(size/2))]
+
+		images.append(sample)
+		titles.append(chnam)
+		FigureSavePath = os.path.join(SpecificImgFolder, "StainSamples.pdf")
+	showImages(images, titles, save = 1, path = FigureSavePath)
+
+def LesionFigSave(Img,UserROIs):
+	DAPIImg = cv.bitwise_not(Img[0])
 	statsT = []
 	centroidsT = []
 	IntensityStatsT = []
@@ -990,6 +1006,8 @@ def LesionFigSave(DAPIImg,UserROIs):
 
 		IntensityStats = GeneralROIIntensity(Rawchannels, labels, centroids)
 
+		Staincheck(Vischannels)
+
 		if i == 0:
 			statsT = [stats[0]]
 			centroidsT = [centroids[0]]
@@ -1008,6 +1026,8 @@ def LesionFigSave(DAPIImg,UserROIs):
 	labelsT = cv.resize(labelsT, (imgwidth, imgheight))
 	output = (numLabels,labelsT, statsT, centroidsT, IntensityStatsT)
 	return output
+
+
 
 """_____________________________________________________________________________________________________________________________"""
 
@@ -1078,7 +1098,7 @@ useKeras = setup['useKeras']
 scale = setup['scale']
 
 
-overwrite = False
+overwrite = True
 overwriteCells_Pred = False
 overwriteROIS = False
 overwriteProcessing = True
@@ -1258,7 +1278,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			print("Image ",ImageID, " of ", TotalImage,": Processing User ROIs")
 			BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 			UserROIs = np.load(BinarySave, allow_pickle=True)
-			UserROIsOutput = LesionFigSave(DAPIImg=Vischannels[0], UserROIs = UserROIs )
+			UserROIsOutput = LesionFigSave(Img = Vischannels, UserROIs = UserROIs )
 
 			(numLabels,labels, stats, centroids, IntensityStats) = UserROIsOutput
 			print('numLabels')
