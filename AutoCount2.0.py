@@ -256,12 +256,15 @@ def RandomSampler(cells, NumberWant, path, df):
 	randomlist = random.sample(range(len(cells)), NumberWant)
 	for randcellID in randomlist:
 		if cells[randcellID]['skipped'] == "No":
-			#FIGURE OUT COMPLEX SLICEING OF DATAFRAME TO ACCURATLY PULL THE CELL TYPE
-			cell_type = df['Cell_Type'][randcellID]
+			cellid = cells[randcellID]['CellID']
+			row = df.loc[df['Cell ID'] == cellid]
+			cell_type = row['Cell_Type'].values[0]
+			
+
 			for i in range(len(namChannels)):
 				chnam = namChannels[i]
 				if i > 0:
-					filename = 'Cell ID '+ cells[randcellID]['CellID'] +" "+ cell_type + " "+chnam+ '.tif'
+					filename = 'Cell ID '+ str(cellid) + " " + cell_type + " " + chnam + '.tif'
 					savepa = os.path.join(path,filename)
 					cellimg = np.array(cells[randcellID]['RGBs'][chnam][0])
 					
@@ -1095,7 +1098,7 @@ def LesionFigSave(Img,UserROIs):
 
 
 
-setup = settings.folder_dicts[4]
+setup = settings.folder_dicts[5]
 
 ImgFolderPath = setup['Path']
 
