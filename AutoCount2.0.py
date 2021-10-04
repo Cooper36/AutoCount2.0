@@ -19,7 +19,6 @@ import shutil
 from PIL import Image 
 import PIL 
 import imageio
-from PIL import Image
 import pandas as pd
 import random
 from scipy.stats import gaussian_kde
@@ -101,7 +100,7 @@ def showImages(images, titles='', save = 0, path = ' ', text_coords = []):
 					x = text_coords[i][0]
 					y = text_coords[i][1]
 					s = str(i)
-					plt.text(x, y, s, fontsize= 20, color='white')
+					plt.text(x, y, s, fontsize=12)
 	plt.tight_layout()
 	plt.suptitle("press 'Q' to move to next step", verticalalignment="bottom")
 
@@ -251,27 +250,14 @@ def adjust_gamma(image, gamma=1.0):
     # apply gamma correction using the lookup table
     return cv.LUT(image, table)
 
-def RandomSampler(cells, NumberWant, path, df):
+def RandomSampler(cells, NumberWant, path):
 	#Save a specified number of random cells to servay code
 	randomlist = random.sample(range(len(cells)), NumberWant)
 	for randcellID in randomlist:
-		if cells[randcellID]['skipped'] == "No":
-			cellid = cells[randcellID]['CellID']
-			row = df.loc[df['Cell ID'] == cellid]
-			cell_type = row['Cell_Type'].values[0]
-			
-
-			for i in range(len(namChannels)):
-				chnam = namChannels[i]
-				if i > 0:
-					filename = 'Cell ID '+ str(cellid) + " " + cell_type + " " + chnam + '.tif'
-					savepa = os.path.join(path,filename)
-					cellimg = np.array(cells[randcellID]['RGBs'][chnam][0])
-					
-					#imageio.mimwrite(savepa,cellimg)
-					
-					im = Image.fromarray(cellimg)
-					im.save(savepa)
+		filename = cells[randcellID]['CellID'] + '.tif'
+		savepa = os.path.join(path,filename)
+		cellimg = np.array(cells[randcellID]['cellimg'][1])
+		imageio.mimwrite(savepa,cellimg)
 
 def AddStats(Rawchannels, cells, labels, centroids, AreaStats, IntensityStats):
 	#isolate the pixels of the nuclei and bakground regions using masking, the report area and intensity data for each channel
@@ -387,45 +373,40 @@ def MacLearnImgPrepper(cells):
 			i = 1
 			for i in range(len(namChannels)):
 				ch = namChannels[i]
-				if i > 0 :
-					if str(ch) != 'CC1':
-						blue = DAPI_ch
-						green = img[i]
-						red = img[i]
-						rgb = []
-						rgb.append(cv.merge((blue,green,red)))
-						
-
-						if debugImgPrepper or debug:
-							print(i)
-							print(rgb)
-							print(rgb[0].shape)
-							print(rgb[0])
-							cv.imshow("sfsf", rgb[0])
-							cv.waitKey(0)
-
-						RGBs[namChannels[i]] = rgb
-					elif str(ch) == 'CC1':
-						blue = DAPI_ch
-						green = adjust_gamma(img[i], gamma = 0.75) 
-						red = img[-1]
-						rgb = []
-						rgb.append(cv.merge((blue,green,red)))
-						
-
-						if debugImgPrepper or debug:
-							print(i)
-							print(rgb)
-							print(rgb[0].shape)
-							print(rgb[0])
-							cv.imshow("sfsf", rgb[0])
-							cv.waitKey(0)
-
-					RGBs[namChannels[i]] = rgb
+				if i > 0 and str(ch) != 'CC1':
+					blue = DAPI_ch
+					green = img[i]
+					red = img[i]
+					rgb = []
+					rgb.append(cv.merge((blue,green,red)))
 					
 
+					if debugImgPrepper or debug:
+						print(i)
+						print(rgb[0].shape)
+						print(rgb[0])
+						cv.imshow("sfsf", rgb[0])
+						cv.waitKey(0)
+
+					RGBs[namChannels[i]] = rgb
+				else:
+					blue = DAPI_ch
+					green = img[i]
+					red = img[3]
+					rgb = []
+					rgb.append(cv.merge((blue,green,red)))
+					
+
+					if debugImgPrepper or debug:
+						print(i)
+						print(rgb[0].shape)
+						print(rgb[0])
+						cv.imshow("sfsf", rgb[0])
+						cv.waitKey(0)
+
+					RGBs[namChannels[i]] = rgb
+
 		cell['RGBs'] = RGBs
-		
 
 	return cells
 
@@ -454,6 +435,30 @@ def Reorder(UserROIs,output,IntensityStats):
 	output2 = numLabels, labelsUserROI, reorderstats, reordercentroids, reorderIntensityStats
 
 	return output2
+
+def LesionFigSave(DAPIImg,UserROIs):
+	ret, thresh1 = cv.threshold(UserROIs, 0, 255, cv.THRESH_BINARY)
+	thresh1 = np.uint8(thresh1)
+
+	contours, hierarchy = cv.findContours(thresh1, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+	cv.drawContours(DAPIImg, contours, -1, (0,0,255), 6)
+	#print(Lbinarr.shape)
+	images = [ thresh1, DAPIImg]
+	titles = ["Mask","Boarder" ]
+	
+	output = cv.connectedComponentsWithStats(thresh1)
+	(numLabels, labels, stats, centroids) = output
+
+	IntensityStats = GeneralROIIntensity(Rawchannels, labels, centroids)
+
+	#reorder stats and centroids to match the order in which the user drew them
+	output = Reorder(UserROIs,output, IntensityStats)
+	(numLabels, labels, stats, centroids, IntensityStats) = output
+	
+	FigureSavePath = os.path.join(SpecificImgFolder, "Lesion_Boarder_Visualization.pdf")
+	showImages(images, titles, save = 1, path = FigureSavePath, text_coords = centroids)
+
+	return output
 
 def showDensities(img,densities, save = 0, path = ' '):
 	"""Show centroids side-by-side with image."""
@@ -526,24 +531,18 @@ def getPredictions(cells, model):
 				c=c+1
 			for i in range(len(namChannels)):
 				if i > 0:
-					chnam = namChannels[i]
-					if chnam == 'CC1':
-						img = cell['RGBs'][chnam][0]
-						img = img.astype('float64')
-						img = np.expand_dims(img, axis=0)
+					img = cell['RGBs'][namChannels[i]][0]
+					img = img.astype('float64')
+					img = np.expand_dims(img, axis=0)
 
-						if useKeras:
-							predict = model.predict(img)
-							predict = predict[0][0]
-						else :
-							predict = 0
-					else:
-						img = cell['RGBs'][chnam][0]
-						img = img.astype('float64')
-						img = np.expand_dims(img, axis=0)
+					#Comment these out to make the code go faster when debugging
+					if useKeras:
+						predict = model.predict(img)
+						predict = predict[0][0]
+					else :
 						predict = 0
-
-					cell['RGBs'][chnam].append(predict)
+					cell['RGBs'][namChannels[i]].append(predict)
+		
 	return cells
 
 def Cells_to_df(cells):
@@ -717,9 +716,9 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 		else:
 			df[Postivity_RankTitle] = 0
-			#df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-			df[Postivity_RankTitle] = np.where((df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-			#df[Postivity_RankTitle] = np.where((df["SizeThreshed"] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 0) & (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1) & (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 	
 
 		ToHisto = [AreaColumnTitle,IntensColumnTitle,MeanNewcolumnTitle,RelNewcolumnTitle]
@@ -793,7 +792,6 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 	Summary.append({'Original Filename': df['Original Filename'][0], 
 					'Background Area (mm^2)': df['Background Area (mm^2)'][0],
-					'Background Intensity': df['Background Area (mm^2)'][0],
 
 					})
 	cell_types = cell_types_to_analyze.copy()
@@ -865,10 +863,11 @@ class PolygonDrawer(object):
 		self.smallwidth = int(screensize[0] * 0.8)
 		self.smallheight = int(self.smallwidth*(self.imgheight/self.imgwidth))
 		
+		print(self.smallheight)
 		if self.smallheight > screensize[1]:
 			self.smallheight = int(screensize[1] * 0.8)
 			self.smallwidth = int(self.smallheight*(self.imgwidth/self.imgheight))
-			
+			print(self.smallheight)
 
 		self.smallImg = cv.resize(self.img, (self.smallwidth,self.smallheight))
 
@@ -945,9 +944,16 @@ class PolygonDrawer(object):
 			# Waiting for the user to press any key
 			i = i+1
 
-		cv.destroyWindow(self.window_name)
 
-		return self.polygons
+		cv.destroyWindow(self.window_name)
+		bincanvas = np.zeros((self.smallheight,self.smallwidth), dtype= np.uint8)
+		for i in range(len(self.polygons)):
+			polygon = self.polygons[i]
+			polygon = np.array([polygon])
+			fill = i+1
+			cv.fillPoly(bincanvas, polygon, fill)
+		bincanvas = cv.resize(bincanvas, (self.imgwidth, self.imgheight))
+		return bincanvas
 
 def GeneralROIIntensity(Rawchannels, labels, centroids):
 	intensitStats =[]
@@ -967,91 +973,6 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 		
 		intensitStats.append(chIntensity)
 	return intensitStats
-
-def Staincheck(Vischannels):
-	images = []
-	titles = []
-	for i in range(len(namChannels)):
-		chnam = namChannels[i]
-		ch = cv.bitwise_not(Vischannels[i])
-		y,x = ch.shape
-		size = 500
-		sample = ch[int((y/2)-(size/2)):int((y/2)+(size/2)),int((x/2)-(size/2)):int((x/2)+(size/2))]
-
-		images.append(sample)
-		titles.append(chnam)
-		FigureSavePath = os.path.join(SpecificImgFolder, "StainSamples.pdf")
-	showImages(images, titles, save = 1, path = FigureSavePath)
-
-def LesionFigSave(Img,UserROIs):
-	DAPIImg = cv.bitwise_not(Img[0])
-	statsT = []
-	centroidsT = []
-	IntensityStatsT = []
-
-	imgheight, imgwidth = DAPIImg.shape[0:2]
-	import ctypes
-	root = tkinter.Tk()
-	width = root.winfo_screenwidth()
-	height = root.winfo_screenheight()
-	screensize = [width, height]
-
-	smallwidth = int(screensize[0] * 0.8)
-	smallheight = int(smallwidth*(imgheight/imgwidth))
-	
-	if smallheight > screensize[1]:
-		smallheight = int(screensize[1] * 0.8)
-		smallwidth = int(smallheight*(imgwidth/imgheight))
-		
-
-	smallImg = cv.resize(DAPIImg, (smallwidth,smallheight))
-	boarders = np.copy(smallImg, subok = False)
-	labelsT = np.zeros((smallheight,smallwidth), dtype= np.uint8)
-
-	for i in range(len(UserROIs)):
-		bincanvas = np.zeros((smallheight,smallwidth), dtype= np.uint8)
-		polygon = UserROIs[i]
-		polygon = np.array([polygon])
-		fill = i+1
-		cv.fillPoly(bincanvas, polygon, fill)
-		labelsT = np.where(labelsT == 0, bincanvas, labelsT)
-
-		bincanvas = cv.resize(bincanvas, (imgwidth, imgheight))
-		boarders = cv.polylines(boarders, polygon, True, (255, 255, 255), 1)
-	
-
-		ret, thresh1 = cv.threshold(bincanvas, 0, 255, cv.THRESH_BINARY)
-		thresh1 = np.uint8(thresh1)
-
-		contours, hierarchy = cv.findContours(thresh1, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-		
-		outputTrans = cv.connectedComponentsWithStats(thresh1)
-		(numLabels, labels, stats, centroids) = outputTrans
-
-		IntensityStats = GeneralROIIntensity(Rawchannels, labels, centroids)
-
-		Staincheck(Vischannels)
-
-		if i == 0:
-			statsT = [stats[0]]
-			centroidsT = [centroids[0]]
-			IntensityStatsT.append(IntensityStats[0])
-		
-		statsT = np.append(statsT, [stats[1]], axis= 0)
-		centroidsT = np.append(centroidsT, [centroids[1]], axis= 0)
-		IntensityStatsT.append(IntensityStats[1])
-
-	boarders = cv.resize(boarders, (imgwidth, imgheight))
-	images = [DAPIImg, boarders]
-	titles = ["Original", "ROI Boarders"]
-	FigureSavePath = os.path.join(SpecificImgFolder, "Lesion_Boarder_Visualization.pdf")
-	showImages(images, titles, save = 1, path = FigureSavePath, text_coords = centroidsT)
-	numLabels = len(UserROIs)+1
-	labelsT = cv.resize(labelsT, (imgwidth, imgheight))
-	output = (numLabels,labelsT, statsT, centroidsT, IntensityStatsT)
-	return output
-
-
 
 """_____________________________________________________________________________________________________________________________"""
 
@@ -1098,7 +1019,7 @@ def LesionFigSave(Img,UserROIs):
 
 
 
-setup = settings.folder_dicts[5]
+setup = settings.folder_dicts[3]
 
 ImgFolderPath = setup['Path']
 
@@ -1106,7 +1027,7 @@ ImgFolderPath = setup['Path']
 namChannels = setup['channels']
 
 #What cell types are you looking to analyze?
-cell_types_to_analyze = setup['cell_types_to_analyze']
+#cell_types_to_analyze = ['OPC', 'Oligo', 'NonOligo']
 
 #Desired cell image size
 cropsize = setup['cropsize']
@@ -1123,7 +1044,7 @@ scale = setup['scale']
 
 
 overwrite = False
-overwriteCells_Pred = True
+overwriteCells_Pred = False
 overwriteROIS = False
 overwriteProcessing = True
 
@@ -1149,7 +1070,7 @@ ResultsFolderPath = os.path.join(ImgFolderPath,"Results")
 if not os.path.exists(ResultsFolderPath):
 	os.mkdir(ResultsFolderPath)
 
-SummarySave = os.path.join(ResultsFolderPath,'Summary.csv')
+SummarySave = os.path.join(ResultsFolderPath,'SummaryGood.csv')
 
 SpecificImgResultsPath = os.path.join(ResultsFolderPath,"Image_Specific_Results")
 if not os.path.exists(SpecificImgResultsPath):
@@ -1211,9 +1132,9 @@ for oriImgName in os.listdir(ImgFolderPath):
 			Dapi = np.array(Dapi)
 			windowname = str(oriImgName) +" : Draw " + str(ROINumber) + " ROIs"
 			polyDr = PolygonDrawer(windowname, Dapi, ROINumber)
-			ROIs = polyDr.run()
+			Lbinarr = polyDr.run()
 			
-			np.save(BinarySave, ROIs)
+			np.save(BinarySave, Lbinarr, allow_pickle=True, fix_imports=True)
 			#cv.imwrite(BinarySave,Lbinarr)
 		TotalImage = TotalImage + 1
 
@@ -1241,7 +1162,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			
 			#Additional folder structures
 
-			print("Image ",ImageID, " of ", TotalImage,": Reading Image " + oriImgName)
+			print("Image ",ImageID, " of ", TotalImage,": Reading Image ")
 			oriImg = cv.imreadmulti(fullpath, flags = -1)
 
 			print("Image ",ImageID, " of ", TotalImage,": Processing Image ")
@@ -1301,18 +1222,16 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			print("Image ",ImageID, " of ", TotalImage,": Processing User ROIs")
 			BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
-			UserROIs = np.load(BinarySave, allow_pickle=True)
-			UserROIsOutput = LesionFigSave(Img = Vischannels, UserROIs = UserROIs )
+			UserROIs = np.load(BinarySave)
+			UserROIsOutput = LesionFigSave(DAPIImg=Vischannels[0], UserROIs = UserROIs )
 
-			(numLabels,labels, stats, centroids, IntensityStats) = UserROIsOutput
-					
+			(numLabels, labelsUserROI, stats, centroids, IntensityStats) = UserROIsOutput
+		
 			print("Image ",ImageID, " of ", TotalImage,": Measuring Pixel Intensity for Each Cell")
-			cells = AddStats(Rawchannels ,cells, labels, centroids, stats, IntensityStats)
+			cells = AddStats(Rawchannels ,cells, UserROIs, centroids, stats, IntensityStats)
 
 			print("Image ",ImageID, " of ", TotalImage,": Prepping Images for Keras")
 			cells = MacLearnImgPrepper(cells)
-
-			
 
 			if debugcells or debug:
 				for key in cells[3000]:
@@ -1328,7 +1247,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			print("Image ",ImageID, " of ", TotalImage,": Saveing a Sample of the Cells for")
 			#Uncomment this to save x number of random cells (for survaying)
-			
+			RandomSampler(cells, 100, SampleCellsFolder)
 
 			print("Image ",ImageID, " of ", TotalImage,": Crafting the DataFrame and Saving the .csv file")
 			#Build the Dataframe to analyse the data
@@ -1343,7 +1262,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 		UpdateResultSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResultsUpdate.csv")
 		if not os.path.exists(UpdateResultSave) or overwriteProcessing or overwrite:
 			#Define which cell types too look at for this analysis
-			
+			cell_types_to_analyze = setup['cell_types_to_analyze']
 			#Define cell types. Channel names must match those defined in namChannel exactly.
 			#1 indicates positive, 0 indictes negative
 			cell_type_conditions = {
@@ -1359,22 +1278,15 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			'NonOligo' : [['DAPI_ch', 1], ['Olig2', 0]],
 
-			'CC1+Olig2-' : [['DAPI_ch', 1], ['CC1', 1], ['Olig2', 0]],
-
 
 			}
 			#open existing summary as list of dictionaries
-			if len(Summary) == 0:
-				if os.path.exists(SummarySave):
-					sumthere = True
-					with open(SummarySave) as f:
-					    Summary = [{k : v for k, v in row.items()} for row in csv.DictReader(f, skipinitialspace=True)]
+			if os.path.exists(SummarySave):
+				sumthere = True
+				with open(SummarySave) as f:
+				    Summary = [{k : v for k, v in row.items()} for row in csv.DictReader(f, skipinitialspace=True)]
 			print("Image ",ImageID, " of ", TotalImage,": Processing Results")
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
-			#try:
-			RandomSampler(cells, 100, SampleCellsFolder, Resultsdf)
-			#except:
-			#	print("cells does not exist")
 
 		#clear Resultsdf
 		Resultsdf = pd.DataFrame()
