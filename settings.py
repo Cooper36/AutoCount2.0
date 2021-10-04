@@ -155,6 +155,56 @@ class Settings:
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
             },
+            {
+                'name' : 'SettingParametersDCO',
+
+                # Define size of individual cell images (in pixels, defines both height and width, so a square)
+                'cropsize' : 46,
+
+                #Change if using anything other then 10x
+                #Average scale for 4x images, pixel/micron
+                'scale' : 1.5385,
+            
+                # Define the number of ROIs you want to draw
+                'ROINumber' : 1,
+
+                # Name each channel present (must be consistent for all images)
+                'channels' : ["DAPI_ch","CC1","Blank","Olig2"],
+
+                # Path to folder containing images to be analyzed
+                'Path' : "C:\\Users\\jjmc1\\Desktop\\Control KSO DCO\\DCO",
+
+                # Cell types to analyze
+                'cell_types_to_analyze' : ['OPC', 'Oligo', 'NonOligo', 'CC1+Olig2-'],
+
+                # Do you want to use the keras models (slow)
+                'useKeras' : True,
+            },
+            {
+                'name' : 'SettingParametersKSO',
+
+                # Define size of individual cell images (in pixels, defines both height and width, so a square)
+                'cropsize' : 46,
+
+                #Change if using anything other then 10x
+                #Average scale for 4x images, pixel/micron
+                'scale' : 1.5385,
+            
+                # Define the number of ROIs you want to draw
+                'ROINumber' : 1,
+
+                # Name each channel present (must be consistent for all images)
+                'channels' : ["DAPI_ch","CC1","Olig2","Olig2"],
+
+                # Path to folder containing images to be analyzed
+                'Path' : "C:\\Users\\jjmc1\\Desktop\\Control KSO DCO\\DCO",
+
+                # Cell types to analyze
+                'cell_types_to_analyze' : ['OPC', 'Oligo', 'NonOligo', 'CC1+Olig2-'],
+
+                # Do you want to use the keras models (slow)
+                'useKeras' : True,
+            },
         ]
 
 

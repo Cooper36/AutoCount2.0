@@ -531,18 +531,19 @@ def getPredictions(cells, model):
 				c=c+1
 			for i in range(len(namChannels)):
 				if i > 0:
-					img = cell['RGBs'][namChannels[i]][0]
-					img = img.astype('float64')
-					img = np.expand_dims(img, axis=0)
+					if i == 'CC1':
+						img = cell['RGBs'][namChannels[i]][0]
+						img = img.astype('float64')
+						img = np.expand_dims(img, axis=0)
 
-					#Comment these out to make the code go faster when debugging
-					if useKeras:
-						predict = model.predict(img)
-						predict = predict[0][0]
+						#Comment these out to make the code go faster when debugging
+						if useKeras:
+							predict = model.predict(img)
+							predict = predict[0][0]
 					else :
 						predict = 0
 					cell['RGBs'][namChannels[i]].append(predict)
-		
+			
 	return cells
 
 def Cells_to_df(cells):
@@ -692,9 +693,9 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		df[MeanThreshedTitle] = np.where((df[MeanNewcolumnTitle] >= MeanThresh), 1, 0)
 
 		#assuming most will be about 1
-		RelMean = np.mean(df[RelNewcolumnTitle])
-		RelStd = np.std(df[RelNewcolumnTitle])		
-		RelIntensThresh = RelMean + (0.25*RelStd)
+		#RelMean = np.mean(df[RelNewcolumnTitle])
+		#RelStd = np.std(df[RelNewcolumnTitle])		
+		RelIntensThresh = 1.5
 		RelThreshedTitle = ch + " RelThreshed"
 		df[RelThreshedTitle] = np.where((df[RelNewcolumnTitle] >= RelIntensThresh), 1, 0)
 
@@ -717,8 +718,8 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		else:
 			df[Postivity_RankTitle] = 0
 			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 0) & (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1) & (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+			#df[Postivity_RankTitle] = np.where((df["SizeThreshed"] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+			df[Postivity_RankTitle] = np.where( (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 	
 
 		ToHisto = [AreaColumnTitle,IntensColumnTitle,MeanNewcolumnTitle,RelNewcolumnTitle]
@@ -1019,7 +1020,7 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 
 
 
-setup = settings.folder_dicts[3]
+setup = settings.folder_dicts[6]
 
 ImgFolderPath = setup['Path']
 
@@ -1278,6 +1279,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			'NonOligo' : [['DAPI_ch', 1], ['Olig2', 0]],
 
+			'CC1+Olig2-' : [['DAPI_ch', 1], ['CC1', 1], ['Olig2', 0]],
 
 			}
 			#open existing summary as list of dictionaries
