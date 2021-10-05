@@ -60,13 +60,13 @@ def imageThreshold(img,):
 
     return cv.bitwise_not(th2)
 
-def proccessNuclearImage(img):
+def proccessVisualImage(img):
     """Function to proccess a flourescence image with nuclear localized signal (e.g. DAPI)."""
     # normalize (stretch histogram and convert to 8-bit)
     img = cv.normalize(src=img, dst=None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
     # invert image 
-    img = cv.bitwise_not(img)
     # FUTURE: consider other normalization strategies
+    adjust_gamma(img, gamma= 0.35)
     return img
 
 def showImages(images, titles='', save = 0, path = ' ', text_coords = []):
@@ -148,8 +148,6 @@ def thresholdSegmentation(
     # Now, mark the region of unknown with zero
     markers[unknown==255] = 0
 
-    # img = self.proccessNuclearImage(self.images[channel])
-    #img = cv.normalize(src=img, dst=None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
     img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
     markers = cv.watershed(img,markers)
 
@@ -169,15 +167,53 @@ def thresholdSegmentation(
 # NEXT FILTER ON SIZE, CIRCULARITY - GET X-Y centroid
 # https://www.learnopencv.com/blob-detection-using-opencv-python-c/ - for circularity
 
-def showCentroids(img,centroids_x,centroids_y):
-    """Show centroids side-by-side with image."""
-    """plt.subplot(1,2,1),plt.imshow(img,'gray')
-    plt.subplot(1,2,2),plt.scatter(centroids_x,-centroids_y)
-    plt.show()"""
+def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = []):
+	"""Show centroids side-by-side with image."""
 
-    implot = plt.imshow(img,'gray')
-    plt.scatter(centroids_x,centroids_y, s=1,c="red")
-    plt.show()
+	celltypes = cell_types_to_analyze
+	
+	cols = int(len(images) // 2 + len(images) % 2)
+	rows = int(len(images) // cols + len(images) % cols)
+	#plt.figure(figsize = (rows,cols))
+	# print("cells/rows",cols,rows)
+	fig, axes = plt.subplots(rows,cols, sharex=True, sharey=True, figsize=(10,10))
+	# for i in range(len(images)):
+	for i, ax in enumerate(axes.flat):
+		if i < len(images):
+			img = images[i]
+			# img = self.gammaCorrect(img)
+			#img = cv.normalize(src=img, dst=None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
+			ax.imshow(img,'gray')
+			colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+			
+			dotsize = 10
+			for j in range(len(celltypes)):
+				celltype = celltypes[j]
+				color = colors[j]
+				celltypedf = df.loc[df[celltype] == 1]
+				centroids_x = celltypedf['X']
+				centroids_y = celltypedf['Y']
+				ax.scatter(centroids_x,centroids_y, s=dotsize,c=color)
+				ax.legend(celltypes, loc="lower left")
+				dotsize = dotsize*0.75
+			if titles != '':
+				ax.set_title(titles[i])
+			# plt.xticks([]),plt.yticks([])
+			else:
+				fig.delaxes(ax)
+		if not len(text_coords) == 0:
+			for i in range(len(text_coords)):
+				if i > 0:
+					x = text_coords[i][0]
+					y = text_coords[i][1]
+					s = str(i)
+					plt.text(x, y, s, fontsize=12)
+	plt.tight_layout()
+	plt.suptitle("press 'Q' to move to next step", verticalalignment="bottom")
+	plt.show()
+
+
+
 
 def getCells(Vischannels, Rawchannels, centroids, markers):
 	"""Returns the image of each cell, and builds cells as a dictionary"""
@@ -365,7 +401,8 @@ def MacLearnImgPrepper(cells):
 	#Takes the cell image and makes an RGB with blue being dapi and green and red being one of the channels
 	for cell in cells:
 		skipped = cell['skipped']
-		img = cell['cellimg'][1]
+		#cellimg[0] is the raw image, cellimg[1] is the processed image
+		img = cell['cellimg'][0]
 		#print(img.shape)
 		DAPI_ch = img[0]
 		RGBs = {}
@@ -392,7 +429,7 @@ def MacLearnImgPrepper(cells):
 				else:
 					blue = DAPI_ch
 					green = img[i]
-					red = img[3]
+					red = img[-1]
 					rgb = []
 					rgb.append(cv.merge((blue,green,red)))
 					
@@ -437,28 +474,81 @@ def Reorder(UserROIs,output,IntensityStats):
 	return output2
 
 def LesionFigSave(DAPIImg,UserROIs):
-	ret, thresh1 = cv.threshold(UserROIs, 0, 255, cv.THRESH_BINARY)
-	thresh1 = np.uint8(thresh1)
+	img = DAPIImg
+	imgheight, imgwidth = img.shape[0:2]
+	import ctypes
+	root = tkinter.Tk()
+	width = root.winfo_screenwidth()
+	height = root.winfo_screenheight()
+	screensize = [width, height]
 
-	contours, hierarchy = cv.findContours(thresh1, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-	cv.drawContours(DAPIImg, contours, -1, (0,0,255), 6)
-	#print(Lbinarr.shape)
-	images = [ thresh1, DAPIImg]
-	titles = ["Mask","Boarder" ]
+	smallwidth = int(screensize[0] * 0.8)
+	smallheight = int(smallwidth*(imgheight/imgwidth))
 	
-	output = cv.connectedComponentsWithStats(thresh1)
-	(numLabels, labels, stats, centroids) = output
+	print(smallheight)
+	if smallheight > screensize[1]:
+		smallheight = int(screensize[1] * 0.8)
+		smallwidth = int(smallheight*(imgwidth/imgheight))
+		print(smallheight)
 
-	IntensityStats = GeneralROIIntensity(Rawchannels, labels, centroids)
+	smallImg = cv.resize(img, (smallwidth,smallheight))
+	
+	
+	boarders = smallImg
+	labelsT = np.zeros((smallheight,smallwidth), dtype= np.uint8)
 
-	#reorder stats and centroids to match the order in which the user drew them
-	output = Reorder(UserROIs,output, IntensityStats)
-	(numLabels, labels, stats, centroids, IntensityStats) = output
+	numLabelsT = 0
+	statsT = []
+	centroidsT = []
+	IntensityStatsT = []
+
+	for i in range(len(UserROIs)):
+		bincanvas = np.zeros((smallheight,smallwidth), dtype= np.uint8)
+		polygon = UserROIs[i]
+		polygon = np.array([polygon])
+		fill = i+1
+		cv.fillPoly(bincanvas, polygon, fill)
+		
+		labelsT = np.where(labelsT == 0, bincanvas, labelsT)
+		bincanvas = cv.resize(bincanvas, (imgwidth, imgheight))
+		
+		ret, thresh1 = cv.threshold(bincanvas, 0, 255, cv.THRESH_BINARY)
+		thresh1 = np.uint8(thresh1)
+
+		cv.polylines(boarders, np.array([polygon]), True, (255, 255, 255), 5)
+		#print(Lbinarr.shape)
+		
+		output = cv.connectedComponentsWithStats(thresh1)
+		(numLabels, labels, stats, centroids) = output
+		IntensityStats = GeneralROIIntensity(Rawchannels, labels, centroids)
+		
+		if i == 0:
+			statsT.append(stats[0])
+			centroidsT.append(centroids[0])
+			IntensityStatsT.append(IntensityStats[0])
+		numLabelsT = numLabels + 1
+		statsT.append(stats[1])
+		centroidsT.append(centroids[1])
+		IntensityStatsT.append(IntensityStats[1])
+
+	labelsT = cv.resize(labelsT, (imgwidth, imgheight))
+
+	ret, threshAll = cv.threshold(labelsT, 0, 255, cv.THRESH_BINARY)
+	threshAll = np.uint8(threshAll)
+	outputBKG = cv.connectedComponentsWithStats(threshAll)
+	(numLabelsBKG, labelsBKG, statsBKG, centroidsBKG) = outputBKG
+	IntensityStatsBKG = GeneralROIIntensity(Rawchannels, labelsBKG, centroidsBKG)
+	IntensityStatsT[0] = IntensityStatsBKG[0]
+	
+	
+	outputT = (numLabelsT, labelsT, statsT, centroidsT, IntensityStatsT)
 	
 	FigureSavePath = os.path.join(SpecificImgFolder, "Lesion_Boarder_Visualization.pdf")
-	showImages(images, titles, save = 1, path = FigureSavePath, text_coords = centroids)
+	images = [ threshAll, boarders]
+	titles = ["Mask","Boarder" ]
+	showImages(images, titles, save = 1, path = FigureSavePath, text_coords = centroidsT)
 
-	return output
+	return outputT
 
 def showDensities(img,densities, save = 0, path = ' '):
 	"""Show centroids side-by-side with image."""
@@ -531,15 +621,14 @@ def getPredictions(cells, model):
 				c=c+1
 			for i in range(len(namChannels)):
 				if i > 0:
-					if i == 'CC1':
-						img = cell['RGBs'][namChannels[i]][0]
-						img = img.astype('float64')
-						img = np.expand_dims(img, axis=0)
+					img = cell['RGBs'][namChannels[i]][0]
+					img = img.astype('float64')
+					img = np.expand_dims(img, axis=0)
 
-						#Comment these out to make the code go faster when debugging
-						if useKeras:
-							predict = model.predict(img)
-							predict = predict[0][0]
+					#Comment these out to make the code go faster when debugging
+					if useKeras:
+						predict = model.predict(img)
+						predict = predict[0][0]
 					else :
 						predict = 0
 					cell['RGBs'][namChannels[i]].append(predict)
@@ -759,7 +848,6 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 	#Visual Validation? Need to load cells
 
 	#Define positive cell types
-	df['Cell_Type'] = "Not Classified"
 
 	for i in range(len(cell_types_to_analyze)):
 		conditions = []
@@ -785,7 +873,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 		callapsedConditions = np.array(callapsedConditions)
 
-		df['Cell_Type'] = np.where(callapsedConditions,celltypename, df['Cell_Type'])
+		df[celltypename] = np.where(callapsedConditions,1, 0)
 
 	df.to_csv(UpdateResultSave, index = False)
 
@@ -796,7 +884,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 					})
 	cell_types = cell_types_to_analyze.copy()
-	cell_types.append("Not Classified")
+	
 
 	for i in range(len(namChannels)):
 		ch = namChannels[i]
@@ -811,7 +899,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		Summary[-1][celldenstitle] = density
 
 	for cell_type in cell_types:
-		df['Quantification'] = np.where((df['Cell_Type'] == cell_type) & (df["location"] == 0), 1, 0)
+		df['Quantification'] = np.where((df[cell_type] == 1) & (df["location"] == 0), 1, 0)
 		cellNumber = np.sum(df['Quantification'])
 		area = df['Background Area (mm^2)'][0]
 		density = cellNumber/area
@@ -837,7 +925,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 			Summary[-1][celldenstitle] = density
 
 		for cell_type in cell_types:
-			df['Quantification'] = np.where((df['Cell_Type'] == cell_type) & (df["location"] == ROI), 1, 0)
+			df['Quantification'] = np.where((df[cell_type] == 1) & (df["location"] == ROI), 1, 0)
 			cellNumber = np.sum(df['Quantification'])
 			density = cellNumber/area
 			cellnumtitle = 'Lesion '+ str(ROI) +' ' + cell_type + ' Number'
@@ -945,16 +1033,9 @@ class PolygonDrawer(object):
 			# Waiting for the user to press any key
 			i = i+1
 
-
 		cv.destroyWindow(self.window_name)
-		bincanvas = np.zeros((self.smallheight,self.smallwidth), dtype= np.uint8)
-		for i in range(len(self.polygons)):
-			polygon = self.polygons[i]
-			polygon = np.array([polygon])
-			fill = i+1
-			cv.fillPoly(bincanvas, polygon, fill)
-		bincanvas = cv.resize(bincanvas, (self.imgwidth, self.imgheight))
-		return bincanvas
+
+		return self.polygons
 
 def GeneralROIIntensity(Rawchannels, labels, centroids):
 	intensitStats =[]
@@ -1020,7 +1101,7 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 
 
 
-setup = settings.folder_dicts[6]
+setup = settings.folder_dicts[4]
 
 ImgFolderPath = setup['Path']
 
@@ -1045,8 +1126,8 @@ scale = setup['scale']
 
 
 overwrite = False
-overwriteCells_Pred = False
 overwriteROIS = False
+overwriteCells_Pred = True
 overwriteProcessing = True
 
 debug = False
@@ -1060,6 +1141,7 @@ debugcells = False
 debugLesionIdenification1 = False
 debugLesionIdenification2 = False
 debugProcessRawResults = False
+debugCellLocations = False
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
 Summary = []
@@ -1126,10 +1208,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 		BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 		if not os.path.exists(BinarySave) or overwriteROIS or overwrite:
 			img = cv.imreadmulti(fullpath, flags = -1)
-			Dapi = proccessNuclearImage(img[1][0])
-			gamma = 0.35
-			Dapi = adjust_gamma(Dapi, gamma)
-			Dapi = cv.bitwise_not(Dapi)
+			Dapi = proccessVisualImage(img[1][0])
 			Dapi = np.array(Dapi)
 			windowname = str(oriImgName) +" : Draw " + str(ROINumber) + " ROIs"
 			polyDr = PolygonDrawer(windowname, Dapi, ROINumber)
@@ -1158,20 +1237,20 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 		ImageResultsSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResults.csv")
 		
+		print("Image -->" + oriImgName)
+
 		if not os.path.exists(ImageResultsSave) or overwriteCells_Pred or overwrite:
 			
 			
 			#Additional folder structures
 
-			print("Image ",ImageID, " of ", TotalImage,": Reading Image ")
+			print("Image ",ImageID, " of ", TotalImage,": Reading Image")
 			oriImg = cv.imreadmulti(fullpath, flags = -1)
 
 			print("Image ",ImageID, " of ", TotalImage,": Processing Image ")
 			Vischannels =[]
 			for i in range(len(namChannels)):
-				Img = proccessNuclearImage(oriImg[1][i])
-				gamma = 0.35
-				Img = adjust_gamma(Img, gamma)
+				Img = proccessVisualImage(oriImg[1][i])
 				Vischannels.append(Img)
 			Vischannels = np.array(Vischannels)
 
@@ -1223,7 +1302,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			print("Image ",ImageID, " of ", TotalImage,": Processing User ROIs")
 			BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
-			UserROIs = np.load(BinarySave)
+			UserROIs = np.load(BinarySave, allow_pickle=True)
 			UserROIsOutput = LesionFigSave(DAPIImg=Vischannels[0], UserROIs = UserROIs )
 
 			(numLabels, labelsUserROI, stats, centroids, IntensityStats) = UserROIsOutput
@@ -1267,19 +1346,25 @@ for oriImgName in os.listdir(ImgFolderPath):
 			#Define cell types. Channel names must match those defined in namChannel exactly.
 			#1 indicates positive, 0 indictes negative
 			cell_type_conditions = {
+			'DAPI' : [['DAPI_ch', 1]],
+
+			'OligoLineage' : [['DAPI_ch', 1], ['Olig2', 1]],
+
 			'OPC' : [['DAPI_ch', 1], ['CC1', 0], ['Olig2', 1]],
 					
-			'Oligo' : [['DAPI_ch', 1], ['CC1', 1], ['Olig2', 1]],
-
-			'ActiveOPC' : [['DAPI_ch', 1], ['Olig2', 1], ['Sox2', 1]],
-
-			'ProlifOligo' : [['DAPI_ch', 1], ['Olig2', 1], ['Ki67', 1]],
-
-			'Sox2Astro' : [['DAPI_ch', 1], ['Olig2', 0], ['Sox2', 1]],
+			'Mature Oligodendrocyte' : [['DAPI_ch', 1], ['CC1', 1], ['Olig2', 1]],
 
 			'NonOligo' : [['DAPI_ch', 1], ['Olig2', 0]],
 
+			'Sox2Astro' : [['DAPI_ch', 1], ['Olig2', 0], ['Sox2', 1]],
+
+			'ProlifNonOligo' : [['DAPI_ch', 1], ['Olig2', 0], ['Ki67', 1]],
+
 			'CC1+Olig2-' : [['DAPI_ch', 1], ['CC1', 1], ['Olig2', 0]],
+
+			'ActiveOPC' : [['DAPI_ch', 1], ['Olig2', 1], ['Sox2', 1]],
+
+			'ProlifOPC' : [['DAPI_ch', 1], ['Olig2', 1], ['Ki67', 1]],
 
 			}
 			#open existing summary as list of dictionaries
@@ -1289,6 +1374,16 @@ for oriImgName in os.listdir(ImgFolderPath):
 				    Summary = [{k : v for k, v in row.items()} for row in csv.DictReader(f, skipinitialspace=True)]
 			print("Image ",ImageID, " of ", TotalImage,": Processing Results")
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
+			
+			if debug or debugCellLocations:
+				oriImg = cv.imreadmulti(fullpath, flags = -1)
+				Vischannels =[]
+				for i in range(len(namChannels)):
+					Img = proccessVisualImage(oriImg[1][i])
+					Vischannels.append(Img)
+				Vischannels = np.array(Vischannels)
+
+				showCentroids(images = Vischannels, df = Resultsdf, titles = namChannels, save = 0)
 
 		#clear Resultsdf
 		Resultsdf = pd.DataFrame()

@@ -55,7 +55,7 @@ print(reorderstats)
 """
 """___________________________________________________________________________________________________________________________________________________________"""
 
-
+"""
 import csv
 
 with open('test.csv') as f:
@@ -63,7 +63,47 @@ with open('test.csv') as f:
 
 print(a)
 
+"""
+
+def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = []):
+    """Show centroids side-by-side with image."""
+    """plt.subplot(1,2,1),plt.imshow(img,'gray')
+    plt.subplot(1,2,2),plt.scatter(centroids_x,-centroids_y)
+    plt.show()"""
+    celltypes = set(df['Cell_Type'].values)
+    for celltype in celltypes:
+    	celltypedf = df.loc[df['Cell_Type'] == cell_type]
+    	centroids_x = celltypedf['X']
+    	centroids_y = celltypedf['Y']
+
+    cols = int(len(images) // 2 + len(images) % 2)
+	rows = int(len(images) // cols + len(images) % cols)
+	#plt.figure(figsize = (rows,cols))
+	# print("cells/rows",cols,rows)
+	fig, axes = plt.subplots(rows,cols, sharex=True, sharey=True, figsize=(10,10))
+	# for i in range(len(images)):
+	for i, ax in enumerate(axes.flat):
+		if i < len(images):
+			img = images[i]
+			# img = self.gammaCorrect(img)
+			#img = cv.normalize(src=img, dst=None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
+			ax.imshow(img,'gray')
+			ax.scatter(centroids_x,centroids_y, s=1,c="red")
+			if titles != '':
+				ax.set_title(titles[i])
+			# plt.xticks([]),plt.yticks([])
+			else:
+				fig.delaxes(ax)
+		if not len(text_coords) == 0:
+			for i in range(len(text_coords)):
+				if i > 0:
+					x = text_coords[i][0]
+					y = text_coords[i][1]
+					s = str(i)
+					plt.text(x, y, s, fontsize=12)
+	plt.tight_layout()
+	plt.suptitle("press 'Q' to move to next step", verticalalignment="bottom")
 
 
 
-
+showCentroids(images)

@@ -50,7 +50,7 @@ class Settings:
                 'Path' : "\\Users\\jjmc1\\Desktop\\Python\\AutoCount2.0\\LargeLesionDCO",
 
                 # Cell types to analyze
-                'cell_types_to_analyze' : ['OPC', 'Oligo', 'NonOligo'],
+                'cell_types_to_analyze' : ['OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo','CC1+Olig2-'],
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
@@ -175,7 +175,7 @@ class Settings:
                 'Path' : "C:\\Users\\jjmc1\\Desktop\\Control KSO DCO\\DCO",
 
                 # Cell types to analyze
-                'cell_types_to_analyze' : ['OPC', 'Oligo', 'NonOligo', 'CC1+Olig2-'],
+                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo', 'CC1+Olig2-'],
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
@@ -193,14 +193,15 @@ class Settings:
                 # Define the number of ROIs you want to draw
                 'ROINumber' : 1,
 
-                # Name each channel present (must be consistent for all images)
-                'channels' : ["DAPI_ch","CC1","Olig2","Olig2"],
+                # Name each channel present, in order (must be consistent for all images)
+
+                'channels' : ["DAPI_ch","Ki67","Sox2","Olig2"],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "C:\\Users\\jjmc1\\Desktop\\Control KSO DCO\\DCO",
+                'Path' : "C:\\Users\\jjmc1\\Desktop\\Control KSO DCO\\KSO",
 
                 # Cell types to analyze
-                'cell_types_to_analyze' : ['OPC', 'Oligo', 'NonOligo', 'CC1+Olig2-'],
+                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo'],
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
