@@ -67,6 +67,7 @@ def proccessVisualImage(img):
     # invert image 
     # FUTURE: consider other normalization strategies
     adjust_gamma(img, gamma= 0.35)
+    img = cv.bitwise_not(img)
     return img
 
 def showImages(images, titles='', save = 0, path = ' ', text_coords = []):
@@ -112,9 +113,9 @@ def showImages(images, titles='', save = 0, path = ' ', text_coords = []):
 def thresholdSegmentation( 
     thresh, 
     img, 
-    opening_kernel = np.ones((3,3),np.uint8),
+    opening_kernel = np.ones((1,1),np.uint8),
     opening_iterations = 2, 
-    background_kernel = np.ones((3,3),np.uint8),
+    background_kernel = np.ones((1,1),np.uint8),
     background_iterations = 1,
     ):
     """SEGMENTATION and WATERSHED"""
@@ -247,7 +248,6 @@ def getCells(Vischannels, Rawchannels, centroids, markers):
 				Rawstain = Rawchannels[y][y_min:y_max,x_min:x_max]
 				cellMarkers = markers[y_min:y_max,x_min:x_max]
 
-				Visstain = cv.bitwise_not(Visstain)
 				Viscellimg.append(Visstain)
 				Rawcellimg.append(Rawstain)
 				skipped = "No"
@@ -297,6 +297,7 @@ def RandomSampler(cells, NumberWant, path):
 
 def AddStats(Rawchannels, cells, labels, centroids, AreaStats, IntensityStats):
 	#isolate the pixels of the nuclei and bakground regions using masking, the report area and intensity data for each channel
+	
 	AreaStatsPix = AreaStats[:,4]
 	AreaStatsmm2 = []
 
@@ -402,11 +403,12 @@ def MacLearnImgPrepper(cells):
 	for cell in cells:
 		skipped = cell['skipped']
 		#cellimg[0] is the raw image, cellimg[1] is the processed image
-		img = cell['cellimg'][0]
-		#print(img.shape)
-		DAPI_ch = img[0]
-		RGBs = {}
 		if skipped == "No":
+			img = cell['cellimg'][0]
+			#print(img.shape)
+			DAPI_ch = img[0]
+			RGBs = {}
+		
 			i = 1
 			for i in range(len(namChannels)):
 				ch = namChannels[i]
@@ -527,11 +529,12 @@ def LesionFigSave(DAPIImg,UserROIs):
 			centroidsT.append(centroids[0])
 			IntensityStatsT.append(IntensityStats[0])
 		numLabelsT = numLabels + 1
-		statsT.append(stats[1])
-		centroidsT.append(centroids[1])
+		statsT = np.append(statsT,[stats[1]],axis= 0)
+		centroidsT = np.append(centroidsT,[centroids[1]],axis= 0)
 		IntensityStatsT.append(IntensityStats[1])
 
 	labelsT = cv.resize(labelsT, (imgwidth, imgheight))
+	boarders = cv.resize(labelsT, (imgwidth, imgheight))
 
 	ret, threshAll = cv.threshold(labelsT, 0, 255, cv.THRESH_BINARY)
 	threshAll = np.uint8(threshAll)
@@ -1127,7 +1130,7 @@ scale = setup['scale']
 
 overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = True
+overwriteCells_Pred = False
 overwriteProcessing = True
 
 debug = False
@@ -1141,7 +1144,7 @@ debugcells = False
 debugLesionIdenification1 = False
 debugLesionIdenification2 = False
 debugProcessRawResults = False
-debugCellLocations = False
+debugCellLocations = True
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
 Summary = []
@@ -1306,9 +1309,9 @@ for oriImgName in os.listdir(ImgFolderPath):
 			UserROIsOutput = LesionFigSave(DAPIImg=Vischannels[0], UserROIs = UserROIs )
 
 			(numLabels, labelsUserROI, stats, centroids, IntensityStats) = UserROIsOutput
-		
+			
 			print("Image ",ImageID, " of ", TotalImage,": Measuring Pixel Intensity for Each Cell")
-			cells = AddStats(Rawchannels ,cells, UserROIs, centroids, stats, IntensityStats)
+			cells = AddStats(Rawchannels = Rawchannels ,cells = cells, labels = labelsUserROI, centroids = centroids, AreaStats = stats, IntensityStats = IntensityStats)
 
 			print("Image ",ImageID, " of ", TotalImage,": Prepping Images for Keras")
 			cells = MacLearnImgPrepper(cells)

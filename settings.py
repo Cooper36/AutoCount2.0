@@ -125,7 +125,7 @@ class Settings:
                 'Path' : "\\Users\\jjmc1\\Desktop\\roopa mouse",
 
                 # Cell types to analyze
-                'cell_types_to_analyze' : ['OPC', 'Oligo', 'NonOligo', 'CC1+Olig2-'],
+                'cell_types_to_analyze' : ['OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo','CC1+Olig2-'],
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
@@ -150,10 +150,10 @@ class Settings:
                 'Path' : "/Users/jjmc/Documents/Roopa Test images",
 
                 # Cell types to analyze
-                'cell_types_to_analyze' : ['OPC', 'Oligo', 'NonOligo', 'CC1+Olig2-'],
+                'cell_types_to_analyze' : ['OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo','CC1+Olig2-'],
 
                 # Do you want to use the keras models (slow)
-                'useKeras' : True,
+                'useKeras' : False,
             },
             {
                 'name' : 'SettingParametersDCO',
