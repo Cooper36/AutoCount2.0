@@ -454,11 +454,11 @@ def Reorder(UserROIs,output,IntensityStats):
 	reorderstats = [stats[0]] * numLabels
 	reordercentroids = [centroids[0]] * numLabels
 	reorderIntensityStats = [IntensityStats[0]] * numLabels
-	for i in range(numLabels):
+	for i in range(numLabels+1):
 		if i > 0:
 			ix = int(math.floor(centroids[i][0]))
 			iy = int(math.floor(centroids[i][1]))
-			for j in range(numLabels):
+			for j in range(numLabels+1):
 				if j > 0:
 					jx = int(math.floor(centroids[j][0]))
 					jy = int(math.floor(centroids[j][1]))
@@ -476,10 +476,10 @@ def Reorder(UserROIs,output,IntensityStats):
 	return output2
 
 def LesionFigSave(DAPIImg,UserROIs):
-	img = DAPIImg
+	img = cv.bitwise_not(DAPIImg) 
 	imgheight, imgwidth = img.shape[0:2]
 	import ctypes
-	root = tkinter.Tk()
+	root = tk.Tk()
 	width = root.winfo_screenwidth()
 	height = root.winfo_screenheight()
 	screensize = [width, height]
@@ -528,13 +528,13 @@ def LesionFigSave(DAPIImg,UserROIs):
 			statsT.append(stats[0])
 			centroidsT.append(centroids[0])
 			IntensityStatsT.append(IntensityStats[0])
-		numLabelsT = numLabels + 1
+		numLabelsT = numLabelsT + 1
 		statsT = np.append(statsT,[stats[1]],axis= 0)
 		centroidsT = np.append(centroidsT,[centroids[1]],axis= 0)
 		IntensityStatsT.append(IntensityStats[1])
 
 	labelsT = cv.resize(labelsT, (imgwidth, imgheight))
-	boarders = cv.resize(labelsT, (imgwidth, imgheight))
+	boarders = cv.resize(boarders, (imgwidth, imgheight))
 
 	ret, threshAll = cv.threshold(labelsT, 0, 255, cv.THRESH_BINARY)
 	threshAll = np.uint8(threshAll)
@@ -666,8 +666,7 @@ def Cells_to_df(cells):
 	columnTitles.extend(TitlesIA)
 
 	LesTitles = []
-
-	for i in range(numLabels):
+	for i in range(numLabels+1):
 		if i == 0:
 			LesAreaNam = "Background Area (mm^2)"
 			LesTitles.append(LesAreaNam)
@@ -676,6 +675,7 @@ def Cells_to_df(cells):
 				LesTitles.append(chInten)
 
 		else :
+			print("it ran")
 			LesAreaNam = "Lesion " + str(i) + " Area (mm^2)"
 			LesTitles.append(LesAreaNam)
 			for chnam in namChannels:
@@ -709,7 +709,7 @@ def Cells_to_df(cells):
 					cellAnno.extend([MacLearnPred,centIntensVal,centareaVal,allintensVal,allareaVal,otherintensVal,otherareaVal,bkgintensVal,bkgareaVal])
 				else:
 					cellAnno.extend([centIntensVal,centareaVal,allintensVal,allareaVal,otherintensVal,otherareaVal,bkgintensVal,bkgareaVal])
-			for i in range(numLabels):
+			for i in range(numLabels+1):
 				areaPix = cell['location']['Areas_info'][i]
 				cellAnno.append(areaPix)
 				
@@ -955,11 +955,11 @@ class PolygonDrawer(object):
 		self.smallwidth = int(screensize[0] * 0.8)
 		self.smallheight = int(self.smallwidth*(self.imgheight/self.imgwidth))
 		
-		print(self.smallheight)
+		
 		if self.smallheight > screensize[1]:
 			self.smallheight = int(screensize[1] * 0.8)
 			self.smallwidth = int(self.smallheight*(self.imgwidth/self.imgheight))
-			print(self.smallheight)
+			
 
 		self.smallImg = cv.resize(self.img, (self.smallwidth,self.smallheight))
 
@@ -1137,7 +1137,7 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 
 
 
-setup = settings.folder_dicts[8]
+setup = settings.folder_dicts[9]
 
 ImgFolderPath = setup['Path']
 
@@ -1179,7 +1179,7 @@ debugcells = False
 debugLesionIdenification1 = False
 debugLesionIdenification2 = False
 debugProcessRawResults = False
-debugCellLocations = True
+debugCellLocations = False
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
 Summary = []
@@ -1191,7 +1191,7 @@ ResultsFolderPath = os.path.join(ImgFolderPath,"Results")
 if not os.path.exists(ResultsFolderPath):
 	os.mkdir(ResultsFolderPath)
 
-SummarySave = os.path.join(ResultsFolderPath,'SummaryGood.csv')
+SummarySave = os.path.join(ResultsFolderPath,'Summary.csv')
 
 SpecificImgResultsPath = os.path.join(ResultsFolderPath,"Image_Specific_Results")
 if not os.path.exists(SpecificImgResultsPath):
@@ -1421,6 +1421,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 				Vischannels =[]
 				for i in range(len(namChannels)):
 					Img = proccessVisualImage(oriImg[1][i])
+
 					Vischannels.append(Img)
 				Vischannels = np.array(Vischannels)
 

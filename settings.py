@@ -32,6 +32,9 @@ class Settings:
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
+                
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
             },
             {
                 'name' : '1_LargeLesionDCO',
@@ -57,6 +60,9 @@ class Settings:
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
+                
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
             },
             {
                 'name' : '2_FMSize calculation JCWindows',
@@ -82,6 +88,9 @@ class Settings:
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
+                
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
             },
             {
                 'name' : '3_FMSize 4x calculation JCmac',
@@ -107,6 +116,9 @@ class Settings:
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : False,
+                
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
             },
             {
                 'name' : '4_RoopaMouseWindow',
@@ -132,6 +144,9 @@ class Settings:
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
+                
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
             },
             {
                 'name' : '5_RoopaMouseMac',
@@ -157,6 +172,9 @@ class Settings:
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : False,
+                
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
             },
             {
                 'name' : '6_SettingParametersDCO',
@@ -182,6 +200,9 @@ class Settings:
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
+
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
             },
             {
                 'name' : '7_SettingParametersKSO',
@@ -208,6 +229,9 @@ class Settings:
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
+
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
             },
             {
                 'name' : '8_RoopaNeostigmineLesionSize',
@@ -234,6 +258,35 @@ class Settings:
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : False,
+
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
+            },
+            {
+                'name' : '9_LargeLesionKSO',
+
+                # Define size of individual cell images (in pixels, defines both height and width, so a square)
+                'cropsize' : 46,
+
+                #Change if using anything other then 10x
+                #Average scale for 10x images, pixel/micron
+                'scale' : 1.5385,
+            
+                # Define the number of ROIs you want to draw
+                'ROINumber' : 2,
+
+                # Name each channel present, in order (must be consistent for all images)
+
+                'channels' : ["DAPI_ch","Ki67","Sox2","Olig2"],
+
+                # Path to folder containing images to be analyzed
+                'Path' : "C:\\Users\\jjmc1\\Desktop\\Python\\AutoCount2.0\\LargeLesionKSO",
+
+                # Cell types to analyze
+                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo'],
+
+                # Do you want to use the keras models (slow)
+                'useKeras' : True,
 
                 # Check files for uniformity? Good idea to do once
                 'checkfiles' : False,
