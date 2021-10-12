@@ -24,7 +24,7 @@ import random
 from scipy.stats import gaussian_kde
 from keras.models import load_model
 import csv
-import tkinter
+import tkinter as tk
 
 from settings import Settings
 
@@ -947,9 +947,9 @@ class PolygonDrawer(object):
 		self.imgheight, self.imgwidth = self.img.shape[0:2]
 		
 		import ctypes
-		root = tkinter.Tk()
-		width = root.winfo_screenwidth()
-		height = root.winfo_screenheight()
+		self.root = tk.Tk()
+		width = self.root.winfo_screenwidth()
+		height = self.root.winfo_screenheight()
 		screensize = [width, height]
 
 		self.smallwidth = int(screensize[0] * 0.8)
@@ -996,6 +996,31 @@ class PolygonDrawer(object):
 
 	def run(self):
 		# Let's create our working window and set a mouse callback to handle events
+		v = tk.IntVar()
+		v.set(1)  # initializing the choice, i.e. Python
+
+		languages = [("Yes, Skip", True),("No, Don't Skip", False)]
+
+		def ShowChoice():
+			if v.get():
+				print("ROI skipped")
+			self.root.destroy()
+
+		tk.Label(self.root, 
+				text="""Skip this ROI? ROI will be set to 0""",
+				justify = tk.LEFT,
+				padx = 20).pack()
+
+		for language, val in languages:
+			tk.Radiobutton(self.root, 
+				text=language,
+				indicatoron = 0,
+				width = 20,
+				padx = 20, 
+				variable=v, 
+				command=ShowChoice,
+				value=val).pack(anchor=tk.W)
+
 		cv.namedWindow(self.window_name, flags=cv.WINDOW_AUTOSIZE)
 		cv.imshow(self.window_name, np.zeros((self.imgheight, self.imgwidth), np.uint8))
 		cv.waitKey(1)
@@ -1005,6 +1030,14 @@ class PolygonDrawer(object):
 			self.done = False
 			if i == 0:
 				Polycanvas = np.copy(self.smallImg, subok= True)
+				cv.imshow(self.window_name, Polycanvas)
+			self.root.mainloop()
+			if v.get():
+				self.points.append((0, 0))
+				self.points.append((0, 1))
+				self.points.append((1, 1))
+				self.points.append((1, 0))
+				self.done = v.get()
 			while(not self.done):
 				# This is our drawing loop, we just continuously draw new images
 				# and show them in the named window
@@ -1104,7 +1137,7 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 
 
 
-setup = settings.folder_dicts[4]
+setup = settings.folder_dicts[8]
 
 ImgFolderPath = setup['Path']
 
@@ -1126,6 +1159,8 @@ useKeras = setup['useKeras']
 #Change if using anything other then 10x
 #Average scale for 10x images, pixel/micron
 scale = setup['scale']
+
+checkfiles = setup['checkfiles']
 
 
 overwrite = False
@@ -1172,17 +1207,18 @@ TotalImage = 0
 # check to make sure each image has the specified number of channels
 print("Checking Images for Uniformity")
 badfiles = []
-for oriImgName in os.listdir(ImgFolderPath):
-	fullpath = os.path.join(ImgFolderPath, oriImgName)
-	if oriImgName.endswith('.tif'):
-		img = cv.imreadmulti(fullpath, flags = -1)
-		img = img[1]
-		img = np.array(img)
-		chanNum = img.shape[0]
-		sizeh = img.shape[1]
-		sizew = img.shape[2]
-		if chanNum != len(namChannels) or sizeh == 512 or sizew ==512:
-			badfiles.append(oriImgName)
+if checkfiles == True:
+	for oriImgName in os.listdir(ImgFolderPath):
+		fullpath = os.path.join(ImgFolderPath, oriImgName)
+		if oriImgName.endswith('.tif'):
+			img = cv.imreadmulti(fullpath, flags = -1)
+			img = img[1]
+			img = np.array(img)
+			chanNum = img.shape[0]
+			sizeh = img.shape[1]
+			sizew = img.shape[2]
+			if chanNum != len(namChannels) or sizeh == 512 or sizew ==512:
+				badfiles.append(oriImgName)
 
 # move bad files to a new folder
 if len(badfiles) > 0:
@@ -1210,10 +1246,12 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 		BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 		if not os.path.exists(BinarySave) or overwriteROIS or overwrite:
-			img = cv.imreadmulti(fullpath, flags = -1)
-			Dapi = proccessVisualImage(img[1][0])
+			img = cv.imreadmulti(fullpath, flags = -1)[1][0]
+			Dapi = proccessVisualImage(img)
+
 			Dapi = np.array(Dapi)
 			windowname = str(oriImgName) +" : Draw " + str(ROINumber) + " ROIs"
+			Dapi = cv.bitwise_not(Dapi)
 			polyDr = PolygonDrawer(windowname, Dapi, ROINumber)
 			Lbinarr = polyDr.run()
 			

@@ -64,12 +64,12 @@ with open('test.csv') as f:
 print(a)
 
 """
-
+"""
 def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = []):
-    """Show centroids side-by-side with image."""
-    """plt.subplot(1,2,1),plt.imshow(img,'gray')
+    Show centroids side-by-side with image.
+    plt.subplot(1,2,1),plt.imshow(img,'gray')
     plt.subplot(1,2,2),plt.scatter(centroids_x,-centroids_y)
-    plt.show()"""
+    plt.show()
     celltypes = set(df['Cell_Type'].values)
     for celltype in celltypes:
     	celltypedf = df.loc[df['Cell_Type'] == cell_type]
@@ -107,3 +107,38 @@ def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = [])
 
 
 showCentroids(images)
+"""
+
+import tkinter as tk
+
+root = tk.Tk()
+
+v = tk.IntVar()
+v.set(1)  # initializing the choice, i.e. Python
+
+languages = [("Yes, Skip", True),("No, Don't Skip", False)]
+
+def ShowChoice():
+	if v.get():
+		print("ROI skipped")
+	root.destroy()
+
+tk.Label(root, 
+		text="""Skip this ROI? ROI will be set to 0""",
+		justify = tk.LEFT,
+		padx = 20).pack()
+
+for language, val in languages:
+	tk.Radiobutton(root, 
+		text=language,
+		indicatoron = 0,
+		width = 20,
+		padx = 20, 
+		variable=v, 
+		command=ShowChoice,
+		value=val).pack(anchor=tk.W)
+
+
+root.mainloop()
+done = v.get()
+print(done)

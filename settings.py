@@ -1,3 +1,6 @@
+
+
+
 class Settings:
     """A class to store all settings."""
 
@@ -6,7 +9,7 @@ class Settings:
         # Define folders for input of data
         self.folder_dicts = [
             {
-                'name' : 'JCmac',
+                'name' : '0_JCmac',
 
                 # Define size of individual cell images (in pixels, defines both height and width, so a square)
                 'cropsize' : 46,
@@ -31,7 +34,7 @@ class Settings:
                 'useKeras' : True,
             },
             {
-                'name' : 'LargeLesionDCO',
+                'name' : '1_LargeLesionDCO',
 
                 # Define size of individual cell images (in pixels, defines both height and width, so a square)
                 'cropsize' : 46,
@@ -56,7 +59,7 @@ class Settings:
                 'useKeras' : True,
             },
             {
-                'name' : 'FMSize calculation JCWindows',
+                'name' : '2_FMSize calculation JCWindows',
 
                 # Define size of individual cell images (in pixels, defines both height and width, so a square)
                 'cropsize' : 46,
@@ -81,7 +84,7 @@ class Settings:
                 'useKeras' : True,
             },
             {
-                'name' : 'FMSize 4x calculation JCmac',
+                'name' : '3_FMSize 4x calculation JCmac',
 
                 # Define size of individual cell images (in pixels, defines both height and width, so a square)
                 'cropsize' : 46,
@@ -106,7 +109,7 @@ class Settings:
                 'useKeras' : False,
             },
             {
-                'name' : 'RoopaMouseWindow',
+                'name' : '4_RoopaMouseWindow',
 
                 # Define size of individual cell images (in pixels, defines both height and width, so a square)
                 'cropsize' : 46,
@@ -131,7 +134,7 @@ class Settings:
                 'useKeras' : True,
             },
             {
-                'name' : 'RoopaMouseMac',
+                'name' : '5_RoopaMouseMac',
 
                 # Define size of individual cell images (in pixels, defines both height and width, so a square)
                 'cropsize' : 46,
@@ -156,7 +159,7 @@ class Settings:
                 'useKeras' : False,
             },
             {
-                'name' : 'SettingParametersDCO',
+                'name' : '6_SettingParametersDCO',
 
                 # Define size of individual cell images (in pixels, defines both height and width, so a square)
                 'cropsize' : 46,
@@ -181,7 +184,7 @@ class Settings:
                 'useKeras' : True,
             },
             {
-                'name' : 'SettingParametersKSO',
+                'name' : '7_SettingParametersKSO',
 
                 # Define size of individual cell images (in pixels, defines both height and width, so a square)
                 'cropsize' : 46,
@@ -206,9 +209,36 @@ class Settings:
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
             },
+            {
+                'name' : '8_RoopaNeostigmineLesionSize',
+
+                # Define size of individual cell images (in pixels, defines both height and width, so a square)
+                'cropsize' : 46,
+
+                #Change if using anything other then 10x
+                #Average scale for 4x images, pixel/micron
+                'scale' : 1.5385,
+            
+                # Define the number of ROIs you want to draw
+                'ROINumber' : 1,
+
+                # Name each channel present, in order (must be consistent for all images)
+
+                'channels' : ["Solochrome"],
+
+                # Path to folder containing images to be analyzed
+                'Path' : "C:\\Users\\jjmc1\\Documents\\solochrome mouse lesions JC\\Tiff",
+
+                # Cell types to analyze
+                'cell_types_to_analyze' : [],
+
+                # Do you want to use the keras models (slow)
+                'useKeras' : False,
+
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
+            },
         ]
-
-
 
 
 
