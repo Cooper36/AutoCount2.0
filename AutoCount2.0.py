@@ -1407,6 +1407,8 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			'ProlifOPC' : [['DAPI_ch', 1], ['Olig2', 1], ['Ki67', 1]],
 
+			'Activated-ProliferativeOPCs' : [['DAPI_ch', 1], ['Olig2', 1],['Sox2', 1], ['Ki67', 1]],
+
 			}
 			#open existing summary as list of dictionaries
 			if os.path.exists(SummarySave):

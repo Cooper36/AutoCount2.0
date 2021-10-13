@@ -225,7 +225,7 @@ class Settings:
                 'Path' : "C:\\Users\\jjmc1\\Desktop\\Control KSO DCO\\KSO",
 
                 # Cell types to analyze
-                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo'],
+                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo',],
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
@@ -283,7 +283,7 @@ class Settings:
                 'Path' : "C:\\Users\\jjmc1\\Desktop\\Python\\AutoCount2.0\\LargeLesionKSO",
 
                 # Cell types to analyze
-                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo'],
+                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo', 'Activated&ProliferativeOPCs'],
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
