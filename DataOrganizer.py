@@ -136,36 +136,94 @@ class DataOrganizer(object):
 			self.df['dpl'] = self.df.apply(lambda row : RabbitDescriptions[RBGroup][0] if row['RB'] in RabbitDescriptions[RBGroup][1] else row['dpl']  , axis = 1)
 		
 		
-		print(self.df.columns)
-		for i in range(ROINumber+1):
+		CCgraphdf = self.df
+		dpl = sorted(set(CCgraphdf['dpl'].values))
+		CCgraphdf.reset_index(inplace=True)
+		CCgraphdf['ValueNumber'] = "Not Stratified"
+		
+		#add individual value numbers for stratification
+		
+		for i in dpl:
+			dpldf = CCgraphdf[CCgraphdf['dpl'] == i]
+			val = 1
 
-			for stain in self.channel_names:
+			for index in dpldf.index:
+				CCgraphdf.loc[index,'ValueNumber'] = val
+				val = val+1
+
+		CCgraphdf.reset_index(inplace=True)
+		CCgraphdf.set_index(['dpl', "RB"], inplace=True)
+		
+		#Per channel density over time
+		for stain in self.channel_names:
+			values = []
+			SEMTitles = []
+			SEMs = []
+			countsTitles = []
+			counts = []
+
+
+			#get column titles for all ROIs and calculate SEM/count for summarized csv
+			for i in range(ROINumber+1):
 				if i == 0:
 					Densitytitle = 'Background ' + stain + " Positive Cells Density (cells/mm^2)"
+					Series = CCgraphdf[Densitytitle]
+					SEMTitles.append('Bkg '+stain+' SEM')
+					SEMs.append(Series.groupby(by=['dpl']).sem())
+					countsTitles.append('Bkg '+stain+' counts')
+					counts.append(Series.groupby(by=['dpl']).size())
 				else :	
 					Densitytitle = 'Lesion '+ str(i) +' ' + stain + ' Positive Cells Density (cells/mm^2)'
+					Series = CCgraphdf[Densitytitle]
+					SEMTitles.append('Lesion '+str(i)+' SEM')
+					SEMs.append(Series.groupby(by=['dpl']).sem())
+					countsTitles.append('Bkg '+stain+' counts')
+					counts.append(Series.groupby(by=['dpl']).size())
+				values.append(Densitytitle)
 
-				data = [self.df['Treatment'],self.df['RB'],self.df['dpl'], self.df['Section Number'],self.df['Location'], self.df[Densitytitle]]
 
-				CCgraphdf = pd.concat(data, axis=1)
-				index = ['dpl', "RB", 'Location']
-				pivoted = CCgraphdf.pivot_table(index=index, values =  Densitytitle, aggfunc='mean')
-				
-				Savename = stain + " Average_Density_per_dpl.csv"
-				CsvSave = os.path.join(SaveLoc, Savename)
-				pivoted.to_csv(CsvSave, index=True)
+			#make pivot table
+			pivoted = CCgraphdf.pivot_table(index=['dpl'], values = values, aggfunc='mean')
 
-				index = ["Treatment"]
-				pivoted = CCgraphdf.pivot_table(index=index, columns = 'Location', values =  Densitytitle, aggfunc='mean')
-				
-				Savename = stain + " Average_Density_per_Loc.png"
-				ax = pivoted.plot(kind="bar")
-				ax.set_title(Savename)
-				plt.xticks(rotation=45)
-				if debug:
-					plt.show()
-				figSave = os.path.join(SaveLoc, Savename)
-				plt.savefig(figSave, bbox_inches='tight')
+			#save graph with mean and SEM
+			ax = pivoted.plot(kind="bar", yerr=SEMs,capsize=5)
+			Savename = stain + " Average_Density_per_dpl.png"
+			ax.set_title(Savename)
+			plt.xticks(rotation=90)
+			plt.legend(loc ='lower left')
+			if debug:
+				plt.show()
+			figSave = os.path.join(SaveLoc, Savename)
+			plt.savefig(figSave, bbox_inches='tight')
+
+			#Add SEMs and counts to Summary csv
+			for i in range(len(SEMTitles)):
+				pivoted[SEMTitles[i]] = SEMs[i]
+				pivoted[countsTitles[i]] = counts[i]
+			#Reorder columns for easy copy and paste into Prism
+			reorder = []
+			for i in range(len(values)):
+				reorder.extend([values[i], SEMTitles[i], countsTitles[i]])
+			pivoted = pivoted.reindex(reorder, axis=1)
+
+			#Save Summay csv
+			Savename = stain + " Summary stats.csv"
+			CsvSave = os.path.join(SaveLoc, Savename)
+			pivoted.to_csv(CsvSave, index=True)
+
+			#Create individual values csv
+			Pivcolumns = ['ValueNumber']
+			pivoted = CCgraphdf.pivot_table(index=['dpl'], columns = Pivcolumns,  values = values, aggfunc='mean')
+
+			#Save individual value csv
+			Savename = stain + " individual values.csv"
+			CsvSave = os.path.join(SaveLoc, Savename)
+			pivoted.to_csv(CsvSave, index=True)
+
+
+			
+
+
 
 
 
