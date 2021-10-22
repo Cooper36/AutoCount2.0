@@ -17,11 +17,11 @@ class DataOrganizer(object):
 		# Get RB number from filename
 		term = 'RB'
 		search = 2
-		self.df['RB'] = df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0'), axis = 1)
+		self.df['RB'] = df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
 		
-		term = ' S'
+		"""term = ' S'
 		search = 2
-		self.df['Section Number'] = df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search], axis = 1)
+		self.df['Section Number'] = df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search], axis = 1)"""
 
 		self.df['Location'] = 'Not Found'
 
@@ -137,6 +137,7 @@ class DataOrganizer(object):
 		
 		
 		CCgraphdf = self.df
+		print(CCgraphdf['dpl'].values)
 		dpl = sorted(set(CCgraphdf['dpl'].values))
 		CCgraphdf.reset_index(inplace=True)
 		CCgraphdf['ValueNumber'] = "Not Stratified"
@@ -431,7 +432,7 @@ class DataOrganizer(object):
 		"""_____________________________________________________________________________________________________________________________"""
 
 		#compute calculated Fields, specific to staining protocol (need to specify)
-		Staintype = "KSO"
+		Staintype = "DCO"
 
 		if Staintype == "KSO":
 			calculated_FieldsTitles = {
@@ -622,10 +623,10 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[7]
+setup = settings.folder_dicts[1]
 imagefolpath = setup['Path']
 Resultsfolpath = os.path.join(imagefolpath,'Results')
-Summarypath = os.path.join(Resultsfolpath,'SummaryGood.csv')
+Summarypath = os.path.join(Resultsfolpath,'Summary.csv')
 
 head, tail = os.path.split(Summarypath)
 SaveLoc = os.path.join(head,"Summary_DataVis")

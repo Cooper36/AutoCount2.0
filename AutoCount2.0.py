@@ -1137,7 +1137,7 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 
 
 
-setup = settings.folder_dicts[9]
+setup = settings.folder_dicts[1]
 
 ImgFolderPath = setup['Path']
 
