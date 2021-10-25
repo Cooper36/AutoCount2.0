@@ -1154,7 +1154,7 @@ namChannels = setup['channels']
 cropsize = setup['cropsize']
 
 #How many ROIs do you want to define?
-ROINumber = setup['ROINumber']box
+ROINumber = setup['ROINumber']
 
 #Do you want to use the keras model?
 useKeras = setup['useKeras']
@@ -1238,17 +1238,19 @@ print('Draw ROIs')
 for oriImgName in os.listdir(ImgFolderPath):
 	fullpath = os.path.join(ImgFolderPath, oriImgName)
 	if oriImgName.endswith('.tif'):
-
+		print(oriImgName)
+		print("Diagnose 1")
 		SpecificImgFolder = os.path.join(SpecificImgResultsPath, oriImgName[:-4] + " Results")
 		if not os.path.exists(SpecificImgFolder):
 			os.mkdir(SpecificImgFolder)
-
+		print("Diagnose 2")
 		SampleCellsFolder = os.path.join(SpecificImgFolder,"Sample_Cells")
 		if not os.path.exists(SampleCellsFolder):
 			os.mkdir(SampleCellsFolder)
-
+		print("Diagnose 3")
 		BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 		if not os.path.exists(BinarySave) or overwriteROIS or overwrite:
+			print("Diagnose 3.1")
 			img = cv.imreadmulti(fullpath, flags = -1)[1][ROI_Draw_Channel]
 			Dapi = proccessVisualImage(img)
 
