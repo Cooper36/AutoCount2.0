@@ -450,7 +450,7 @@ class DataOrganizer(object):
 									"Percent NonOligo_per_DAPI" : ['NonOligo','DAPI'],
 									"Percent Mature Oligodendrocyte_per_OligoLineage" : ['Mature Oligodendrocyte','OligoLineage'],
 									"Percent OPC_per_OligoLineage" : ['OPC','OligoLineage'],
-									"Percent CC1+Olig2-_per_Mature Oligodendrocyte" : ['CC1+Olig2-','Mature Oligodendrocyte'],
+									"Percent CC1+Olig2-_per_Mature Oligodendrocyte" : ['CC1+Olig2-',''],
 			}
 
 		for CalcField in calculated_FieldsTitles.keys():

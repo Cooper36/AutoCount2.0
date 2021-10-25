@@ -226,7 +226,7 @@ def getCells(Vischannels, Rawchannels, centroids, markers):
 		X = centroids[i][0]
 		Y = centroids[i][1]
 		#print(X,Y)
-		shape = Vischannels[0].shape
+		shape = Vischannels[Nuclei_Identification_Channel].shape
 		width = shape[1]
 		height = shape[0]
 
@@ -406,7 +406,7 @@ def MacLearnImgPrepper(cells):
 		if skipped == "No":
 			img = cell['cellimg'][0]
 			#print(img.shape)
-			DAPI_ch = img[0]
+			DAPI_ch = img[Nuclei_Identification_Channel]
 			RGBs = {}
 		
 			i = 1
@@ -487,7 +487,7 @@ def LesionFigSave(DAPIImg,UserROIs):
 	smallwidth = int(screensize[0] * 0.8)
 	smallheight = int(smallwidth*(imgheight/imgwidth))
 	
-	print(smallheight)
+	#print(smallheight)
 	if smallheight > screensize[1]:
 		smallheight = int(screensize[1] * 0.8)
 		smallwidth = int(smallheight*(imgwidth/imgheight))
@@ -787,11 +787,11 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		#assuming most will be about 1
 		#RelMean = np.mean(df[RelNewcolumnTitle])
 		#RelStd = np.std(df[RelNewcolumnTitle])		
-		RelIntensThresh = 1.5
+		RelIntensThresh = 5
 		RelThreshedTitle = ch + " RelThreshed"
 		df[RelThreshedTitle] = np.where((df[RelNewcolumnTitle] >= RelIntensThresh), 1, 0)
 
-		if i > 0:
+		if i != 0:
 			MacLearnThreshedTitle = ch + " MacLearnThreshed"
 			df[MacLearnThreshedTitle] = np.where((df[MacLearnPredTitle] >= 0.5), 1, 0)
 
@@ -1137,9 +1137,12 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 
 
 
-setup = settings.folder_dicts[1]
+setup = settings.folder_dicts[10]
 
 ImgFolderPath = setup['Path']
+
+ROI_Draw_Channel = setup['ROI_Draw_Channel']
+Nuclei_Identification_Channel = setup['Nuclei_Identification_Channel']
 
 #What are the channels?
 namChannels = setup['channels']
@@ -1246,7 +1249,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 		BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 		if not os.path.exists(BinarySave) or overwriteROIS or overwrite:
-			img = cv.imreadmulti(fullpath, flags = -1)[1][0]
+			img = cv.imreadmulti(fullpath, flags = -1)[1][ROI_Draw_Channel]
 			Dapi = proccessVisualImage(img)
 
 			Dapi = np.array(Dapi)
@@ -1278,7 +1281,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 		ImageResultsSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResults.csv")
 		
-		print("Image -->" + oriImgName)
+		print("Image --> " + oriImgName)
 
 		if not os.path.exists(ImageResultsSave) or overwriteCells_Pred or overwrite:
 			
@@ -1306,8 +1309,8 @@ for oriImgName in os.listdir(ImgFolderPath):
 				showImages(Vischannels,Titles)
 
 			print("Image ",ImageID, " of ", TotalImage,": Thresholding and Segmenting Image ")
-			new = imageThreshold(Vischannels[0])
-			output = thresholdSegmentation(new, Vischannels[0])
+			new = imageThreshold(Vischannels[Nuclei_Identification_Channel])
+			output = thresholdSegmentation(new, Vischannels[Nuclei_Identification_Channel])
 			centroids = output[1][3]
 			markers = output[4]
 
@@ -1335,7 +1338,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			centroids_y = np.array(centroids_y)
 			
 			if debug:
-				showCentroids(Vischannels[0],centroids_x,centroids_y)
+				showCentroids(Vischannels[Nuclei_Identification_Channel],centroids_x,centroids_y)
 
 			print("Image ",ImageID, " of ", TotalImage,": Getting Cell Images and making cells")
 			cells = []
@@ -1344,7 +1347,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			print("Image ",ImageID, " of ", TotalImage,": Processing User ROIs")
 			BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 			UserROIs = np.load(BinarySave, allow_pickle=True)
-			UserROIsOutput = LesionFigSave(DAPIImg=Vischannels[0], UserROIs = UserROIs )
+			UserROIsOutput = LesionFigSave(DAPIImg=Vischannels[Nuclei_Identification_Channel], UserROIs = UserROIs )
 
 			(numLabels, labelsUserROI, stats, centroids, IntensityStats) = UserROIsOutput
 			
@@ -1389,6 +1392,8 @@ for oriImgName in os.listdir(ImgFolderPath):
 			cell_type_conditions = {
 			'DAPI' : [['DAPI_ch', 1]],
 
+			'CC1+' : [['DAPI_ch', 1],['CC1', 1]],
+
 			'OligoLineage' : [['DAPI_ch', 1], ['Olig2', 1]],
 
 			'OPC' : [['DAPI_ch', 1], ['CC1', 0], ['Olig2', 1]],
@@ -1408,6 +1413,10 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'ProlifOPC' : [['DAPI_ch', 1], ['Olig2', 1], ['Ki67', 1]],
 
 			'Activated-ProliferativeOPCs' : [['DAPI_ch', 1], ['Olig2', 1],['Sox2', 1], ['Ki67', 1]],
+
+			'Human Cell' : [['DAPI_ch', 1], ['hNA', 1]],
+
+			'Myelinating Human Cell' : [['DAPI_ch', 1], ['hNA', 1], ['MBP', 1]],
 
 			}
 			#open existing summary as list of dictionaries

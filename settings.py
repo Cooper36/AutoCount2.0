@@ -291,6 +291,41 @@ class Settings:
                 # Check files for uniformity? Good idea to do once
                 'checkfiles' : False,
             },
+            {
+                'name' : '10_Transplant Test',
+
+                # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
+                'ROI_Draw_Channel' : 0,
+
+                # Which channel to use for identifying nuclei, base 0
+                'Nuclei_Identification_Channel' : 3,
+
+                # Define size of individual cell images (in pixels, defines both height and width, so a square)
+                'cropsize' : 46,
+
+                #Change if using anything other then 10x
+                #Average scale for 10x images, pixel/micron
+                'scale' : 1.5385,
+            
+                # Define the number of ROIs you want to draw
+                'ROINumber' : 0,
+
+                # Name each channel present, in order (must be consistent for all images)
+
+                'channels' : ["DAPI_ch","MBP","mCherry","hNA"],
+
+                # Path to folder containing images to be analyzed
+                'Path' : "C:\\Users\\jjmc1\\Desktop\\Rich Transplants",
+
+                # Cell types to analyze
+                'cell_types_to_analyze' : ['DAPI', 'Human Cell','Myelinating Human Cell'],
+
+                # Do you want to use the keras models (slow)
+                'useKeras' : True,
+
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
+            },
         ]
 
 
