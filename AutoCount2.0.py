@@ -1154,7 +1154,7 @@ namChannels = setup['channels']
 cropsize = setup['cropsize']
 
 #How many ROIs do you want to define?
-ROINumber = setup['ROINumber']
+ROINumber = setup['ROINumber']box
 
 #Do you want to use the keras model?
 useKeras = setup['useKeras']

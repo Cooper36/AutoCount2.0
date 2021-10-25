@@ -295,7 +295,7 @@ class Settings:
                 'name' : '10_Transplant Test',
 
                 # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
-                'ROI_Draw_Channel' : 0,
+                'ROI_Draw_Channel' : 3,
 
                 # Which channel to use for identifying nuclei, base 0
                 'Nuclei_Identification_Channel' : 3,
@@ -315,7 +315,7 @@ class Settings:
                 'channels' : ["DAPI_ch","MBP","mCherry","hNA"],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "C:\\Users\\jjmc1\\Desktop\\Rich Transplants",
+                'Path' : "/Volumes/labdata/People/Rich/Transplant_MBP-hNA/Tiff",
 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'Human Cell','Myelinating Human Cell'],
