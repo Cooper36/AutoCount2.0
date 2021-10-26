@@ -322,7 +322,7 @@ class Settings:
                 'cell_types_to_analyze' : ['DAPI', 'Human Cell','Myelinating Human Cell'],
 
                 # Do you want to use the keras models (slow)
-                'useKeras' : True,
+                'useKeras' : False,
 
                 # Check files for uniformity? Good idea to do once
                 'checkfiles' : False,

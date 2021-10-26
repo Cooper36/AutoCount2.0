@@ -110,6 +110,7 @@ def showImages(images, titles='', save = 0, path = ' ', text_coords = []):
 		plt.show()
 	else:
 		plt.savefig(path, bbox_inches='tight')
+	plt.close()
 def thresholdSegmentation( 
     thresh, 
     img, 
@@ -212,6 +213,7 @@ def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = [])
 	plt.tight_layout()
 	plt.suptitle("press 'Q' to move to next step", verticalalignment="bottom")
 	plt.show()
+	plt.close()
 
 
 
@@ -491,7 +493,7 @@ def LesionFigSave(DAPIImg,UserROIs):
 	if smallheight > screensize[1]:
 		smallheight = int(screensize[1] * 0.8)
 		smallwidth = int(smallheight*(imgwidth/imgheight))
-		print(smallheight)
+		
 
 	smallImg = cv.resize(img, (smallwidth,smallheight))
 	
@@ -590,6 +592,7 @@ def showDensities(img,densities, save = 0, path = ' '):
 		plt.show()
 	else:
 		plt.savefig(path, bbox_inches='tight')
+	plt.close()
 
 def PlotHistogram(data):
 	# Creating histogram
@@ -598,6 +601,7 @@ def PlotHistogram(data):
 	 
 	# Show plot
 	plt.show()
+	plt.close()
 
 def loadKerasModel(filename):
     """Load h5 model file."""
@@ -675,7 +679,6 @@ def Cells_to_df(cells):
 				LesTitles.append(chInten)
 
 		else :
-			print("it ran")
 			LesAreaNam = "Lesion " + str(i) + " Area (mm^2)"
 			LesTitles.append(LesAreaNam)
 			for chnam in namChannels:
@@ -808,12 +811,12 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		elif ch == 'CC1':
 			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 		else:
-			df[Postivity_RankTitle] = 0
-			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-			#df[Postivity_RankTitle] = np.where((df["SizeThreshed"] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-			df[Postivity_RankTitle] = np.where( (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-	
-
+			if useKeras:
+				df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+				#df[Postivity_RankTitle] = np.where((df["SizeThreshed"] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+				df[Postivity_RankTitle] = np.where( (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+			else:
+				df[Postivity_RankTitle] = np.where( (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 		ToHisto = [AreaColumnTitle,IntensColumnTitle,MeanNewcolumnTitle,RelNewcolumnTitle]
 		#debug Histograms to show distribution of values for each channel, have the threshold appear on that histogram
 		dfnonan= df.fillna(0)
@@ -1169,7 +1172,7 @@ checkfiles = setup['checkfiles']
 overwrite = False
 overwriteROIS = False
 overwriteCells_Pred = False
-overwriteProcessing = True
+overwriteProcessing = False
 
 debug = False
 debugThreshold = False
@@ -1238,19 +1241,14 @@ print('Draw ROIs')
 for oriImgName in os.listdir(ImgFolderPath):
 	fullpath = os.path.join(ImgFolderPath, oriImgName)
 	if oriImgName.endswith('.tif'):
-		print(oriImgName)
-		print("Diagnose 1")
 		SpecificImgFolder = os.path.join(SpecificImgResultsPath, oriImgName[:-4] + " Results")
 		if not os.path.exists(SpecificImgFolder):
 			os.mkdir(SpecificImgFolder)
-		print("Diagnose 2")
 		SampleCellsFolder = os.path.join(SpecificImgFolder,"Sample_Cells")
 		if not os.path.exists(SampleCellsFolder):
 			os.mkdir(SampleCellsFolder)
-		print("Diagnose 3")
 		BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 		if not os.path.exists(BinarySave) or overwriteROIS or overwrite:
-			print("Diagnose 3.1")
 			img = cv.imreadmulti(fullpath, flags = -1)[1][ROI_Draw_Channel]
 			Dapi = proccessVisualImage(img)
 
@@ -1371,7 +1369,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			print("End Keras")
 			
 
-			print("Image ",ImageID, " of ", TotalImage,": Saveing a Sample of the Cells for")
+			print("Image ",ImageID, " of ", TotalImage,": Saveing a Sample of the Cells")
 			#Uncomment this to save x number of random cells (for survaying)
 			RandomSampler(cells, 100, SampleCellsFolder)
 
