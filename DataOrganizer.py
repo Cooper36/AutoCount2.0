@@ -14,23 +14,6 @@ class DataOrganizer(object):
 
 		self.filenameCol = self.columns[0]
 
-		# Get RB number from filename
-		term = 'RB'
-		search = 2
-		self.df['RB'] = df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
-		
-		"""term = ' S'
-		search = 2
-		self.df['Section Number'] = df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search], axis = 1)"""
-
-		self.df['Location'] = 'Not Found'
-
-		term = "LH"
-		self.df['Location'] = df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
-
-		term = "RH"
-		self.df['Location'] = df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
-
 
 	def strfinder(self, string, term, looklen):
 		#find a number in a substring of length looklen that trails term
@@ -49,7 +32,40 @@ class DataOrganizer(object):
 	    data = pivotdf.loc[sex, name]
 	    DataFrame.plot.bar(x=None, y=None, **kwargs)
 	'''
+	def PVTransplants(self):
+		"PV-Transplant-1_AnimalE_Slide05_Section2_ImageID-14115.tif"
+		term = 'Animal'
+		search = 1
+		self.df['Animal'] = self.df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
+		
+		term = 'Slide'
+		search = 2
+		self.df['Slide'] = self.df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
+		
+		term = 'Section'
+		search = 1
+		self.df['Section'] = self.df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
+	
+
 	def Cuprizone(self):
+		# Get RB number from filename
+		term = 'RB'
+		search = 2
+		self.df['RB'] = df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
+		
+		"""term = ' S'
+		search = 2
+		self.df['Section Number'] = df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search], axis = 1)"""
+
+		self.df['Location'] = 'Not Found'
+
+		term = "LH"
+		self.df['Location'] = df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
+
+		term = "RH"
+		self.df['Location'] = df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
+
+
 		term = "CC"
 		self.df['Location'] = df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
 		self.df['Location cont'] = 'NA'
@@ -126,6 +142,22 @@ class DataOrganizer(object):
 
 
 	def KSO_DCOLesion(self):
+		# Get RB number from filename
+		term = 'RB'
+		search = 2
+		self.df['RB'] = df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
+		
+		"""term = ' S'
+		search = 2
+		self.df['Section Number'] = df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search], axis = 1)"""
+
+		self.df['Location'] = 'Not Found'
+
+		term = "LH"
+		self.df['Location'] = df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
+
+		term = "RH"
+		self.df['Location'] = df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
 
 		self.df['Treatment'] = 'Not Specified'
 		self.df['dpl'] = 'Not Specified'
@@ -623,7 +655,7 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[1]
+setup = settings.folder_dicts[10]
 imagefolpath = setup['Path']
 Resultsfolpath = os.path.join(imagefolpath,'Results')
 Summarypath = os.path.join(Resultsfolpath,'Summary.csv')
@@ -656,7 +688,8 @@ ROINumber = setup['ROINumber']
 Summary = pd.read_csv(Summarypath)	
 dO = DataOrganizer(df = Summary, channel_names=namChannels , cell_types = cell_types_to_analyze )
 #dO.Cuprizone()
-dO.KSO_DCOLesion()
+#dO.KSO_DCOLesion()
+dO.PVTransplants()
 
 
 
