@@ -279,6 +279,35 @@ def getCells(Vischannels, Rawchannels, centroids, markers):
 
 	return cells
 
+def adjust_visual(array, set_points):
+	"""
+	average_val = np.average(array)
+	bitSP = 255 * set_point
+	dif = bitSP - average_val
+	if dif > 0:
+		array_adj = array + dif
+	elif dif < 0:
+		array_adj = array - dif
+	elif dif == 0:
+		array_adj = array
+	"""
+	array_adj = np.copy(array)
+	rmax = np.quantile(array_adj, set_points[1]) + (np.quantile(array_adj, set_points[1])*0.1)
+	rmin = np.quantile(array_adj, set_points[0]) - (np.quantile(array_adj, set_points[0])*0.1)
+	#rmax = math.floor(np.max(array) - (np.max(array)*set_points[1]))
+	#rmin = math.floor(np.min(array) + (np.min(array)*set_points[0]))
+	array_adj = np.where(array > rmax, rmax, array)
+	array_adj = np.where(array < rmin, rmin, array)
+	tmax = 255
+	tmin = 0
+
+	array_adj = ((array_adj - rmin) / (rmax - rmin)) * (tmax-tmin) + tmin
+
+	return array_adj
+
+
+	
+
 def adjust_gamma(image, gamma=1.0):
     # build a lookup table mapping the pixel values [0, 255] to
     # their adjusted gamma values
@@ -414,7 +443,7 @@ def MacLearnImgPrepper(cells):
 			i = 1
 			for i in range(len(namChannels)):
 				ch = namChannels[i]
-				if i > 0 and str(ch) != 'CC1':
+				if i > 0 and str(ch) != 'CC1' and ch != 'PLP':
 					blue = DAPI_ch
 					green = img[i]
 					red = img[i]
@@ -808,7 +837,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		df[Postivity_RankTitle] = 0
 		if i == 0:
 			df[Postivity_RankTitle] = np.where((df[IntensColumnTitle] > 0), 1, 0)
-		elif ch == 'CC1':
+		elif ch == 'CC1' | ch == 'PLP':
 			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 		else:
 			if useKeras:
@@ -1140,7 +1169,7 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 
 
 
-setup = settings.folder_dicts[10]
+setup = settings.folder_dicts[11]
 
 ImgFolderPath = setup['Path']
 
@@ -1251,10 +1280,12 @@ for oriImgName in os.listdir(ImgFolderPath):
 		if not os.path.exists(BinarySave) or overwriteROIS or overwrite:
 			img = cv.imreadmulti(fullpath, flags = -1)[1][ROI_Draw_Channel]
 			Dapi = proccessVisualImage(img)
-
 			Dapi = np.array(Dapi)
 			windowname = str(oriImgName) +" : Draw " + str(ROINumber) + " ROIs"
 			Dapi = cv.bitwise_not(Dapi)
+			
+			Dapi = adjust_visual(array = Dapi, set_points = [0.05,0.95])
+			Dapi = np.uint8(Dapi)
 			polyDr = PolygonDrawer(windowname, Dapi, ROINumber)
 			Lbinarr = polyDr.run()
 			
@@ -1399,6 +1430,8 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'OPC' : [['DAPI_ch', 1], ['CC1', 0], ['Olig2', 1]],
 					
 			'Mature Oligodendrocyte' : [['DAPI_ch', 1], ['CC1', 1], ['Olig2', 1]],
+
+			'PLP Mature Oligodendrocyte' : [['DAPI_ch', 1], ['PLP', 1]],
 
 			'NonOligo' : [['DAPI_ch', 1], ['Olig2', 0]],
 

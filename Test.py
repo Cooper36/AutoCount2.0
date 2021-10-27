@@ -1,7 +1,8 @@
-"""import numpy as np
+import numpy as np
 import sys
 import cv2 as cv
 import math
+"""
 length = [0] * 8
 np.set_printoptions(threshold=sys.maxsize, linewidth = 9999)
 
@@ -109,7 +110,7 @@ def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = [])
 showCentroids(images)
 """
 
-import tkinter as tk
+"""import tkinter as tk
 
 root = tk.Tk()
 
@@ -124,7 +125,7 @@ def ShowChoice():
 	root.destroy()
 
 tk.Label(root, 
-		text="""Skip this ROI? ROI will be set to 0""",
+		
 		justify = tk.LEFT,
 		padx = 20).pack()
 
@@ -141,4 +142,9 @@ for language, val in languages:
 
 root.mainloop()
 done = v.get()
-print(done)
+print(done)"""
+
+
+y = np.ones((5,5))
+y = y + 1
+print(y)
