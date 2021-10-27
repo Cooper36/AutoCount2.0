@@ -292,7 +292,7 @@ class Settings:
                 'checkfiles' : False,
             },
             {
-                'name' : '10_Transplant Test',
+                'name' : '10_Rich PV Transplants',
 
                 # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
                 'ROI_Draw_Channel' : 0,
@@ -315,8 +315,8 @@ class Settings:
                 'channels' : ["DAPI_ch","MBP","mCherry","hNA"],
 
                 # Path to folder containing images to be analyzed
-                #'Path' : "C:\\Users\\jjmc1\\Desktop\\Rich Transplants",
-                'Path' : "Y:\\People\\Rich\\Transplant_MBP-hNA\\Tiff",
+                'Path' : "/Volumes/labdata/People/Rich/Transplant_MBP-hNA/Tiff",
+                #'Path' : "Y:\\People\\Rich\\Transplant_MBP-hNA\\Tiff",
 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'Human Cell','Myelinating Human Cell'],
@@ -357,7 +357,7 @@ class Settings:
                 'cell_types_to_analyze' : ['DAPI'],
 
                 # Do you want to use the keras models (slow)
-                'useKeras' : True,
+                'useKeras' : False,
 
                 # Check files for uniformity? Good idea to do once
                 'checkfiles' : False,

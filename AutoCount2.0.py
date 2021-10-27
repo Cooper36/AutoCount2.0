@@ -5,7 +5,9 @@ print("Loading Packages")
 import cv2 as cv
 import sys
 
-import numpy as np 
+import numpy as np
+import matplotlib
+matplotlib.use("TkAgg")
 from matplotlib import pyplot as plt
 import xml.etree.ElementTree as ET
 import math
@@ -111,6 +113,7 @@ def showImages(images, titles='', save = 0, path = ' ', text_coords = []):
 	else:
 		plt.savefig(path, bbox_inches='tight')
 	plt.close()
+
 def thresholdSegmentation( 
     thresh, 
     img, 
@@ -837,7 +840,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		df[Postivity_RankTitle] = 0
 		if i == 0:
 			df[Postivity_RankTitle] = np.where((df[IntensColumnTitle] > 0), 1, 0)
-		elif ch == 'CC1' | ch == 'PLP':
+		elif ch == 'CC1' or ch == 'PLP':
 			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 		else:
 			if useKeras:
@@ -1169,7 +1172,7 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 
 
 
-setup = settings.folder_dicts[11]
+setup = settings.folder_dicts[10]
 
 ImgFolderPath = setup['Path']
 
@@ -1201,7 +1204,7 @@ checkfiles = setup['checkfiles']
 overwrite = False
 overwriteROIS = False
 overwriteCells_Pred = False
-overwriteProcessing = False
+overwriteProcessing = True
 
 debug = False
 debugThreshold = False
