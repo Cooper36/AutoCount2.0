@@ -215,7 +215,9 @@ def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = [])
 					plt.text(x, y, s, fontsize=12)
 	plt.tight_layout()
 	plt.suptitle("press 'Q' to move to next step", verticalalignment="bottom")
-	plt.show()
+	if debug or debugCellLocations:
+		plt.show()
+	plt.savefig(path, bbox_inches='tight')
 	plt.close()
 
 
@@ -1172,7 +1174,7 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 
 
 
-setup = settings.folder_dicts[10]
+setup = settings.folder_dicts[12]
 
 ImgFolderPath = setup['Path']
 
@@ -1370,9 +1372,6 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			centroids_x = np.array(centroids_x)
 			centroids_y = np.array(centroids_y)
-			
-			if debug:
-				showCentroids(Vischannels[Nuclei_Identification_Channel],centroids_x,centroids_y)
 
 			print("Image ",ImageID, " of ", TotalImage,": Getting Cell Images and making cells")
 			cells = []
@@ -1430,7 +1429,11 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			'OligoLineage' : [['DAPI_ch', 1], ['Olig2', 1]],
 
+			'OligoLineageRS' : [['DAPI_ch', 1], ['Olig2RS', 1]],
+
 			'OPC' : [['DAPI_ch', 1], ['CC1', 0], ['Olig2', 1]],
+
+			'OPCRS' : [['DAPI_ch', 1], ['PLP', 0], ['Olig2RS', 1]],
 					
 			'Mature Oligodendrocyte' : [['DAPI_ch', 1], ['CC1', 1], ['Olig2', 1]],
 
@@ -1463,16 +1466,17 @@ for oriImgName in os.listdir(ImgFolderPath):
 			print("Image ",ImageID, " of ", TotalImage,": Processing Results")
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 			
-			if debug or debugCellLocations:
-				oriImg = cv.imreadmulti(fullpath, flags = -1)
-				Vischannels =[]
-				for i in range(len(namChannels)):
-					Img = proccessVisualImage(oriImg[1][i])
+			
+			oriImg = cv.imreadmulti(fullpath, flags = -1)
+			Vischannels =[]
+			for i in range(len(namChannels)):
+				Img = proccessVisualImage(oriImg[1][i])
 
-					Vischannels.append(Img)
-				Vischannels = np.array(Vischannels)
+				Vischannels.append(Img)
+			Vischannels = np.array(Vischannels)
 
-				showCentroids(images = Vischannels, df = Resultsdf, titles = namChannels, save = 0)
+			FigureSavePath = os.path.join(SpecificImgFolder, "Cell_Identification.pdf")
+			showCentroids(images = Vischannels, path = FigureSavePath, df = Resultsdf, titles = namChannels, save = 0)
 
 		#clear Resultsdf
 		Resultsdf = pd.DataFrame()
