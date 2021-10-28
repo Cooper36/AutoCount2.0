@@ -192,7 +192,7 @@ def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = [])
 			ax.imshow(img,'gray')
 			colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 			
-			dotsize = 10
+			dotsize = 5
 			for j in range(len(celltypes)):
 				celltype = celltypes[j]
 				color = colors[j]
@@ -1001,6 +1001,8 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 			celldenstitle = 'Lesion '+ str(ROI) + ' ' + ch + ' Positive Cells Density (cells/mm^2)'
 			ModeIntenstitle = "Lesion " + str(ROI) + " Mode Intensity Value " + ch
 			ModeIntens = df[ModeIntenstitle][0]
+			print('mode')
+			print(ModeIntens)
 			RawIntenstitle = 'Lesion '+ str(ROI) + ' Raw Intensity ' + ch
 			RawIntens = df[RawIntenstitle][0]
 			meanIntenstitle = 'Lesion '+ str(ROI) + ' Mean Intensity ' + ch + ' (Sum Intensity/pixels^2)'

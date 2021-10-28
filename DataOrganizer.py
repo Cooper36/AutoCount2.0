@@ -32,6 +32,27 @@ class DataOrganizer(object):
 	    data = pivotdf.loc[sex, name]
 	    DataFrame.plot.bar(x=None, y=None, **kwargs)
 	'''
+	def Neostigmine7dplRoopa(self):
+		term = 'Slide'
+		search = 2
+		self.df['Slide'] = self.df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
+		
+		self.df['Treatment'] = 'NA'
+
+		termHD = "HighDose"
+		self.df['Treatment'] = self.df.apply(lambda row : termHD if termHD in row[self.filenameCol] else row['Treatment']  , axis = 1)
+
+		term = "HD"
+		self.df['Treatment'] = self.df.apply(lambda row : term if termHD in row[self.filenameCol] else row['Treatment']  , axis = 1)
+
+		term = "LowDose"
+		self.df['Treatment'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Treatment']  , axis = 1)
+
+		term = "Ctrl"
+		self.df['Treatment'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Treatment']  , axis = 1)
+
+
+	
 	def CuprizoneMNA(self):
 		'RB38_Cuprizone_MNA_S21-31_Section1_PosLHIC_ImageID-14610.tif'
 		# Get RB number from filename
