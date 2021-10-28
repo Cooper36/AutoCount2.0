@@ -24,6 +24,7 @@ import imageio
 import pandas as pd
 import random
 from scipy.stats import gaussian_kde
+from scipy import stats
 from keras.models import load_model
 import csv
 import tkinter as tk
@@ -331,7 +332,7 @@ def RandomSampler(cells, NumberWant, path):
 		cellimg = np.array(cells[randcellID]['cellimg'][1])
 		imageio.mimwrite(savepa,cellimg)
 
-def AddStats(Rawchannels, cells, labels, centroids, AreaStats, IntensityStats):
+def AddStats(Rawchannels, cells, labels, centroids, AreaStats, IntensityStats, modeStats):
 	#isolate the pixels of the nuclei and bakground regions using masking, the report area and intensity data for each channel
 	
 	AreaStatsPix = AreaStats[:,4]
@@ -426,7 +427,9 @@ def AddStats(Rawchannels, cells, labels, centroids, AreaStats, IntensityStats):
 				location = {
 							'location_int' : label, 
 							'Areas_info' : AreaStatsmm2,
-							'ROIintensities': IntensityStats
+							'Areas_infoPix' : AreaStatsPix,
+							'ROIintensities': IntensityStats,
+							'ROImodes': modeStats,
 							}
 
 		cell['stats'] = stats
@@ -539,6 +542,7 @@ def LesionFigSave(DAPIImg,UserROIs):
 	statsT = []
 	centroidsT = []
 	IntensityStatsT = []
+	modeStatsT = []
 
 	for i in range(len(UserROIs)):
 		bincanvas = np.zeros((smallheight,smallwidth), dtype= np.uint8)
@@ -558,16 +562,19 @@ def LesionFigSave(DAPIImg,UserROIs):
 		
 		output = cv.connectedComponentsWithStats(thresh1)
 		(numLabels, labels, stats, centroids) = output
-		IntensityStats = GeneralROIIntensity(Rawchannels, labels, centroids)
+		IntensityStats, modeStats = GeneralROIIntensity(Rawchannels, labels, centroids)
 		
 		if i == 0:
 			statsT.append(stats[0])
 			centroidsT.append(centroids[0])
 			IntensityStatsT.append(IntensityStats[0])
+			modeStatsT.append(modeStats[0])
+
 		numLabelsT = numLabelsT + 1
 		statsT = np.append(statsT,[stats[1]],axis= 0)
 		centroidsT = np.append(centroidsT,[centroids[1]],axis= 0)
 		IntensityStatsT.append(IntensityStats[1])
+		modeStatsT.append(modeStats[1])
 
 	labelsT = cv.resize(labelsT, (imgwidth, imgheight))
 	boarders = cv.resize(boarders, (imgwidth, imgheight))
@@ -576,11 +583,12 @@ def LesionFigSave(DAPIImg,UserROIs):
 	threshAll = np.uint8(threshAll)
 	outputBKG = cv.connectedComponentsWithStats(threshAll)
 	(numLabelsBKG, labelsBKG, statsBKG, centroidsBKG) = outputBKG
-	IntensityStatsBKG = GeneralROIIntensity(Rawchannels, labelsBKG, centroidsBKG)
+	IntensityStatsBKG , modeStatsBKG = GeneralROIIntensity(Rawchannels, labelsBKG, centroidsBKG)
 	IntensityStatsT[0] = IntensityStatsBKG[0]
+	modeStatsT[0] = modeStatsBKG[0]
 	
 	
-	outputT = (numLabelsT, labelsT, statsT, centroidsT, IntensityStatsT)
+	outputT = (numLabelsT, labelsT, statsT, centroidsT, IntensityStatsT, modeStatsT)
 	
 	FigureSavePath = os.path.join(SpecificImgFolder, "Lesion_Boarder_Visualization.pdf")
 	images = [ threshAll, boarders]
@@ -708,16 +716,25 @@ def Cells_to_df(cells):
 		if i == 0:
 			LesAreaNam = "Background Area (mm^2)"
 			LesTitles.append(LesAreaNam)
+			LesAreapixNam = "Background Area (pixels^2)"
+			LesTitles.append(LesAreapixNam)
 			for chnam in namChannels:
 				chInten = "Background Raw Intensity " + chnam
+				chmode = "Background Mode Intensity Value " + chnam
 				LesTitles.append(chInten)
+				LesTitles.append(chmode)
 
 		else :
 			LesAreaNam = "Lesion " + str(i) + " Area (mm^2)"
 			LesTitles.append(LesAreaNam)
+			LesAreapixNam = "Lesion " + str(i) + " Area (pixels^2)"
+			LesTitles.append(LesAreapixNam)
 			for chnam in namChannels:
 				chInten = "Lesion " + str(i) + " Raw Intensity " + chnam
 				LesTitles.append(chInten)
+				chmode = "Lesion " + str(i) + " Mode Intensity Value " + chnam
+				LesTitles.append(chmode)
+
 	columnTitles.extend(LesTitles)
 
 
@@ -747,12 +764,18 @@ def Cells_to_df(cells):
 				else:
 					cellAnno.extend([centIntensVal,centareaVal,allintensVal,allareaVal,otherintensVal,otherareaVal,bkgintensVal,bkgareaVal])
 			for i in range(numLabels+1):
-				areaPix = cell['location']['Areas_info'][i]
-				cellAnno.append(areaPix)
-				
+
+				areamm2 = cell['location']['Areas_info'][i]
+				cellAnno.append(areamm2)
+
+				areapix = cell['location']['Areas_infoPix'][i]
+				cellAnno.append(areapix)
+
 				for chnam in namChannels:
-					roiIntensity = cell['location']['ROIintensities'][i][ch_nam]
+					roiIntensity = cell['location']['ROIintensities'][i][chnam]
+					roiChmode = cell['location']['ROImodes'][i][chnam]
 					cellAnno.append(roiIntensity)
+					cellAnno.append(roiChmode)
 
 			cellsAnno.append(cellAnno)
 
@@ -921,6 +944,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 	Summary.append({'Original Filename': df['Original Filename'][0], 
 					'Background Area (mm^2)': df['Background Area (mm^2)'][0],
+					'Background Area (mm^2)': df['Background Area (mm^2)'][0],
 
 					})
 	cell_types = cell_types_to_analyze.copy()
@@ -933,10 +957,21 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		cellNumber = np.sum(df['Quantification'])
 		area = df['Background Area (mm^2)'][0]
 		density = cellNumber/area
+
+		areapix = df['Background Area (pixels^2)'][0]
+		RawIntenstitle = 'Background Raw Intensity ' + ch
+		ModeIntenstitle = 'Background Mode Intensity Value ' + ch
+		ModeIntens = df[ModeIntenstitle][0]
+		RawIntens = df[RawIntenstitle][0]
+		meanIntenstitle = 'Background Mean Intensity ' + ch + ' (Sum Intensity/pixels^2)'
+		meanIntens = RawIntens/areapix
 		cellnumtitle = 'Background ' + ch + ' Positive Cell Number'
 		celldenstitle = 'Background ' + ch + ' Positive Cells Density (cells/mm^2)'
 		Summary[-1][cellnumtitle] = cellNumber
 		Summary[-1][celldenstitle] = density
+		Summary[-1][RawIntenstitle] = RawIntens
+		Summary[-1][meanIntenstitle] = meanIntens
+		Summary[-1][ModeIntenstitle] = ModeIntens
 
 	for cell_type in cell_types:
 		df['Quantification'] = np.where((df[cell_type] == 1) & (df["location"] == 0), 1, 0)
@@ -951,18 +986,31 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 	for i in range(ROINumber):
 		ROI = i+1
 		lesTitle = 'Lesion '+ str(ROI) +' Area (mm^2)'
+		lesTitlepix = 'Lesion '+ str(ROI) +' Area (pixels^2)'
 		area = df[lesTitle][0]
+		areapix = df[lesTitlepix][0]
 		Summary[-1][lesTitle] = area
+		Summary[-1][lesTitlepix] = areapix
 		for y in range(len(namChannels)):
 			ch = namChannels[y]
 			Postivity_RankTitle = ch + " Postivity_Rank"
 			df['Quantification'] = np.where((df[Postivity_RankTitle] == 1) & (df["location"] == ROI), 1, 0)
 			cellNumber = np.sum(df['Quantification'])
 			density = cellNumber/area
-			cellnumtitle = 'Lesion '+ str(ROI) +' ' + ch + ' Positive Cell Number'
-			celldenstitle = 'Lesion '+ str(ROI) +' ' + ch + ' Positive Cells Density (cells/mm^2)'
+			cellnumtitle = 'Lesion '+ str(ROI) + ' ' + ch + ' Positive Cell Number'
+			celldenstitle = 'Lesion '+ str(ROI) + ' ' + ch + ' Positive Cells Density (cells/mm^2)'
+			ModeIntenstitle = "Lesion " + str(ROI) + " Mode Intensity Value " + ch
+			ModeIntens = df[ModeIntenstitle][0]
+			RawIntenstitle = 'Lesion '+ str(ROI) + ' Raw Intensity ' + ch
+			RawIntens = df[RawIntenstitle][0]
+			meanIntenstitle = 'Lesion '+ str(ROI) + ' Mean Intensity ' + ch + ' (Sum Intensity/pixels^2)'
+			meanIntens = RawIntens/areapix
+
 			Summary[-1][cellnumtitle] = cellNumber
 			Summary[-1][celldenstitle] = density
+			Summary[-1][RawIntenstitle] = RawIntens
+			Summary[-1][meanIntenstitle] = meanIntens
+			Summary[-1][ModeIntenstitle] = ModeIntens
 
 		for cell_type in cell_types:
 			df['Quantification'] = np.where((df[cell_type] == 1) & (df["location"] == ROI), 1, 0)
@@ -1112,6 +1160,7 @@ class PolygonDrawer(object):
 
 def GeneralROIIntensity(Rawchannels, labels, centroids):
 	intensitStats =[]
+	modeStats = []
 	for i in range(len(centroids)):
 		mask = np.copy(labels)
 		mask[mask > i] = 0
@@ -1119,15 +1168,21 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 		mask[mask == i] = 1
 		mask = np.uint8(mask)
 		chIntensity = {}
+		chmode = {}
 		for j in range(len(namChannels)):
 			chnam = namChannels[j]
 			channel = Rawchannels[j]
 			channelmasked = cv.bitwise_and(channel, channel, mask=mask)
 			intensity = np.sum(channelmasked)
+			counts, bins = np.histogram(channelmasked[channelmasked>0], bins=np.arange(65536))
+
+			mode = np.argmax(counts)
 			chIntensity[chnam] = intensity
+			chmode[chnam] = mode
 		
 		intensitStats.append(chIntensity)
-	return intensitStats
+		modeStats.append(chmode)
+	return [intensitStats, modeStats]
 
 """_____________________________________________________________________________________________________________________________"""
 
@@ -1174,7 +1229,7 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 
 
 
-setup = settings.folder_dicts[10]
+setup = settings.folder_dicts[11]
 
 ImgFolderPath = setup['Path']
 
@@ -1382,10 +1437,10 @@ for oriImgName in os.listdir(ImgFolderPath):
 			UserROIs = np.load(BinarySave, allow_pickle=True)
 			UserROIsOutput = LesionFigSave(DAPIImg=Vischannels[Nuclei_Identification_Channel], UserROIs = UserROIs )
 
-			(numLabels, labelsUserROI, stats, centroids, IntensityStats) = UserROIsOutput
+			(numLabels, labelsUserROI, stats, centroids, IntensityStats, modeStats) = UserROIsOutput
 			
 			print("Image ",ImageID, " of ", TotalImage,": Measuring Pixel Intensity for Each Cell")
-			cells = AddStats(Rawchannels = Rawchannels ,cells = cells, labels = labelsUserROI, centroids = centroids, AreaStats = stats, IntensityStats = IntensityStats)
+			cells = AddStats(Rawchannels = Rawchannels ,cells = cells, labels = labelsUserROI, centroids = centroids, AreaStats = stats, IntensityStats = IntensityStats, modeStats = modeStats)
 
 			print("Image ",ImageID, " of ", TotalImage,": Prepping Images for Keras")
 			cells = MacLearnImgPrepper(cells)
@@ -1466,7 +1521,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			print("Image ",ImageID, " of ", TotalImage,": Processing Results")
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 			
-			
+			"""
 			oriImg = cv.imreadmulti(fullpath, flags = -1)
 			Vischannels =[]
 			for i in range(len(namChannels)):
@@ -1477,7 +1532,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			FigureSavePath = os.path.join(SpecificImgFolder, "Cell_Identification.pdf")
 			showCentroids(images = Vischannels, path = FigureSavePath, df = Resultsdf, titles = namChannels, save = 0)
-
+			"""
 		#clear Resultsdf
 		Resultsdf = pd.DataFrame()
 

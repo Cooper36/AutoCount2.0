@@ -32,8 +32,211 @@ class DataOrganizer(object):
 	    data = pivotdf.loc[sex, name]
 	    DataFrame.plot.bar(x=None, y=None, **kwargs)
 	'''
+	def CuprizoneMNA(self):
+		'RB38_Cuprizone_MNA_S21-31_Section1_PosLHIC_ImageID-14610.tif'
+		# Get RB number from filename
+		term = 'RB'
+		search = 2
+		self.df['RB'] = self.df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
+		
+		term = 'MNA_S2'
+		self.df['AP'] = self.df.apply(lambda row : 'Anterior' if term in row[self.filenameCol] else 'Posterior'  , axis = 1)
+
+		term = 'Section'
+		search = 1
+		self.df['Section'] = self.df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search], axis = 1)
+
+		self.df['Hemisphere'] = 'NA'
+
+		term = "LH"
+		self.df['Hemisphere'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Hemisphere']  , axis = 1)
+
+		term = "RH"
+		self.df['Hemisphere'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Hemisphere']  , axis = 1)
+
+
+		self.df['Location'] = 'Not Found'
+
+		term = "CC"
+		self.df['Location'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
+
+		term = "CR"
+		self.df['Location'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
+
+		term = "IC"
+		self.df['Location'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
+		
+		term = "ICfas"
+		self.df['Location'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
+
+		self.df['Treatment'] = 'Not Specified'
+		self.df['dpl'] = 'Not Specified'
+
+		for RBGroup in RabbitDescriptions.keys():
+			term = RBGroup
+			self.df['Treatment'] = self.df.apply(lambda row : term if row['RB'] in RabbitDescriptions[RBGroup][1] else row['Treatment']  , axis = 1)
+			self.df['dpl'] = self.df.apply(lambda row : RabbitDescriptions[RBGroup][0] if row['RB'] in RabbitDescriptions[RBGroup][1] else row['dpl']  , axis = 1)
+		
+		print(self.df.columns)
+		
+
+		CCgraphdf = self.df
+		#print(CCgraphdf['Treatment'].values)
+		Treatment = sorted(set(CCgraphdf['Treatment'].values))
+		CCgraphdf.reset_index(inplace=True)
+		CCgraphdf['ValueNumber'] = "Not Stratified"
+		print(Treatment)
+		#add individual value numbers for stratification
+		for i in Treatment:
+			dpldf = CCgraphdf[CCgraphdf['Treatment'] == i]
+			val = 1
+
+			for index in dpldf.index:
+				CCgraphdf.loc[index,'ValueNumber'] = val
+				val = val+1
+		
+		CCgraphdf.reset_index(inplace=True) 
+		CCgraphdf.set_index(['Treatment', "RB"], inplace=True)	
+
+		Savename = "Test.csv"
+		CsvSave = os.path.join(SaveLoc, Savename)
+		CCgraphdf.to_csv(CsvSave, index=True)
+
+		print(CCgraphdf)
+
+
+		#Per channel density over time
+		for stain in self.channel_names:
+			values = []
+			SEMTitles = []
+			SEMs = []
+			countsTitles = []
+			counts = []
+
+
+			#get column titles for all ROIs and calculate SEM/count for summarized csv
+			for i in range(ROINumber+1):
+				if i == 0:
+					Densitytitle = 'Background Mean Intensity ' + stain + " (Sum Intensity/pixels^2)"
+					Series = CCgraphdf[Densitytitle]
+					SEMTitles.append('Bkg '+stain+' SEM')
+					SEMs.append(Series.groupby(by=['Treatment']).sem())
+					countsTitles.append('Bkg '+stain+' counts')
+					counts.append(Series.groupby(by=['Treatment']).size())
+				else :	
+					Densitytitle = 'Lesion '+ str(i) +' Mean Intensity ' + stain + ' (Sum Intensity/pixels^2)'
+					Series = CCgraphdf[Densitytitle]
+					SEMTitles.append('Lesion '+str(i)+' SEM')
+					SEMs.append(Series.groupby(by=['Treatment']).sem())
+					countsTitles.append('Lesion '+str(i)+' '+stain+' counts')
+					counts.append(Series.groupby(by=['Treatment']).size())
+				values.append(Densitytitle)
+
+
+			#make pivot table
+			pivoted = CCgraphdf.pivot_table(index=['Treatment'], values = values, aggfunc='mean')
+
+			#save graph with mean and SEM
+			ax = pivoted.plot(kind="bar", yerr=SEMs,capsize=5)
+			Savename = stain + " Average_Density_per_dpl.png"
+			ax.set_title(Savename)
+			plt.xticks(rotation=0)
+			plt.legend(loc ='lower left')
+			plt.ylabel( stain +' Density (cell/mm^2)')
+			if debug:
+				plt.show()
+			figSave = os.path.join(ChannelSave, Savename)
+			plt.savefig(figSave, bbox_inches='tight')
+
+			#Add SEMs and counts to Summary csv
+			for i in range(len(SEMTitles)):
+				pivoted[SEMTitles[i]] = SEMs[i]
+				pivoted[countsTitles[i]] = counts[i]
+			#Reorder columns for easy copy and paste into Prism
+			reorder = []
+			for i in range(len(values)):
+				reorder.extend([values[i], SEMTitles[i], countsTitles[i]])
+
+			pivoted = pivoted.reindex(reorder, axis=1)
+
+
+			#Save Relative Summay csv
+			Savename = stain + " Summary stats.csv"
+			CsvSave = os.path.join(ChannelSave, Savename)
+			pivoted.to_csv(CsvSave, index=True)
+
+
+			#Create individual values csv
+			Pivcolumns = ['ValueNumber']
+			pivoted = CCgraphdf.pivot_table(index=['Treatment'], columns = Pivcolumns,  values = values, aggfunc='mean')
+
+			#Save individual value csv
+			Savename = stain + " individual values.csv"
+			CsvSave = os.path.join(ChannelSave, Savename)
+			pivoted.to_csv(CsvSave, index=True)
+
+			
+
+		for stain in self.channel_names:
+			values = []
+			SEMTitles = []
+			SEMs = []
+			countsTitles = []
+			counts = []
+
+
+			#get column titles for all ROIs and calculate SEM/count for summarized csv
+			for i in range(ROINumber+1):
+				if i > 0:
+					Densitytitle = 'Lesion '+ str(i) +' Mean Intensity ' + stain + ' (Sum Intensity/pixels^2)'
+					Series = CCgraphdf[Densitytitle]
+					SEMTitles.append('Lesion '+str(i)+' SEM')
+					SEMs.append(Series.groupby(by=['Treatment']).sem())
+					countsTitles.append('Lesion '+str(i)+' '+stain+' counts')
+					counts.append(Series.groupby(by=['Treatment']).size())
+					values.append(Densitytitle)
+
+
+			pivoted = CCgraphdf.pivot_table(index=['Treatment'], columns = ['Location'], values = values, aggfunc='mean')
+			Savename = stain + " Grouped.csv"
+			CsvSave = os.path.join(ChannelSave, Savename)
+			pivoted.to_csv(CsvSave, index=True)
+
+			ax = pivoted.plot(kind="bar",capsize=5)
+			ax.set_title(Savename)
+			plt.xticks(rotation=0)
+			plt.legend(loc ='lower left')
+			plt.ylabel( stain +' Mean Intensity (Sum Intensity/pixels^2)')
+			Savename = stain + " Grouped.png"
+			figSave = os.path.join(ChannelSave, Savename)
+			plt.savefig(figSave, bbox_inches='tight')
+			"""
+			#save graph with mean and SEM
+			ax = pivoted.plot(kind="bar", yerr=SEMs,capsize=5)
+			Savename = stain + " Average_Density_per_dpl.png"
+			ax.set_title(Savename)
+			plt.xticks(rotation=0)
+			plt.legend(loc ='lower left')
+			plt.ylabel( stain +' Density (cell/mm^2)')
+			if debug:
+				plt.show()
+			figSave = os.path.join(ChannelSave, Savename)
+			plt.savefig(figSave, bbox_inches='tight')
+
+			#Add SEMs and counts to Summary csv
+			for i in range(len(SEMTitles)):
+				pivoted[SEMTitles[i]] = SEMs[i]
+				pivoted[countsTitles[i]] = counts[i]
+			#Reorder columns for easy copy and paste into Prism
+			reorder = []
+			for i in range(len(values)):
+				reorder.extend([values[i], SEMTitles[i], countsTitles[i]])
+
+			pivoted = pivoted.reindex(reorder, axis=1)
+			"""
+
 	def PVTransplants(self):
-		"PV-Transplant-1_AnimalE_Slide05_Section2_ImageID-14115.tif"
+		
 		term = 'Animal'
 		search = 1
 		self.df['Animal'] = self.df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
@@ -44,15 +247,15 @@ class DataOrganizer(object):
 		
 		term = 'Section'
 		search = 1
-		self.df['Section'] = self.df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
-	
+		self.df['Section'] = self.df.apply(lambda row : str(int(row['Slide']) + (10*(1-int(row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip())))), axis = 1)
+		print(self.df['Section'])
 
 	def Cuprizone(self):
 		# Get RB number from filename
 		term = 'RB'
 		search = 2
 		self.df['RB'] = df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
-		
+
 		"""term = ' S'
 		search = 2
 		self.df['Section Number'] = df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search], axis = 1)"""
@@ -98,7 +301,7 @@ class DataOrganizer(object):
 			index = ["Treatment", "RB"]
 			pivoted = CCgraphdf.pivot_table(index=index, columns = 'Location', values =  Densitytitle, aggfunc='mean')
 			
-			Savename = stain + " Average_Density_per_Loc.csv"
+			Savename = stain + " Mean .csv"
 			CsvSave = os.path.join(SaveLoc, Savename)
 			pivoted.to_csv(CsvSave, index=True)
 
@@ -183,8 +386,9 @@ class DataOrganizer(object):
 				CCgraphdf.loc[index,'ValueNumber'] = val
 				val = val+1
 		
-		CCgraphdf.reset_index(inplace=True)
+		CCgraphdf.reset_index(inplace=True) 
 		CCgraphdf.set_index(['dpl', "RB"], inplace=True)		
+
 
 		"""_____________________________________________________________________________________________________________________________"""
 
@@ -655,7 +859,7 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[10]
+setup = settings.folder_dicts[11]
 imagefolpath = setup['Path']
 Resultsfolpath = os.path.join(imagefolpath,'Results')
 Summarypath = os.path.join(Resultsfolpath,'Summary.csv')
@@ -689,7 +893,8 @@ Summary = pd.read_csv(Summarypath)
 dO = DataOrganizer(df = Summary, channel_names=namChannels , cell_types = cell_types_to_analyze )
 #dO.Cuprizone()
 #dO.KSO_DCOLesion()
-dO.PVTransplants()
+#dO.PVTransplants()
+dO.CuprizoneMNA()
 
 
 
