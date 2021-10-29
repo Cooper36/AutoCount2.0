@@ -179,6 +179,12 @@ class Settings:
             {
                 'name' : '6_SettingParametersDCO',
 
+                # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
+                'ROI_Draw_Channel' : 0,
+
+                # Which channel to use for identifying nuclei, base 0
+                'Nuclei_Identification_Channel' : 0,
+
                 # Define size of individual cell images (in pixels, defines both height and width, so a square)
                 'cropsize' : 46,
 

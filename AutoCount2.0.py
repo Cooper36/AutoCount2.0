@@ -443,7 +443,7 @@ def MacLearnImgPrepper(cells):
 		skipped = cell['skipped']
 		#cellimg[0] is the raw image, cellimg[1] is the processed image
 		if skipped == "No":
-			img = cell['cellimg'][0]
+			img = cell['cellimg'][1]
 			#print(img.shape)
 			DAPI_ch = img[Nuclei_Identification_Channel]
 			RGBs = {}
@@ -469,7 +469,7 @@ def MacLearnImgPrepper(cells):
 					RGBs[namChannels[i]] = rgb
 				else:
 					blue = DAPI_ch
-					green = img[i]
+					green = adjust_gamma(img[i],gamma = 0.75)
 					red = img[-1]
 					rgb = []
 					rgb.append(cv.merge((blue,green,red)))
@@ -1229,7 +1229,7 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 
 
 
-setup = settings.folder_dicts[14]
+setup = settings.folder_dicts[6]
 
 ImgFolderPath = setup['Path']
 
@@ -1258,7 +1258,7 @@ scale = setup['scale']
 checkfiles = setup['checkfiles']
 
 
-overwrite = False
+overwrite = True
 overwriteROIS = False
 overwriteCells_Pred = False
 overwriteProcessing = True
@@ -1427,6 +1427,12 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			centroids_x = np.array(centroids_x)
 			centroids_y = np.array(centroids_y)
+			Vischannels = []
+			for i in range(len(namChannels)):
+				Img = proccessVisualImage(oriImg[1][i])
+				Img = cv.bitwise_not(Img)
+				Vischannels.append(Img)
+			Vischannels = np.array(Vischannels)
 
 			print("Image ",ImageID, " of ", TotalImage,": Getting Cell Images and making cells")
 			cells = []
@@ -1441,6 +1447,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			
 			print("Image ",ImageID, " of ", TotalImage,": Measuring Pixel Intensity for Each Cell")
 			cells = AddStats(Rawchannels = Rawchannels ,cells = cells, labels = labelsUserROI, centroids = centroids, AreaStats = stats, IntensityStats = IntensityStats, modeStats = modeStats)
+
 
 			print("Image ",ImageID, " of ", TotalImage,": Prepping Images for Keras")
 			cells = MacLearnImgPrepper(cells)
