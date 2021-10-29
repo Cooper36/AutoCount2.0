@@ -847,7 +847,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		#assuming most will be about 1
 		#RelMean = np.mean(df[RelNewcolumnTitle])
 		#RelStd = np.std(df[RelNewcolumnTitle])		
-		RelIntensThresh = 5
+		RelIntensThresh = 1.8
 		RelThreshedTitle = ch + " RelThreshed"
 		df[RelThreshedTitle] = np.where((df[RelNewcolumnTitle] >= RelIntensThresh), 1, 0)
 
@@ -1001,8 +1001,6 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 			celldenstitle = 'Lesion '+ str(ROI) + ' ' + ch + ' Positive Cells Density (cells/mm^2)'
 			ModeIntenstitle = "Lesion " + str(ROI) + " Mode Intensity Value " + ch
 			ModeIntens = df[ModeIntenstitle][0]
-			print('mode')
-			print(ModeIntens)
 			RawIntenstitle = 'Lesion '+ str(ROI) + ' Raw Intensity ' + ch
 			RawIntens = df[RawIntenstitle][0]
 			meanIntenstitle = 'Lesion '+ str(ROI) + ' Mean Intensity ' + ch + ' (Sum Intensity/pixels^2)'
@@ -1231,7 +1229,7 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 
 
 
-setup = settings.folder_dicts[11]
+setup = settings.folder_dicts[14]
 
 ImgFolderPath = setup['Path']
 
@@ -1276,7 +1274,7 @@ debugcells = False
 debugLesionIdenification1 = False
 debugLesionIdenification2 = False
 debugProcessRawResults = False
-debugCellLocations = False
+debugCellLocations = True
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
 Summary = []
@@ -1523,7 +1521,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			print("Image ",ImageID, " of ", TotalImage,": Processing Results")
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 			
-			"""
+			
 			oriImg = cv.imreadmulti(fullpath, flags = -1)
 			Vischannels =[]
 			for i in range(len(namChannels)):
@@ -1534,7 +1532,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			FigureSavePath = os.path.join(SpecificImgFolder, "Cell_Identification.pdf")
 			showCentroids(images = Vischannels, path = FigureSavePath, df = Resultsdf, titles = namChannels, save = 0)
-			"""
+			
 		#clear Resultsdf
 		Resultsdf = pd.DataFrame()
 
