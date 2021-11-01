@@ -1229,8 +1229,8 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 
 
 
-setup = settings.folder_dicts[6]
-
+setup = settings.folder_dicts[12]
+Dataname = setup['name']
 ImgFolderPath = setup['Path']
 
 ROI_Draw_Channel = setup['ROI_Draw_Channel']
@@ -1258,7 +1258,7 @@ scale = setup['scale']
 checkfiles = setup['checkfiles']
 
 
-overwrite = True
+overwrite = False
 overwriteROIS = False
 overwriteCells_Pred = False
 overwriteProcessing = True
@@ -1274,7 +1274,7 @@ debugcells = False
 debugLesionIdenification1 = False
 debugLesionIdenification2 = False
 debugProcessRawResults = False
-debugCellLocations = True
+debugCellLocations = False
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
 Summary = []
@@ -1286,7 +1286,7 @@ ResultsFolderPath = os.path.join(ImgFolderPath,"Results")
 if not os.path.exists(ResultsFolderPath):
 	os.mkdir(ResultsFolderPath)
 
-SummarySave = os.path.join(ResultsFolderPath,'Summary.csv')
+SummarySave = os.path.join(ResultsFolderPath,Dataname + '_Summary.csv')
 
 SpecificImgResultsPath = os.path.join(ResultsFolderPath,"Image_Specific_Results")
 if not os.path.exists(SpecificImgResultsPath):
@@ -1520,12 +1520,6 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'Myelinating Human Cell' : [['DAPI_ch', 1], ['hNA', 1], ['MBP', 1]],
 
 			}
-			#open existing summary as list of dictionaries
-			if os.path.exists(SummarySave):
-				sumthere = True
-				with open(SummarySave) as f:
-				    Summary = [{k : v for k, v in row.items()} for row in csv.DictReader(f, skipinitialspace=True)]
-			print("Image ",ImageID, " of ", TotalImage,": Processing Results")
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 			
 			

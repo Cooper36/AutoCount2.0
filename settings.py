@@ -424,7 +424,7 @@ class Settings:
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
                 # Check files for uniformity? Good idea to do once
-                'checkfiles' : True,
+                'checkfiles' : False,
             },
             {
                 'name' : '14_Cuprizone DCO',
