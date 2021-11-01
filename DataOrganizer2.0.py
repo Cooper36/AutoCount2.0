@@ -252,7 +252,7 @@ setup = settings.folder_dicts[14]
 Dataname = setup['name']
 imagefolpath = setup['Path']
 Resultsfolpath = os.path.join(imagefolpath,'Results')
-Summarypath = os.path.join(Resultsfolpath,'Summary.csv')
+Summarypath = os.path.join(Resultsfolpath,Dataname+'_Summary.csv')
 
 head, tail = os.path.split(Summarypath)
 SaveLoc = os.path.join(head,"Summary_DataVis")

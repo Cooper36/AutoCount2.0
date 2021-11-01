@@ -1229,7 +1229,7 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 
 
 
-setup = settings.folder_dicts[12]
+setup = settings.folder_dicts[14]
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
 
@@ -1274,7 +1274,7 @@ debugcells = False
 debugLesionIdenification1 = False
 debugLesionIdenification2 = False
 debugProcessRawResults = False
-debugCellLocations = False
+debugCellLocations = True
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
 Summary = []
