@@ -469,7 +469,8 @@ def MacLearnImgPrepper(cells):
 					RGBs[namChannels[i]] = rgb
 				else:
 					blue = DAPI_ch
-					green = adjust_gamma(img[i],gamma = 0.75)
+					#green = adjust_gamma(img[i],gamma = 0.75)
+					green = img[i]
 					red = img[-1]
 					rgb = []
 					rgb.append(cv.merge((blue,green,red)))
@@ -1229,7 +1230,7 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 
 
 
-setup = settings.folder_dicts[14]
+setup = settings.folder_dicts[6]
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
 
@@ -1260,7 +1261,7 @@ checkfiles = setup['checkfiles']
 
 overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = False
+overwriteCells_Pred = True
 overwriteProcessing = True
 
 debug = False
@@ -1274,7 +1275,7 @@ debugcells = False
 debugLesionIdenification1 = False
 debugLesionIdenification2 = False
 debugProcessRawResults = False
-debugCellLocations = True
+debugCellLocations = False
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
 Summary = []
@@ -1427,12 +1428,13 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			centroids_x = np.array(centroids_x)
 			centroids_y = np.array(centroids_y)
-			Vischannels = []
+			"""Vischannels = []
 			for i in range(len(namChannels)):
 				Img = proccessVisualImage(oriImg[1][i])
 				Img = cv.bitwise_not(Img)
 				Vischannels.append(Img)
-			Vischannels = np.array(Vischannels)
+			Vischannels = np.array(Vischannels)"""
+			Vischannels = cv.bitwise_not(Vischannels)
 
 			print("Image ",ImageID, " of ", TotalImage,": Getting Cell Images and making cells")
 			cells = []

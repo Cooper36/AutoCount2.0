@@ -248,7 +248,7 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[14]
+setup = settings.folder_dicts[6]
 Dataname = setup['name']
 imagefolpath = setup['Path']
 Resultsfolpath = os.path.join(imagefolpath,'Results')

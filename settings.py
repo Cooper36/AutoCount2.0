@@ -199,7 +199,8 @@ class Settings:
                 'channels' : ["DAPI_ch","CC1","Blank","Olig2"],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "C:\\Users\\jjmc1\\Desktop\\Control KSO DCO\\DCO",
+                #'Path' : "C:\\Users\\jjmc1\\Desktop\\Control KSO DCO\\DCO",
+                'Path' : "/Users/jjmc/Desktop/Control KSO DCO/DCO",
 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo', 'CC1+Olig2-'],
