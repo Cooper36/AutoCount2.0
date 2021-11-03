@@ -219,7 +219,7 @@ def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = [])
 					plt.text(x, y, s, fontsize=12)
 	plt.tight_layout()
 	plt.suptitle("press 'Q' to move to next step", verticalalignment="bottom")
-	if save == 0:
+	if debugCellLocations:
 		plt.show()
 	else:
 		plt.savefig(path, bbox_inches='tight')
@@ -1210,7 +1210,7 @@ def GeneralROIIntensity(oriImg, labels, centroids):
 
 
 
-setup = settings.folder_dicts[6]
+setup = settings.folder_dicts[14]
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
 

@@ -451,6 +451,7 @@ class Settings:
                 'ROINumber' : 1,
                 # Name each channel present (must be consistent for all images)
                 'channels' : ["DAPI_ch","CC1","594_ch","Olig2"],
+                'gammas' : [0.75,0.75,1,0.75],
                 # Path to folder containing images to be analyzed
                 'Path' : "/Users/jjmc/Desktop/Working Folder/Normal and Cuprizone DCO/Images",
                 # Cell types to analyze
