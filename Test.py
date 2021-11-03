@@ -145,6 +145,14 @@ done = v.get()
 print(done)"""
 
 
-y = np.ones((5,5))
-y = y + 1
-print(y)
+import tifffile as tiff
+import numpy as np
+ar = np.ones((50,50), dtype=np.uint16)
+print(ar.dtype)
+tiff.imsave('new.tiff', a)
+np.max(ar)
+
+
+
+
+

@@ -30,6 +30,7 @@ import csv
 import tkinter as tk
 
 from settings import Settings
+import tifffile as tiff
 
 settings = Settings()
 
@@ -49,28 +50,30 @@ def imageThreshold(img,):
     #img = cv.medianBlur(img,5)
     img_blur = cv.GaussianBlur(img,(5,5),0)
 
-    #ret,th1 = cv.threshold(img_blur,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
+    ret,th1 = cv.threshold(img_blur,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
     th2 = cv.adaptiveThreshold(img_blur,255,cv.ADAPTIVE_THRESH_MEAN_C,
         cv.THRESH_BINARY,11,2)
-    #th3 = cv.adaptiveThreshold(img_blur,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,
-        #cv.THRESH_BINARY,11,2)
+    th3 = cv.adaptiveThreshold(img_blur,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv.THRESH_BINARY,11,2)
     titles = ['Original Image (Blur)', 'Global Otsu Thresholding',
         'Adaptive Mean Thresholding', 'Adaptive Gaussian Thresholding']
-    #images = [img_blur, th1, th2, th3]
+    images = [img_blur, th1, th2, th3]
 
-    if debug:
+    if debug or debugThreshold:
         showImages(images, titles)
 
-    return cv.bitwise_not(th2)
+    return cv.bitwise_not(th1)
 
 def proccessVisualImage(img):
     """Function to proccess a flourescence image with nuclear localized signal (e.g. DAPI)."""
     # normalize (stretch histogram and convert to 8-bit)
+
     img = cv.normalize(src=img, dst=None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
+    img = np.uint8(img)
     # invert image 
     # FUTURE: consider other normalization strategies
-    adjust_gamma(img, gamma= 0.35)
-    img = cv.bitwise_not(img)
+    
+    #img = cv.bitwise_not(img)
     return img
 
 def showImages(images, titles='', save = 0, path = ' ', text_coords = []):
@@ -118,9 +121,9 @@ def showImages(images, titles='', save = 0, path = ' ', text_coords = []):
 def thresholdSegmentation( 
     thresh, 
     img, 
-    opening_kernel = np.ones((1,1),np.uint8),
+    opening_kernel = np.ones((3,3),np.uint8),
     opening_iterations = 2, 
-    background_kernel = np.ones((1,1),np.uint8),
+    background_kernel = np.ones((3,3),np.uint8),
     background_iterations = 1,
     ):
     """SEGMENTATION and WATERSHED"""
@@ -216,25 +219,25 @@ def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = [])
 					plt.text(x, y, s, fontsize=12)
 	plt.tight_layout()
 	plt.suptitle("press 'Q' to move to next step", verticalalignment="bottom")
-	if debug or debugCellLocations:
+	if save == 0:
 		plt.show()
-	plt.savefig(path, bbox_inches='tight')
+	else:
+		plt.savefig(path, bbox_inches='tight')
 	plt.close()
 
 
 
 
-def getCells(Vischannels, Rawchannels, centroids, markers):
+def getCells(oriImg, visoriImg, centroids, markers):
 	"""Returns the image of each cell, and builds cells as a dictionary"""
 	for i in range(len(centroids)):
 	#print(type(channels))
 	#for i in range(100):
-		Viscellimg = []
-		Rawcellimg = []
+		cellimg = []
 		X = centroids[i][0]
 		Y = centroids[i][1]
 		#print(X,Y)
-		shape = Vischannels[Nuclei_Identification_Channel].shape
+		shape = oriImg[Nuclei_Identification_Channel].shape
 		width = shape[1]
 		height = shape[0]
 
@@ -242,30 +245,22 @@ def getCells(Vischannels, Rawchannels, centroids, markers):
 		x_max = math.ceil((X + cropsize/2).astype(int))
 		y_min = math.ceil((Y - cropsize/2).astype(int))
 		y_max = math.ceil((Y + cropsize/2).astype(int))
-		#print(x_min,x_max,y_min,y_max)
-		#if x_min < 0 or x_max < 0 or y_min < 0 or y_max < 0:
+
 		if x_min < 0 or x_max > width or y_min < 0 or y_max > height:
-			for y in range(len(namChannels)):
-				blank = np.zeros((cropsize,cropsize,1), np.uint8)
-				Viscellimg.append(blank)
-			#print("exclude")
+			cellimg.append(np.zeros((len(namChannels),cropsize,cropsize), np.uint8))
+			cellimg.append(np.zeros((len(namChannels),cropsize,cropsize), np.uint8))
 			skipped = "Yes"
 		else:
-			for y in range(len(namChannels)):
-				Visstain = Vischannels[y][y_min:y_max,x_min:x_max]
-				Rawstain = Rawchannels[y][y_min:y_max,x_min:x_max]
-				cellMarkers = markers[y_min:y_max,x_min:x_max]
-
-				Viscellimg.append(Visstain)
-				Rawcellimg.append(Rawstain)
-				skipped = "No"
+			#shallow copy of cells
+			cellimg.append(oriImg[:,y_min:y_max,x_min:x_max])
+			cellimg.append(visoriImg[:,y_min:y_max,x_min:x_max])
+			cellMarkers = markers[y_min:y_max,x_min:x_max]
+			skipped = "No"
 
 
 		
 		filename = 'Cell ID ' + str(i) + '.tif'
 		savepa = os.path.join(SampleCellsFolder,filename)
-		Viscellimg = np.array(Viscellimg)
-		Rawcellimg = np.array(Rawcellimg)
 		
 		#Uncomment this to save ALL cell images
 		#imageio.mimwrite(savepa,cellimg)
@@ -275,7 +270,7 @@ def getCells(Vischannels, Rawchannels, centroids, markers):
 				'oriImgName' : oriImgName,
 				'CellID' :  str(i),
 				'centroids' : centroids[i], 
-				'cellimg' : [Rawcellimg,Viscellimg],
+				'cellimg' : cellimg,
 				'cellMarkers': cellMarkers, 
 				'skipped' : skipped
 				}
@@ -312,7 +307,16 @@ def adjust_visual(array, set_points):
 	return array_adj
 
 
-	
+def gammaCorrect(image, gamma: float=-1):
+	"""Gamma correct."""
+	if gamma == -1:
+		return image
+	max_pixel = np.max(image)
+	corrected_image = image
+	corrected_image = (corrected_image / max_pixel) 
+	corrected_image = np.power(corrected_image, gamma)
+	corrected_image = corrected_image * max_pixel
+	return corrected_image
 
 def adjust_gamma(image, gamma=1.0):
     # build a lookup table mapping the pixel values [0, 255] to
@@ -329,10 +333,10 @@ def RandomSampler(cells, NumberWant, path):
 	for randcellID in randomlist:
 		filename = cells[randcellID]['CellID'] + '.tif'
 		savepa = os.path.join(path,filename)
-		cellimg = np.array(cells[randcellID]['cellimg'][1])
-		imageio.mimwrite(savepa,cellimg)
+		cellimg = cells[randcellID]['cellimg']
+		tiff.imsave(savepa, cellimg)
 
-def AddStats(Rawchannels, cells, labels, centroids, AreaStats, IntensityStats, modeStats):
+def AddStats(oriImg, cells, labels, centroids, AreaStats, IntensityStats, modeStats):
 	#isolate the pixels of the nuclei and bakground regions using masking, the report area and intensity data for each channel
 	
 	AreaStatsPix = AreaStats[:,4]
@@ -345,6 +349,7 @@ def AddStats(Rawchannels, cells, labels, centroids, AreaStats, IntensityStats, m
 
 	for cell in cells:
 		skipped = cell['skipped']
+		#16 bit cellimg
 		img = cell['cellimg'][0]
 
 		if skipped == "No":
@@ -386,21 +391,6 @@ def AddStats(Rawchannels, cells, labels, centroids, AreaStats, IntensityStats, m
 				backgroundArea = np.sum(invertMask)
 				#print(backgroundArea)
 
-
-				#Alternative masking method
-				""" 
-				src = channel
-				mask = centMarker/1
-				print(mask.dtype, mask.min(), mask.max())
-				dst = src * mask
-				nucleiCent = dst.astype(np.uint8)
-				
-				print(channel)
-				print(" ")
-				print(otherMarker)
-				print(" ")
-				"""
-
 				nucleiCent = cv.bitwise_and(channel, channel, mask=centMarker)
 				centIntensity = np.sum(nucleiCent)
 
@@ -441,49 +431,39 @@ def MacLearnImgPrepper(cells):
 	#Takes the cell image and makes an RGB with blue being dapi and green and red being one of the channels
 	for cell in cells:
 		skipped = cell['skipped']
-		#cellimg[0] is the raw image, cellimg[1] is the processed image
 		if skipped == "No":
-			img = cell['cellimg'][1]
-			#print(img.shape)
+			#raw
+
+			img = np.copy(cell['cellimg'][1])
+
+			#img = (img/256).astype('uint8')
+			
 			DAPI_ch = img[Nuclei_Identification_Channel]
 			RGBs = {}
 		
-			i = 1
 			for i in range(len(namChannels)):
 				ch = namChannels[i]
-				if i > 0 and str(ch) != 'CC1' and ch != 'PLP':
-					blue = DAPI_ch
-					green = img[i]
-					red = img[i]
-					rgb = []
-					rgb.append(cv.merge((blue,green,red)))
+				
+				if i > 0 :
+					if str(ch) == 'CC1' or str(ch) == 'PLP':
+						blue = DAPI_ch
+						#green = np.uint8(gammaCorrect(img[i],gamma = gammas[i]))
+						green = img[i]
+						#to correct for gradients in staining intensity, make the max pixel in every cell image 127 (half max intensity of 8 bit image)
+						green = cv.normalize(src=green, dst=None, alpha=0, beta=127, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
+						red = img[-1]
+
+					else:
+						blue = DAPI_ch
+						green = img[i]
+						red = img[i]
+						
+					chrgb = cv.merge([blue, green, red])
 					
-
 					if debugImgPrepper or debug:
-						print(i)
-						print(rgb[0].shape)
-						print(rgb[0])
-						cv.imshow("sfsf", rgb[0])
-						cv.waitKey(0)
+						showImages([blue, green, red],['1','2','3'])
 
-					RGBs[namChannels[i]] = rgb
-				else:
-					blue = DAPI_ch
-					#green = adjust_gamma(img[i],gamma = 0.75)
-					green = img[i]
-					red = img[-1]
-					rgb = []
-					rgb.append(cv.merge((blue,green,red)))
-					
-
-					if debugImgPrepper or debug:
-						print(i)
-						print(rgb[0].shape)
-						print(rgb[0])
-						cv.imshow("sfsf", rgb[0])
-						cv.waitKey(0)
-
-					RGBs[namChannels[i]] = rgb
+					RGBs[namChannels[i]] = [chrgb]
 
 		cell['RGBs'] = RGBs
 
@@ -563,7 +543,7 @@ def LesionFigSave(DAPIImg,UserROIs):
 		
 		output = cv.connectedComponentsWithStats(thresh1)
 		(numLabels, labels, stats, centroids) = output
-		IntensityStats, modeStats = GeneralROIIntensity(Rawchannels, labels, centroids)
+		IntensityStats, modeStats = GeneralROIIntensity(oriImg, labels, centroids)
 		
 		if i == 0:
 			statsT.append(stats[0])
@@ -584,7 +564,7 @@ def LesionFigSave(DAPIImg,UserROIs):
 	threshAll = np.uint8(threshAll)
 	outputBKG = cv.connectedComponentsWithStats(threshAll)
 	(numLabelsBKG, labelsBKG, statsBKG, centroidsBKG) = outputBKG
-	IntensityStatsBKG , modeStatsBKG = GeneralROIIntensity(Rawchannels, labelsBKG, centroidsBKG)
+	IntensityStatsBKG , modeStatsBKG = GeneralROIIntensity(oriImg, labelsBKG, centroidsBKG)
 	IntensityStatsT[0] = IntensityStatsBKG[0]
 	modeStatsT[0] = modeStatsBKG[0]
 	
@@ -1159,7 +1139,7 @@ class PolygonDrawer(object):
 
 		return self.polygons
 
-def GeneralROIIntensity(Rawchannels, labels, centroids):
+def GeneralROIIntensity(oriImg, labels, centroids):
 	intensitStats =[]
 	modeStats = []
 	for i in range(len(centroids)):
@@ -1172,7 +1152,7 @@ def GeneralROIIntensity(Rawchannels, labels, centroids):
 		chmode = {}
 		for j in range(len(namChannels)):
 			chnam = namChannels[j]
-			channel = Rawchannels[j]
+			channel = oriImg[j]
 			channelmasked = cv.bitwise_and(channel, channel, mask=mask)
 			intensity = np.sum(channelmasked)
 			counts, bins = np.histogram(channelmasked[channelmasked>0], bins=np.arange(65536))
@@ -1258,6 +1238,8 @@ scale = setup['scale']
 
 checkfiles = setup['checkfiles']
 
+gammas = setup['gammas']
+
 
 overwrite = False
 overwriteROIS = False
@@ -1270,7 +1252,7 @@ debugGamma = False
 debugMarkers = False
 debugChannels = False
 debugMasking = False
-debugImgPrepper = False
+debugImgPrepper = False 
 debugcells = False
 debugLesionIdenification1 = False
 debugLesionIdenification2 = False
@@ -1287,7 +1269,7 @@ ResultsFolderPath = os.path.join(ImgFolderPath,"Results")
 if not os.path.exists(ResultsFolderPath):
 	os.mkdir(ResultsFolderPath)
 
-SummarySave = os.path.join(ResultsFolderPath,Dataname + '_Summary.csv')
+SummarySave = os.path.join(ResultsFolderPath, Dataname + '_Summary.csv')
 
 SpecificImgResultsPath = os.path.join(ResultsFolderPath,"Image_Specific_Results")
 if not os.path.exists(SpecificImgResultsPath):
@@ -1340,12 +1322,10 @@ for oriImgName in os.listdir(ImgFolderPath):
 		BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 		if not os.path.exists(BinarySave) or overwriteROIS or overwrite:
 			img = cv.imreadmulti(fullpath, flags = -1)[1][ROI_Draw_Channel]
+			Dapi = gammaCorrect(img, gamma = gammas[ROI_Draw_Channel])
 			Dapi = proccessVisualImage(img)
 			Dapi = np.array(Dapi)
 			windowname = str(oriImgName) +" : Draw " + str(ROINumber) + " ROIs"
-			Dapi = cv.bitwise_not(Dapi)
-			
-			Dapi = adjust_visual(array = Dapi, set_points = [0.05,0.95])
 			Dapi = np.uint8(Dapi)
 			polyDr = PolygonDrawer(windowname, Dapi, ROINumber)
 			Lbinarr = polyDr.run()
@@ -1372,7 +1352,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			os.mkdir(SampleCellsFolder)
 
 		ImageResultsSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResults.csv")
-		
+		print(" ")
 		print("Image --> " + oriImgName)
 
 		if not os.path.exists(ImageResultsSave) or overwriteCells_Pred or overwrite:
@@ -1382,42 +1362,45 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			print("Image ",ImageID, " of ", TotalImage,": Reading Image")
 			oriImg = cv.imreadmulti(fullpath, flags = -1)
+			oriImg = oriImg[1]
+			oriImg = np.array(oriImg)
+			visoriImg = np.copy(oriImg)
+			
+			for i in range(len(namChannels)):
+				#visoriImg[i] = gammaCorrect(visoriImg[i], gammas[i]) 
+				visoriImg[i] = proccessVisualImage(visoriImg[i])
+
+			visoriImg = np.uint8(visoriImg)
+			#MAKE DEEP COPIES (OR JUST ONE IMAGE AND ADJUST AS NEEDED)
+
+
 
 			print("Image ",ImageID, " of ", TotalImage,": Processing Image ")
-			Vischannels =[]
-			for i in range(len(namChannels)):
-				Img = proccessVisualImage(oriImg[1][i])
-				Vischannels.append(Img)
-			Vischannels = np.array(Vischannels)
-
-			Rawchannels = []
-			for i in range(len(namChannels)):
-				Img = oriImg[1][i]
-				Rawchannels.append(Img)
-			Rawchannels = np.array(Rawchannels)
 
 			if debugGamma or debug:
-				Titles = ["Dapi", "ch1", "ch2", "ch3"]
-				showImages(Vischannels,Titles)
+				for i in range(len(namChannels)):
+					gamma1 = gammaCorrect(np.copy(oriImg[i]),gamma = 1)
+
+					gamma0_75 = gammaCorrect(np.copy(oriImg[i]),gamma = 0.75)
+
+					gamma0_5 = gammaCorrect(np.copy(oriImg[i]),gamma = 0.5)
+
+					gamma0_25 = gammaCorrect(np.copy(oriImg[i]),gamma = 0.25)
+					images = [gamma1, gamma0_75, gamma0_5, gamma0_25]
+					titles = [ 'gamma: 1','gamma: 0.75','gamma: 0.5', 'gamma: 0.25']
+					showImages(images,titles)
 
 			print("Image ",ImageID, " of ", TotalImage,": Thresholding and Segmenting Image ")
-			new = imageThreshold(Vischannels[Nuclei_Identification_Channel])
-			output = thresholdSegmentation(new, Vischannels[Nuclei_Identification_Channel])
+			NucleiImg = np.copy(oriImg[Nuclei_Identification_Channel])
+			NucleiImg = gammaCorrect(NucleiImg, gamma = gammas[Nuclei_Identification_Channel])
+			NucleiImg = cv.bitwise_not(proccessVisualImage(NucleiImg))
+
+			thresh = imageThreshold(NucleiImg)
+
+			output = thresholdSegmentation(thresh,NucleiImg)
 			centroids = output[1][3]
 			markers = output[4]
-
-
-			if debugMarkers or debug:
-				print(Vischannels.shape)
-				print(markers.shape)
-				print(markers)
-				#cv.imshow(markers)
-				#cv.waitKey(0)
 			
-			
-			if debugChannels or debug:
-				Titles = ["Dapi", "ch1", "ch2", "ch3", "markers"]
-				showImages(Vischannels,Titles)
 
 			centroids_x = []
 			centroids_y = []
@@ -1428,28 +1411,20 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			centroids_x = np.array(centroids_x)
 			centroids_y = np.array(centroids_y)
-			"""Vischannels = []
-			for i in range(len(namChannels)):
-				Img = proccessVisualImage(oriImg[1][i])
-				Img = cv.bitwise_not(Img)
-				Vischannels.append(Img)
-			Vischannels = np.array(Vischannels)"""
-			Vischannels = cv.bitwise_not(Vischannels)
 
 			print("Image ",ImageID, " of ", TotalImage,": Getting Cell Images and making cells")
 			cells = []
-			cells = getCells(Vischannels, Rawchannels, centroids, markers)
+			cells = getCells(oriImg,visoriImg, centroids, markers)
 
 			print("Image ",ImageID, " of ", TotalImage,": Processing User ROIs")
 			BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 			UserROIs = np.load(BinarySave, allow_pickle=True)
-			UserROIsOutput = LesionFigSave(DAPIImg=Vischannels[Nuclei_Identification_Channel], UserROIs = UserROIs )
+			UserROIsOutput = LesionFigSave(DAPIImg=NucleiImg, UserROIs = UserROIs )
 
 			(numLabels, labelsUserROI, stats, centroids, IntensityStats, modeStats) = UserROIsOutput
 			
 			print("Image ",ImageID, " of ", TotalImage,": Measuring Pixel Intensity for Each Cell")
-			cells = AddStats(Rawchannels = Rawchannels ,cells = cells, labels = labelsUserROI, centroids = centroids, AreaStats = stats, IntensityStats = IntensityStats, modeStats = modeStats)
-
+			cells = AddStats(oriImg = oriImg ,cells = cells, labels = labelsUserROI, centroids = centroids, AreaStats = stats, IntensityStats = IntensityStats, modeStats = modeStats)
 
 			print("Image ",ImageID, " of ", TotalImage,": Prepping Images for Keras")
 			cells = MacLearnImgPrepper(cells)
@@ -1503,6 +1478,8 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			'PLP Mature Oligodendrocyte' : [['DAPI_ch', 1], ['PLP', 1]],
 
+			'CC1+' : [['DAPI_ch', 1], ['CC1', 1]],
+
 			'NonOligo' : [['DAPI_ch', 1], ['Olig2', 0]],
 
 			'Sox2Astro' : [['DAPI_ch', 1], ['Olig2', 0], ['Sox2', 1]],
@@ -1528,8 +1505,8 @@ for oriImgName in os.listdir(ImgFolderPath):
 			oriImg = cv.imreadmulti(fullpath, flags = -1)
 			Vischannels =[]
 			for i in range(len(namChannels)):
-				Img = proccessVisualImage(oriImg[1][i])
-
+				Img = gammaCorrect(oriImg[1][i], gamma = gammas[i])
+				Img = proccessVisualImage(Img)
 				Vischannels.append(Img)
 			Vischannels = np.array(Vischannels)
 

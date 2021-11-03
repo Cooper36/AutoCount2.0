@@ -39,6 +39,12 @@ class Settings:
             {
                 'name' : '1_LargeLesionDCO',
 
+                # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
+                'ROI_Draw_Channel' : 0,
+
+                # Which channel to use for identifying nuclei, base 0
+                'Nuclei_Identification_Channel' : 0,
+
                 # Define size of individual cell images (in pixels, defines both height and width, so a square)
                 'cropsize' : 46,
 
@@ -197,19 +203,22 @@ class Settings:
 
                 # Name each channel present (must be consistent for all images)
                 'channels' : ["DAPI_ch","CC1","Blank","Olig2"],
+                'gammas' : [0.75,0.75,1,0.75],
 
                 # Path to folder containing images to be analyzed
                 #'Path' : "C:\\Users\\jjmc1\\Desktop\\Control KSO DCO\\DCO",
                 'Path' : "/Users/jjmc/Desktop/Control KSO DCO/DCO",
 
                 # Cell types to analyze
-                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo', 'CC1+Olig2-'],
+                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','OPC', 'CC1+', 'NonOligo', 'CC1+Olig2-'],
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
 
                 # Check files for uniformity? Good idea to do once
                 'checkfiles' : False,
+
+                
             },
             {
                 'name' : '7_SettingParametersKSO',
@@ -391,8 +400,8 @@ class Settings:
                 'channels' : ["DAPI_ch","PLP","594_ch","Olig2RS"],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "Y:\\People\\James\\Neo7dpl PLP Olig2 RNAscope",
-
+                #'Path' : "Y:\\People\\James\\Neo7dpl PLP Olig2 RNAscope",
+                'Path' : "/Volumes/labdata/People/James/Neo7dpl PLP Olig2 RNAscope",
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OPCRS', 'PLP Mature Oligodendrocyte','OligoLineageRS'],
 

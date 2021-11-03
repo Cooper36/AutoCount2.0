@@ -35,13 +35,13 @@ class DataOrganizer(object):
 		search = 2
 		self.df['Slide'] = self.df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
 		
-		self.df['Treatment'] = 'NA'
+		self.df['Treatment'] = 'Not Found'
 
 		termHD = "HighDose"
 		self.df['Treatment'] = self.df.apply(lambda row : termHD if termHD in row[self.filenameCol] else row['Treatment']  , axis = 1)
 
 		term = "HD"
-		self.df['Treatment'] = self.df.apply(lambda row : term if termHD in row[self.filenameCol] else row['Treatment']  , axis = 1)
+		self.df['Treatment'] = self.df.apply(lambda row : termHD if term in row[self.filenameCol] else row['Treatment']  , axis = 1)
 
 		term = "LowDose"
 		self.df['Treatment'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Treatment']  , axis = 1)
@@ -248,7 +248,7 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[6]
+setup = settings.folder_dicts[12]
 Dataname = setup['name']
 imagefolpath = setup['Path']
 Resultsfolpath = os.path.join(imagefolpath,'Results')
@@ -281,7 +281,8 @@ ROINumber = setup['ROINumber']
 
 Summary = pd.read_csv(Summarypath)	
 dO = DataOrganizer(df = Summary, channel_names=namChannels , cell_types = cell_types_to_analyze )
-dO.Cuprizone()
+#dO.Cuprizone()
 #dO.KSO_DCOLesion()
 #dO.PVTransplants()
 #dO.CuprizoneMNA()
+dO.Neostigmine7dplRoopa()
