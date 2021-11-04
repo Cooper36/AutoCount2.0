@@ -398,10 +398,11 @@ class Settings:
 
                 # Name each channel present (must be consistent for all images)
                 'channels' : ["DAPI_ch","PLP","594_ch","Olig2RS"],
+                'gammas' : [0.75,0.75,1,0.75],
 
                 # Path to folder containing images to be analyzed
-                #'Path' : "Y:\\People\\James\\Neo7dpl PLP Olig2 RNAscope",
-                'Path' : "/Volumes/labdata/People/James/Neo7dpl PLP Olig2 RNAscope",
+                'Path' : "Y:\\People\\James\\Neo7dpl PLP Olig2 RNAscope",
+                #'Path' : "/Volumes/labdata/People/James/Neo7dpl PLP Olig2 RNAscope",
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OPCRS', 'PLP Mature Oligodendrocyte','OligoLineageRS'],
 
@@ -427,6 +428,7 @@ class Settings:
                 'ROINumber' : 2,
                 # Name each channel present (must be consistent for all images)
                 'channels' : ["DAPI_ch","CC1","Olig2"],
+                'gammas' : [0.75,0.75,1,0.75],
                 # Path to folder containing images to be analyzed
                 'Path' : "Y:\\People\\Roopa\\Staining\\Neostigmine experiment\\JCanalysis",
                 # Cell types to analyze
