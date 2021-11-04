@@ -248,7 +248,7 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[12]
+setup = settings.folder_dicts[14]
 Dataname = setup['name']
 imagefolpath = setup['Path']
 Resultsfolpath = os.path.join(imagefolpath,'Results')
@@ -281,8 +281,8 @@ ROINumber = setup['ROINumber']
 
 Summary = pd.read_csv(Summarypath)	
 dO = DataOrganizer(df = Summary, channel_names=namChannels , cell_types = cell_types_to_analyze )
-#dO.Cuprizone()
+dO.Cuprizone()
 #dO.KSO_DCOLesion()
 #dO.PVTransplants()
 #dO.CuprizoneMNA()
-dO.Neostigmine7dplRoopa()
+#dO.Neostigmine7dplRoopa()

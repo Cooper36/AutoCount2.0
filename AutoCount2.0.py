@@ -62,7 +62,7 @@ def imageThreshold(img,):
     if debug or debugThreshold:
         showImages(images, titles)
 
-    return cv.bitwise_not(th1)
+    return cv.bitwise_not(th2)
 
 def proccessVisualImage(img):
     """Function to proccess a flourescence image with nuclear localized signal (e.g. DAPI)."""
@@ -820,12 +820,12 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		IntensThreshedTitle = ch + " IntensThreshed"
 		df[IntensThreshedTitle] = np.where((df[IntensColumnTitle] >= IntensThresh), 1, 0)
 
-		#based on bkg mean intensity
-		MeanThresh = np.mean(df[bkgMeanTitle]) + (0.5 * np.std(df[bkgMeanTitle]))
+		#based on the average bkg mean intensity of the whole image
+		MeanThresh = np.mean(df[bkgMeanTitle]) + (np.std(df[bkgMeanTitle]))
 		MeanThreshedTitle = ch + " MeanThreshed"
 		df[MeanThreshedTitle] = np.where((df[MeanNewcolumnTitle] >= MeanThresh), 1, 0)
 
-		#assuming most will be about 1
+		#based on relationship between the the immediate bkg around each nuclei
 		#RelMean = np.mean(df[RelNewcolumnTitle])
 		#RelStd = np.std(df[RelNewcolumnTitle])		
 		RelIntensThresh = 1.8
@@ -854,6 +854,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 				#df[Postivity_RankTitle] = np.where((df["SizeThreshed"] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 				df[Postivity_RankTitle] = np.where( (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 			else:
+				#df[Postivity_RankTitle] = np.where((df["SizeThreshed"] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 				df[Postivity_RankTitle] = np.where( (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 		ToHisto = [AreaColumnTitle,IntensColumnTitle,MeanNewcolumnTitle,RelNewcolumnTitle]
 		#debug Histograms to show distribution of values for each channel, have the threshold appear on that histogram
@@ -1243,7 +1244,7 @@ gammas = setup['gammas']
 
 overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = True
+overwriteCells_Pred = False
 overwriteProcessing = True
 
 debug = False
