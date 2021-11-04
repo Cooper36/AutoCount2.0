@@ -330,6 +330,8 @@ def adjust_gamma(image, gamma=1.0):
 def RandomSampler(cells, NumberWant, path):
 	#Save a specified number of random cells to servay code
 	randomlist = random.sample(range(len(cells)), NumberWant)
+	if len(cells) < NumberWant:
+		NumberWant = 0.1*cells.size
 	for randcellID in randomlist:
 		filename = cells[randcellID]['CellID'] + '.tif'
 		savepa = os.path.join(path,filename)
@@ -536,13 +538,29 @@ def LesionFigSave(DAPIImg,UserROIs):
 		bincanvas = cv.resize(bincanvas, (imgwidth, imgheight))
 		
 		ret, thresh1 = cv.threshold(bincanvas, 0, 255, cv.THRESH_BINARY)
+		print(np.max(thresh1))
+		img = np.copy(thresh1)
+		scale_percent = 20 # percent of original size
+		width = int(img.shape[1] * scale_percent / 100)
+		height = int(img.shape[0] * scale_percent / 100)
+		dim = (width, height)
+		  
+		# resize image
+		resized = cv.resize(img, dim, interpolation = cv.INTER_AREA)
+		cv.imshow('winname', resized)
+		cv.waitKey(0)
+		cv.destroyWindow('winname')
 		thresh1 = np.uint8(thresh1)
 
 		cv.polylines(boarders, np.array([polygon]), True, (255, 255, 255), 5)
 		#print(Lbinarr.shape)
 		
+	
 		output = cv.connectedComponentsWithStats(thresh1)
+		centroids = []
 		(numLabels, labels, stats, centroids) = output
+		print('centroids '+ str(centroids))
+
 		IntensityStats, modeStats = GeneralROIIntensity(oriImg, labels, centroids)
 		
 		if i == 0:
@@ -575,6 +593,9 @@ def LesionFigSave(DAPIImg,UserROIs):
 	images = [ threshAll, boarders]
 	titles = ["Mask","Boarder" ]
 	showImages(images, titles, save = 1, path = FigureSavePath, text_coords = centroidsT)
+
+	print("Intensity stats: ")
+	print(IntensityStatsT)
 
 	return outputT
 
@@ -1143,7 +1164,11 @@ class PolygonDrawer(object):
 def GeneralROIIntensity(oriImg, labels, centroids):
 	intensitStats =[]
 	modeStats = []
+
+	
 	for i in range(len(centroids)):
+		print('i = '+ str(i))
+		print(np.max(labels))
 		mask = np.copy(labels)
 		mask[mask > i] = 0
 		mask[mask < i] = 0
@@ -1156,6 +1181,8 @@ def GeneralROIIntensity(oriImg, labels, centroids):
 			channel = oriImg[j]
 			channelmasked = cv.bitwise_and(channel, channel, mask=mask)
 			intensity = np.sum(channelmasked)
+			print(str(chnam) + ' max of channel ' + str(np.max(channel)))
+			print('intensity ' + str(intensity))
 			counts, bins = np.histogram(channelmasked[channelmasked>0], bins=np.arange(65536))
 
 			mode = np.argmax(counts)
@@ -1211,7 +1238,7 @@ def GeneralROIIntensity(oriImg, labels, centroids):
 
 
 
-setup = settings.folder_dicts[14]
+setup = settings.folder_dicts[13]
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
 
@@ -1244,7 +1271,7 @@ gammas = setup['gammas']
 
 overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = False
+overwriteCells_Pred = True
 overwriteProcessing = True
 
 debug = False
@@ -1323,8 +1350,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 		BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 		if not os.path.exists(BinarySave) or overwriteROIS or overwrite:
 			img = cv.imreadmulti(fullpath, flags = -1)[1][ROI_Draw_Channel]
-			Dapi = gammaCorrect(img, gamma = gammas[ROI_Draw_Channel])
-			Dapi = proccessVisualImage(img)
+			Dapi = adjust_visual(img, [0.05,0.98])
 			Dapi = np.array(Dapi)
 			windowname = str(oriImgName) +" : Draw " + str(ROINumber) + " ROIs"
 			Dapi = np.uint8(Dapi)
