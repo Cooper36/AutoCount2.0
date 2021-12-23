@@ -164,6 +164,7 @@ def thresholdSegmentation(
 
     titles = ['threshold', 'opening', 'dist_transform', 'sure_fg', 'unknown', 'watershed']
     images = [thresh, opening, dist_transform, sure_fg, unknown, img]
+    NucleiBoarder = img
     
     if debugThreshold or debug:
         showImages(images, titles)
@@ -452,7 +453,7 @@ def MacLearnImgPrepper(cells):
 						#green = np.uint8(gammaCorrect(img[i],gamma = gammas[i]))
 						green = img[i]
 						#to correct for gradients in staining intensity, make the max pixel in every cell image 127 (half max intensity of 8 bit image)
-						green = cv.normalize(src=green, dst=None, alpha=0, beta=127, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
+						#green = cv.normalize(src=green, dst=None, alpha=0, beta=127, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
 						red = img[-1]
 
 					else:
@@ -538,6 +539,7 @@ def LesionFigSave(DAPIImg,UserROIs):
 		bincanvas = cv.resize(bincanvas, (imgwidth, imgheight))
 		
 		ret, thresh1 = cv.threshold(bincanvas, 0, 255, cv.THRESH_BINARY)
+		"""
 		print(np.max(thresh1))
 		img = np.copy(thresh1)
 		scale_percent = 20 # percent of original size
@@ -551,7 +553,7 @@ def LesionFigSave(DAPIImg,UserROIs):
 		cv.waitKey(0)
 		cv.destroyWindow('winname')
 		thresh1 = np.uint8(thresh1)
-
+		"""
 		cv.polylines(boarders, np.array([polygon]), True, (255, 255, 255), 5)
 		#print(Lbinarr.shape)
 		
@@ -559,7 +561,7 @@ def LesionFigSave(DAPIImg,UserROIs):
 		output = cv.connectedComponentsWithStats(thresh1)
 		centroids = []
 		(numLabels, labels, stats, centroids) = output
-		print('centroids '+ str(centroids))
+		#print('centroids '+ str(centroids))
 
 		IntensityStats, modeStats = GeneralROIIntensity(oriImg, labels, centroids)
 		
@@ -594,8 +596,8 @@ def LesionFigSave(DAPIImg,UserROIs):
 	titles = ["Mask","Boarder" ]
 	showImages(images, titles, save = 1, path = FigureSavePath, text_coords = centroidsT)
 
-	print("Intensity stats: ")
-	print(IntensityStatsT)
+	#print("Intensity stats: ")
+	#print(IntensityStatsT)
 
 	return outputT
 
@@ -664,7 +666,8 @@ def getPredictions(cells, model):
 				value = (c/len(cells))*100
 				formatted_string = "{:.2f}".format(value)
 				float_value = float(formatted_string)
-				print("          Keras ",float_value, " % complete")
+				if useKeras:
+					print("          Keras ",float_value, " % complete")
 				p=0
 				c= c+1
 			else:
@@ -842,17 +845,21 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		df[IntensThreshedTitle] = np.where((df[IntensColumnTitle] >= IntensThresh), 1, 0)
 
 		#based on the average bkg mean intensity of the whole image
-		MeanThresh = np.mean(df[bkgMeanTitle]) + (np.std(df[bkgMeanTitle]))
+		bkgmean = np.mean(df[bkgMeanTitle])
+		MeanThresh = bkgmean + (np.std(df[bkgMeanTitle]))
 		MeanThreshedTitle = ch + " MeanThreshed"
 		df[MeanThreshedTitle] = np.where((df[MeanNewcolumnTitle] >= MeanThresh), 1, 0)
 
 		#based on relationship between the the immediate bkg around each nuclei
 		#RelMean = np.mean(df[RelNewcolumnTitle])
 		#RelStd = np.std(df[RelNewcolumnTitle])		
-		RelIntensThresh = 1.8
+		RelIntensThreshlow = Relthreshs[i][0]
+		RelIntensThreshhigh = Relthreshs[i][1]
 		RelThreshedTitle = ch + " RelThreshed"
-		df[RelThreshedTitle] = np.where((df[RelNewcolumnTitle] >= RelIntensThresh), 1, 0)
-
+		#high confidence rel thresh
+		df[RelThreshedTitle] = np.where((df[RelNewcolumnTitle] >= RelIntensThreshhigh), 1, 0)
+		#low confidence rel thresh
+		df[RelThreshedTitle] = np.where((df[RelNewcolumnTitle] >= RelIntensThreshlow) & (df[IntensColumnTitle] >= bkgmean), 1, df[RelThreshedTitle])
 		if i != 0:
 			MacLearnThreshedTitle = ch + " MacLearnThreshed"
 			df[MacLearnThreshedTitle] = np.where((df[MacLearnPredTitle] >= 0.5), 1, 0)
@@ -967,6 +974,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		ModeIntens = df[ModeIntenstitle][0]
 		RawIntens = df[RawIntenstitle][0]
 		meanIntenstitle = 'Background Mean Intensity ' + ch + ' (Sum Intensity/pixels^2)'
+
 		meanIntens = RawIntens/areapix
 		cellnumtitle = 'Background ' + ch + ' Positive Cell Number'
 		celldenstitle = 'Background ' + ch + ' Positive Cells Density (cells/mm^2)'
@@ -1167,8 +1175,8 @@ def GeneralROIIntensity(oriImg, labels, centroids):
 
 	
 	for i in range(len(centroids)):
-		print('i = '+ str(i))
-		print(np.max(labels))
+		#print('i = '+ str(i))
+		#print(np.max(labels))
 		mask = np.copy(labels)
 		mask[mask > i] = 0
 		mask[mask < i] = 0
@@ -1181,8 +1189,8 @@ def GeneralROIIntensity(oriImg, labels, centroids):
 			channel = oriImg[j]
 			channelmasked = cv.bitwise_and(channel, channel, mask=mask)
 			intensity = np.sum(channelmasked)
-			print(str(chnam) + ' max of channel ' + str(np.max(channel)))
-			print('intensity ' + str(intensity))
+			#print(str(chnam) + ' max of channel ' + str(np.max(channel)))
+			#print('intensity ' + str(intensity))
 			counts, bins = np.histogram(channelmasked[channelmasked>0], bins=np.arange(65536))
 
 			mode = np.argmax(counts)
@@ -1238,7 +1246,7 @@ def GeneralROIIntensity(oriImg, labels, centroids):
 
 
 
-setup = settings.folder_dicts[13]
+setup = settings.folder_dicts[10]
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
 
@@ -1247,6 +1255,7 @@ Nuclei_Identification_Channel = setup['Nuclei_Identification_Channel']
 
 #What are the channels?
 namChannels = setup['channels']
+Relthreshs = setup['RelativeIntensityThreshold']
 
 #What cell types are you looking to analyze?
 #cell_types_to_analyze = ['OPC', 'Oligo', 'NonOligo']
@@ -1271,8 +1280,8 @@ gammas = setup['gammas']
 
 overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = True
-overwriteProcessing = True
+overwriteCells_Pred = False
+overwriteProcessing = False
 
 debug = False
 debugThreshold = False
@@ -1452,8 +1461,8 @@ for oriImgName in os.listdir(ImgFolderPath):
 			
 			print("Image ",ImageID, " of ", TotalImage,": Measuring Pixel Intensity for Each Cell")
 			cells = AddStats(oriImg = oriImg ,cells = cells, labels = labelsUserROI, centroids = centroids, AreaStats = stats, IntensityStats = IntensityStats, modeStats = modeStats)
-
-			print("Image ",ImageID, " of ", TotalImage,": Prepping Images for Keras")
+			if useKeras:
+				print("Image ",ImageID, " of ", TotalImage,": Prepping Images for Keras")
 			cells = MacLearnImgPrepper(cells)
 
 			if debugcells or debug:
@@ -1462,10 +1471,15 @@ for oriImgName in os.listdir(ImgFolderPath):
 					print(" ")
 
 			
-			print("Image ",ImageID, " of ", TotalImage,": Begining Keras Analysis")
-			model = loadKerasModel(os.path.join(os.getcwd(), "CC1counting_wMar_5.8.h5"))
+			if useKeras:
+				print("Image ",ImageID, " of ", TotalImage,": Beginning Keras Analysis")
+			if useKeras:
+				model = loadKerasModel(os.path.join(os.getcwd(), "CC1counting_wMar_5.8.h5"))
+			else:
+				model = 0
 			cells = getPredictions(cells, model)
-			print("End Keras")
+			if useKeras:
+				print("End Keras")
 			
 
 			print("Image ",ImageID, " of ", TotalImage,": Saveing a Sample of the Cells")
@@ -1480,10 +1494,11 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			#Get Summary data from Resultsdf for the lesions and save that to a persisting dataframe to construct the Summary.csv file
 		#Shift to individual image analysis, as in just work with the current csv
-		if Resultsdf.empty :
-			Resultsdf = pd.read_csv(ImageResultsSave)	
+		
 		UpdateResultSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResultsUpdate.csv")
 		if not os.path.exists(UpdateResultSave) or overwriteProcessing or overwrite:
+			if Resultsdf.empty :
+				Resultsdf = pd.read_csv(ImageResultsSave)	
 			#Define which cell types too look at for this analysis
 			cell_types_to_analyze = setup['cell_types_to_analyze']
 			#Define cell types. Channel names must match those defined in namChannel exactly.

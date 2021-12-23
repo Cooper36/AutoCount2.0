@@ -174,7 +174,7 @@ class DataOrganizer(object):
 		# Get RB number from filename
 		term = 'RB'
 		search = 2
-		self.df['RB'] = df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
+		self.df['RB'] = self.df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
 		
 		"""term = ' S'
 		search = 2
@@ -183,10 +183,10 @@ class DataOrganizer(object):
 		self.df['Location'] = 'Not Found'
 
 		term = "LH"
-		self.df['Location'] = df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
+		self.df['Location'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
 
 		term = "RH"
-		self.df['Location'] = df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
+		self.df['Location'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
 
 		self.df['Treatment'] = 'Not Specified'
 		self.df['dpl'] = 'Not Specified'
@@ -198,7 +198,7 @@ class DataOrganizer(object):
 		
 		Savename = Dataname +"_For Excel.csv"
 		CsvSave = os.path.join(SaveLoc, Savename)
-		self.to_csv(CsvSave, index=True)
+		self.df.to_csv(CsvSave, index=True)
 
 
 
@@ -248,9 +248,10 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[14]
+setup = settings.folder_dicts[9]
 Dataname = setup['name']
 imagefolpath = setup['Path']
+DataOrganizerType = setup['DataOrganizer']
 Resultsfolpath = os.path.join(imagefolpath,'Results')
 Summarypath = os.path.join(Resultsfolpath,Dataname+'_Summary.csv')
 
@@ -281,8 +282,21 @@ ROINumber = setup['ROINumber']
 
 Summary = pd.read_csv(Summarypath)	
 dO = DataOrganizer(df = Summary, channel_names=namChannels , cell_types = cell_types_to_analyze )
-dO.Cuprizone()
-#dO.KSO_DCOLesion()
-#dO.PVTransplants()
-#dO.CuprizoneMNA()
-#dO.Neostigmine7dplRoopa()
+
+if DataOrganizerType == 'KSO_DCOLesion':
+	dO.KSO_DCOLesion()
+
+elif DataOrganizerType == 'Cuprizone':
+	dO.Cuprizone()
+
+elif DataOrganizerType == 'PVTransplants':
+	dO.PVTransplants()
+
+elif DataOrganizerType == 'CuprizoneMNA':
+	dO.CuprizoneMNA()
+
+elif DataOrganizerType == 'Neostigmine7dplRoopa':
+	dO.Neostigmine7dplRoopa()
+
+else:
+	print('DataOrganizer type not selected')

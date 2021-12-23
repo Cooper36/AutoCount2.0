@@ -57,6 +57,8 @@ class Settings:
 
                 # Name each channel present (must be consistent for all images)
                 'channels' : ["DAPI_ch","CC1","594_ch","Olig2"],
+                'gammas' : [0.75,0.75,1,0.25],
+                'RelativeIntensityThreshold' : [[1,5],[1.2,2],[1.2,2],[1.2,2]],
 
                 # Path to folder containing images to be analyzed
                 'Path' : "\\Users\\jjmc1\\Desktop\\Python\\AutoCount2.0\\LargeLesionDCO",
@@ -69,6 +71,10 @@ class Settings:
                 
                 # Check files for uniformity? Good idea to do once
                 'checkfiles' : False,
+
+                # DataOrganizer type
+                'DataOrganizer' : 'KSO_DCOLesion',
+
             },
             {
                 'name' : '2_FMSize calculation JCWindows',
@@ -281,6 +287,12 @@ class Settings:
             {
                 'name' : '9_LargeLesionKSO',
 
+                # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
+                'ROI_Draw_Channel' : 0,
+
+                # Which channel to use for identifying nuclei, base 0
+                'Nuclei_Identification_Channel' : 0,
+
                 # Define size of individual cell images (in pixels, defines both height and width, so a square)
                 'cropsize' : 46,
 
@@ -294,6 +306,8 @@ class Settings:
                 # Name each channel present, in order (must be consistent for all images)
 
                 'channels' : ["DAPI_ch","Ki67","Sox2","Olig2"],
+                'gammas' : [0.75,0.75,1,0.25],
+                'RelativeIntensityThreshold' : [[1,5],[3,5],[3,5],[1.2,2]],
 
                 # Path to folder containing images to be analyzed
                 'Path' : "C:\\Users\\jjmc1\\Desktop\\Python\\AutoCount2.0\\LargeLesionKSO",
@@ -302,10 +316,13 @@ class Settings:
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo', 'Activated-ProliferativeOPCs'],
 
                 # Do you want to use the keras models (slow)
-                'useKeras' : True,
+                'useKeras' : False,
 
                 # Check files for uniformity? Good idea to do once
                 'checkfiles' : False,
+
+                # DataOrganizer type
+                'DataOrganizer' : 'KSO_DCOLesion',
             },
             {
                 'name' : '10_Rich PV Transplants',
@@ -329,10 +346,14 @@ class Settings:
                 # Name each channel present, in order (must be consistent for all images)
 
                 'channels' : ["DAPI_ch","MBP","mCherry","hNA"],
+                'gammas' : [0.75,0.75,1,0.25],
+                'RelativeIntensityThreshold' : [[1,5],[3,5],[3,5],[4,5]],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "/Volumes/labdata/People/Rich/Transplant_MBP-hNA/Tiff",
+                'Path' : "Y:\\People\\Rich\\__Transplants\\_____Transplant Master Folder\\D\\IHC master folder\\PV-NES-NLS-Transplant1_MBP-hNA IHC images\\Tiff\\New images",
                 #'Path' : "Y:\\People\\Rich\\Transplant_MBP-hNA\\Tiff",
+                #'Path' : "C:\\Users\\jjmc1\\Desktop\\New folder",
+                
 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'Human Cell','Myelinating Human Cell'],
@@ -341,7 +362,10 @@ class Settings:
                 'useKeras' : False,
 
                 # Check files for uniformity? Good idea to do once
-                'checkfiles' : False,
+                'checkfiles' : True,
+
+                # DataOrganizer type
+                'DataOrganizer' : 'PVTransplants',
             },
             {
                 'name' : '11_Cuprizone MNA',
