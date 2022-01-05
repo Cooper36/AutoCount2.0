@@ -28,12 +28,19 @@ from scipy import stats
 from keras.models import load_model
 import csv
 import tkinter as tk
+import ctypes
+root = tk.Tk()
+width = root.winfo_screenwidth()
+height = root.winfo_screenheight()
+screensize = [width, height]	
 
 from settings import Settings
 import tifffile as tiff
 
 settings = Settings()
 
+#import os, psutil
+#process = psutil.Process(os.getpid())
 
 
 def openVSI(fullpath):
@@ -116,7 +123,7 @@ def showImages(images, titles='', save = 0, path = ' ', text_coords = []):
 		plt.show()
 	else:
 		plt.savefig(path, bbox_inches='tight')
-	plt.close()
+	plt.close("all")
 
 def thresholdSegmentation( 
     thresh, 
@@ -224,7 +231,7 @@ def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = [])
 		plt.show()
 	else:
 		plt.savefig(path, bbox_inches='tight')
-	plt.close()
+	plt.close('all')
 
 
 
@@ -344,11 +351,11 @@ def AddStats(oriImg, cells, labels, centroids, AreaStats, IntensityStats, modeSt
 	
 	AreaStatsPix = AreaStats[:,4]
 	AreaStatsmm2 = []
-
+	#print(AreaStatsPix)
 	np.array(AreaStats)
 	for area in AreaStatsPix:
 		AreaStatsmm2.append((area/(scale**2))/1000000)
-
+	#print(AreaStatsmm2)
 
 	for cell in cells:
 		skipped = cell['skipped']
@@ -498,14 +505,9 @@ def Reorder(UserROIs,output,IntensityStats):
 
 	return output2
 
-def LesionFigSave(DAPIImg,UserROIs):
-	img = cv.bitwise_not(DAPIImg) 
+def LesionFigSave(DAPIImg, UserROIs, screensize):
+	img = cv.bitwise_not(np.copy(DAPIImg, subok = True)) 
 	imgheight, imgwidth = img.shape[0:2]
-	import ctypes
-	root = tk.Tk()
-	width = root.winfo_screenwidth()
-	height = root.winfo_screenheight()
-	screensize = [width, height]
 
 	smallwidth = int(screensize[0] * 0.8)
 	smallheight = int(smallwidth*(imgheight/imgwidth))
@@ -515,12 +517,9 @@ def LesionFigSave(DAPIImg,UserROIs):
 		smallheight = int(screensize[1] * 0.8)
 		smallwidth = int(smallheight*(imgwidth/imgheight))
 		
+	boarders = img
 
-	smallImg = cv.resize(img, (smallwidth,smallheight))
-	
-	
-	boarders = smallImg
-	labelsT = np.zeros((smallheight,smallwidth), dtype= np.uint8)
+	labelsT = np.zeros((imgheight,imgwidth), dtype= np.uint8)
 
 	numLabelsT = 0
 	statsT = []
@@ -529,7 +528,7 @@ def LesionFigSave(DAPIImg,UserROIs):
 	modeStatsT = []
 
 	for i in range(len(UserROIs)):
-		bincanvas = np.zeros((smallheight,smallwidth), dtype= np.uint8)
+		bincanvas = np.zeros((imgheight,imgwidth), dtype= np.uint8)
 		polygon = UserROIs[i]
 		polygon = np.array([polygon])
 		fill = i+1
@@ -554,8 +553,15 @@ def LesionFigSave(DAPIImg,UserROIs):
 		cv.destroyWindow('winname')
 		thresh1 = np.uint8(thresh1)
 		"""
+		print('DAPIImg',DAPIImg.shape)
+		print('boarders',boarders.shape)
+		print('polygon',polygon)
+
 		cv.polylines(boarders, np.array([polygon]), True, (255, 255, 255), 5)
 		#print(Lbinarr.shape)
+
+		#cv.imshow('boarders', boarders)
+		#cv.waitKey(0)
 		
 	
 		output = cv.connectedComponentsWithStats(thresh1)
@@ -564,6 +570,7 @@ def LesionFigSave(DAPIImg,UserROIs):
 		#print('centroids '+ str(centroids))
 
 		IntensityStats, modeStats = GeneralROIIntensity(oriImg, labels, centroids)
+
 		
 		if i == 0:
 			statsT.append(stats[0])
@@ -593,6 +600,7 @@ def LesionFigSave(DAPIImg,UserROIs):
 	
 	FigureSavePath = os.path.join(SpecificImgFolder, "Lesion_Boarder_Visualization.pdf")
 	images = [ threshAll, boarders]
+	print(threshAll.size,boarders.size)
 	titles = ["Mask","Boarder" ]
 	showImages(images, titles, save = 1, path = FigureSavePath, text_coords = centroidsT)
 
@@ -638,7 +646,7 @@ def showDensities(img,densities, save = 0, path = ' '):
 		plt.show()
 	else:
 		plt.savefig(path, bbox_inches='tight')
-	plt.close()
+	plt.close('all')
 
 def PlotHistogram(data):
 	# Creating histogram
@@ -647,7 +655,7 @@ def PlotHistogram(data):
 	 
 	# Show plot
 	plt.show()
-	plt.close()
+	plt.close('all')
 
 def loadKerasModel(filename):
     """Load h5 model file."""
@@ -745,6 +753,7 @@ def Cells_to_df(cells):
 
 	#Build a new cells (cellsAnno) that is more ammenabel to dataframe construction
 	cellsAnno = []
+
 	for cell in cells:
 		cellAnno = []
 		cellAnno.extend([cell['oriImgName'], cell['CellID'], cell['centroids'][0], cell['centroids'][1], cell['skipped'], cell['location']['location_int']])
@@ -777,7 +786,8 @@ def Cells_to_df(cells):
 				cellAnno.append(areapix)
 
 				for chnam in namChannels:
-					roiIntensity = cell['location']['ROIintensities'][i][chnam]
+					roiIntensity = int(cell['location']['ROIintensities'][i][chnam])
+					#print('roiIntensity ', i, roiIntensity)
 					roiChmode = cell['location']['ROImodes'][i][chnam]
 					cellAnno.append(roiIntensity)
 					cellAnno.append(roiChmode)
@@ -786,9 +796,10 @@ def Cells_to_df(cells):
 
 
 	#might need to fill empty spaces with 0's here
-	
+	#print('cells', cells[0]['location']['ROIintensities'][0][namChannels[2]])
+	#print('cellsAnno',cellsAnno[0][columnTitles.index('Background Raw Intensity Sox2')])
 	df = pd.DataFrame(data=cellsAnno, columns=columnTitles)
-
+	#print('df', df.at[0,'Background Raw Intensity Sox2'])
 	return df
 
 def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
@@ -915,7 +926,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		plt.savefig(FigureSavePath)
 		if debugProcessRawResults or debug:
 			plt.show()
-		plt.close(fig)
+		plt.close('all')
 	
 
 	#Visual Validation? Need to load cells
@@ -981,6 +992,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		Summary[-1][cellnumtitle] = cellNumber
 		Summary[-1][celldenstitle] = density
 		Summary[-1][RawIntenstitle] = RawIntens
+		#print("rawintens", RawIntens)
 		Summary[-1][meanIntenstitle] = meanIntens
 		Summary[-1][ModeIntenstitle] = ModeIntens
 
@@ -1033,20 +1045,12 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 			Summary[-1][celldenstitle] = density
 
 	return Summary
-
-		
 				
 class PolygonDrawer(object):
-	def __init__(self, window_name, img, ROINumber):
+	def __init__(self, window_name, img, ROINumber, screensize):
 		self.window_name = window_name # Name for our window
 		self.img = img
 		self.imgheight, self.imgwidth = self.img.shape[0:2]
-		
-		import ctypes
-		self.root = tk.Tk()
-		width = self.root.winfo_screenwidth()
-		height = self.root.winfo_screenheight()
-		screensize = [width, height]
 
 		self.smallwidth = int(screensize[0] * 0.8)
 		self.smallheight = int(self.smallwidth*(self.imgheight/self.imgwidth))
@@ -1067,6 +1071,9 @@ class PolygonDrawer(object):
 		self.polygons = [] # List of all polygons
 		self.FINAL_LINE_COLOR = (255, 255, 255)
 		self.WORKING_LINE_COLOR = (127, 127, 127)
+		self.scaleheight = self.imgheight/self.smallheight
+		self.scalewidth = self.imgwidth/self.smallwidth
+		print(self.scalewidth)
 
 
 	def on_mouse(self, event, x, y, buttons, user_param):
@@ -1082,7 +1089,7 @@ class PolygonDrawer(object):
 		elif event == cv.EVENT_LBUTTONDOWN:
 			# Left click means adding a point at current position to the list of points
 			print("Adding point #%d with position(%d,%d)" % (len(self.points), x, y))
-			self.points.append((x, y))
+			self.points.append([x, y])
 
 		elif event == cv.EVENT_RBUTTONDOWN:
 			# Right click means we're done
@@ -1092,30 +1099,6 @@ class PolygonDrawer(object):
 
 	def run(self):
 		# Let's create our working window and set a mouse callback to handle events
-		v = tk.IntVar()
-		v.set(1)  # initializing the choice, i.e. Python
-
-		languages = [("Yes, Skip", True),("No, Don't Skip", False)]
-
-		def ShowChoice():
-			if v.get():
-				print("ROI skipped")
-			self.root.destroy()
-
-		tk.Label(self.root, 
-				text="""Skip this ROI? ROI will be set to 0""",
-				justify = tk.LEFT,
-				padx = 20).pack()
-
-		for language, val in languages:
-			tk.Radiobutton(self.root, 
-				text=language,
-				indicatoron = 0,
-				width = 20,
-				padx = 20, 
-				variable=v, 
-				command=ShowChoice,
-				value=val).pack(anchor=tk.W)
 
 		cv.namedWindow(self.window_name, flags=cv.WINDOW_AUTOSIZE)
 		cv.imshow(self.window_name, np.zeros((self.imgheight, self.imgwidth), np.uint8))
@@ -1127,13 +1110,7 @@ class PolygonDrawer(object):
 			if i == 0:
 				Polycanvas = np.copy(self.smallImg, subok= True)
 				cv.imshow(self.window_name, Polycanvas)
-			self.root.mainloop()
-			if v.get():
-				self.points.append((0, 0))
-				self.points.append((0, 1))
-				self.points.append((1, 1))
-				self.points.append((1, 0))
-				self.done = v.get()
+
 			while(not self.done):
 				# This is our drawing loop, we just continuously draw new images
 				# and show them in the named window
@@ -1159,8 +1136,18 @@ class PolygonDrawer(object):
 			# And show it
 			cv.imshow(self.window_name, Polycanvas)
 
-			self.polygons.append(self.points)
+			#scale points to original image
+			self.ScalePoints = []
+			for point in self.points:
+				point[0] = math.floor(point[0] * self.scalewidth)
+				point[1] = math.floor(point[1] * self.scaleheight)
+
+				self.ScalePoints.append(point)
+
+			self.polygons.append(self.ScalePoints)
+
 			self.points = []
+			self.ScalePoints = []
 
 			# Waiting for the user to press any key
 			i = i+1
@@ -1246,7 +1233,8 @@ def GeneralROIIntensity(oriImg, labels, centroids):
 
 
 
-setup = settings.folder_dicts[10]
+setup = settings.folder_dicts[7]
+RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
 
@@ -1277,11 +1265,14 @@ checkfiles = setup['checkfiles']
 
 gammas = setup['gammas']
 
+FastProcess = setup['FastProcess']
 
-overwrite = False
+
+
+overwrite = True
 overwriteROIS = False
-overwriteCells_Pred = False
-overwriteProcessing = False
+overwriteCells_Pred = True
+overwriteProcessing = True
 
 debug = False
 debugThreshold = False
@@ -1347,6 +1338,7 @@ if len(badfiles) > 0:
 		shutil.move(oldpath, newpath)
 
 print('Draw ROIs')
+
 for oriImgName in os.listdir(ImgFolderPath):
 	fullpath = os.path.join(ImgFolderPath, oriImgName)
 	if oriImgName.endswith('.tif'):
@@ -1358,14 +1350,23 @@ for oriImgName in os.listdir(ImgFolderPath):
 			os.mkdir(SampleCellsFolder)
 		BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 		if not os.path.exists(BinarySave) or overwriteROIS or overwrite:
+			
+			print('Image name:', oriImgName)
 			img = cv.imreadmulti(fullpath, flags = -1)[1][ROI_Draw_Channel]
 			Dapi = adjust_visual(img, [0.05,0.98])
 			Dapi = np.array(Dapi)
+			'''
+			if oriImgName.find('RB') > 0:
+				RBstartread = oriImgName.find('RB')+2
+				RBendread = RBstartread + 2
+				windowname =
+			'''
 			windowname = str(oriImgName) +" : Draw " + str(ROINumber) + " ROIs"
 			Dapi = np.uint8(Dapi)
-			polyDr = PolygonDrawer(windowname, Dapi, ROINumber)
+			polyDr = PolygonDrawer(windowname, Dapi, ROINumber,screensize)
 			Lbinarr = polyDr.run()
-			
+			#print(Lbinarr)
+			#np.savetxt(BinarySave, Lbinarr, delimiter=',')
 			np.save(BinarySave, Lbinarr, allow_pickle=True, fix_imports=True)
 			#cv.imwrite(BinarySave,Lbinarr)
 		TotalImage = TotalImage + 1
@@ -1455,9 +1456,10 @@ for oriImgName in os.listdir(ImgFolderPath):
 			print("Image ",ImageID, " of ", TotalImage,": Processing User ROIs")
 			BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 			UserROIs = np.load(BinarySave, allow_pickle=True)
-			UserROIsOutput = LesionFigSave(DAPIImg=NucleiImg, UserROIs = UserROIs )
+			UserROIsOutput = LesionFigSave(DAPIImg=NucleiImg, UserROIs = UserROIs, screensize = screensize )
 
 			(numLabels, labelsUserROI, stats, centroids, IntensityStats, modeStats) = UserROIsOutput
+
 			
 			print("Image ",ImageID, " of ", TotalImage,": Measuring Pixel Intensity for Each Cell")
 			cells = AddStats(oriImg = oriImg ,cells = cells, labels = labelsUserROI, centroids = centroids, AreaStats = stats, IntensityStats = IntensityStats, modeStats = modeStats)
@@ -1467,7 +1469,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			if debugcells or debug:
 				for key in cells[3000]:
-					print(cells[3000][key])
+					print(key, " : ", cells[3000][key])
 					print(" ")
 
 			
@@ -1484,7 +1486,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			print("Image ",ImageID, " of ", TotalImage,": Saveing a Sample of the Cells")
 			#Uncomment this to save x number of random cells (for survaying)
-			RandomSampler(cells, 100, SampleCellsFolder)
+			#RandomSampler(cells, 100, SampleCellsFolder)
 
 			print("Image ",ImageID, " of ", TotalImage,": Crafting the DataFrame and Saving the .csv file")
 			#Build the Dataframe to analyse the data
@@ -1543,17 +1545,18 @@ for oriImgName in os.listdir(ImgFolderPath):
 			}
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 			
-			
-			oriImg = cv.imreadmulti(fullpath, flags = -1)
-			Vischannels =[]
-			for i in range(len(namChannels)):
-				Img = gammaCorrect(oriImg[1][i], gamma = gammas[i])
-				Img = proccessVisualImage(Img)
-				Vischannels.append(Img)
-			Vischannels = np.array(Vischannels)
+			if not FastProcess:
 
-			FigureSavePath = os.path.join(SpecificImgFolder, "Cell_Identification.pdf")
-			showCentroids(images = Vischannels, path = FigureSavePath, df = Resultsdf, titles = namChannels, save = 0)
+				oriImg = cv.imreadmulti(fullpath, flags = -1)
+				Vischannels =[]
+				for i in range(len(namChannels)):
+					Img = gammaCorrect(oriImg[1][i], gamma = gammas[i])
+					Img = proccessVisualImage(Img)
+					Vischannels.append(Img)
+				Vischannels = np.array(Vischannels)
+
+				FigureSavePath = os.path.join(SpecificImgFolder, "Cell_Identification.pdf")
+				showCentroids(images = Vischannels, path = FigureSavePath, df = Resultsdf, titles = namChannels, save = 0)
 			
 		#clear Resultsdf
 		Resultsdf = pd.DataFrame()

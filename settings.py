@@ -5,6 +5,34 @@ class Settings:
     """A class to store all settings."""
 
     def __init__(self):
+        #Define rabbits numbers
+        self.RabbitDescriptions = {
+        '007dpl_5ul' : [7,[ '1', '2', '3', '5', '9', '16', '19']],
+        '014dpl_5ul' : [14,[ '4', '6', '10', '21', '23']],
+        '021dpl_5ul' : [21,[ '7', '8', '17', '20', '22']],
+        '056dpl_5ul' : [56,['13', '27', '28', '29']],
+        '180dpl_5ul' : [180,['43', '44', '45',]],
+
+        '056dpl_5ul_Glut' : [56,['14']],
+        '180dpl_5ul_Glut' : [180,['45']],
+
+        '007dpl_1ul' : [7,['24', '25']],
+
+        '007dpl_0.35ul' : [7,['26', '48','60']],
+        '014dpl_0.35ul' : [14,['35', '51','54','59']],
+        '021dpl_0.35ul' : [21,['34','50','53','56']],
+
+        '014dpl_0.35ul&5ul' : [7,['61']],
+        '014dpl_0.35ul&5ul' : [14,['57']],
+        '021dpl_0.35ul&5ul' : [21,['52']],
+
+        '021dpl_5ul_Clemastine' : [21,[ '31', '32', '33']],
+        '021dpl_5ul_PI-88' : [21,[ '40','41', '42',]],
+
+        'Normal' : [0,['46' , '47', '58']],
+        '8wk_Cup0.2' : [56,['36', '37']],
+        '8wk_Cup0.5' : [56,['38' , '39']],
+}
 
         # Define folders for input of data
         self.folder_dicts = [
@@ -228,7 +256,11 @@ class Settings:
             },
             {
                 'name' : '7_SettingParametersKSO',
+                # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
+                'ROI_Draw_Channel' : 0,
 
+                # Which channel to use for identifying nuclei, base 0
+                'Nuclei_Identification_Channel' : 0,
                 # Define size of individual cell images (in pixels, defines both height and width, so a square)
                 'cropsize' : 46,
 
@@ -242,6 +274,8 @@ class Settings:
                 # Name each channel present, in order (must be consistent for all images)
 
                 'channels' : ["DAPI_ch","Ki67","Sox2","Olig2"],
+                'gammas' : [0.75,0.75,1,0.25],
+                'RelativeIntensityThreshold' : [[1,5],[3,5],[3,5],[1.2,2]],
 
                 # Path to folder containing images to be analyzed
                 'Path' : "C:\\Users\\jjmc1\\Desktop\\Control KSO DCO\\KSO",
@@ -250,10 +284,13 @@ class Settings:
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo',],
 
                 # Do you want to use the keras models (slow)
-                'useKeras' : True,
+                'useKeras' : False,
 
                 # Check files for uniformity? Good idea to do once
                 'checkfiles' : False,
+
+                # if true, does not pull images during the ProcessRawResults
+                'FastProcess' : True,
             },
             {
                 'name' : '8_RoopaNeostigmineLesionSize',
@@ -486,6 +523,49 @@ class Settings:
                 'useKeras' : True,
                 # Check files for uniformity? Good idea to do once
                 'checkfiles' : False,
+            },
+            {
+                'name' : '15_Treatment&Small',
+
+                # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
+                'ROI_Draw_Channel' : 0,
+
+                # Which channel to use for identifying nuclei, base 0
+                'Nuclei_Identification_Channel' : 0,
+
+                # Define size of individual cell images (in pixels, defines both height and width, so a square)
+                'cropsize' : 46,
+
+                #Change if using anything other then 10x
+                #Average scale for 10x images, pixel/micron
+                'scale' : 1.5385,
+            
+                # Define the number of ROIs you want to draw
+                'ROINumber' : 2,
+
+                # Name each channel present, in order (must be consistent for all images)
+
+                'channels' : ["DAPI_ch","Ki67","Sox2","Olig2"],
+                'gammas' : [0.75,0.75,1,0.25],
+                'RelativeIntensityThreshold' : [[1,5],[3,5],[3,5],[1.2,2]],
+
+                # Path to folder containing images to be analyzed
+                'Path' : "Y:\\People\\James\\KSO Small+Treatment",
+
+                # Cell types to analyze
+                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo', 'Activated-ProliferativeOPCs'],
+
+                # Do you want to use the keras models (slow)
+                'useKeras' : False,
+
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
+
+                # if true, does not pull images during the ProcessRawResults
+                'FastProcess' : True,
+
+                # DataOrganizer type
+                'DataOrganizer' : 'KSO_DCOLesion',
             },
         ]
 

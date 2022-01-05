@@ -202,38 +202,8 @@ class DataOrganizer(object):
 
 
 
-RabbitDescriptions = {
-		'007dpl_5ul' : [7,[ '1', '2', '3', '5', '9', '16', '19']],
-		'014dpl_5ul' : [14,[ '4', '6', '10', '21', '23']],
-		'021dpl_5ul' : [21,[ '7', '8', '17', '20', '22']],
-		'056dpl_5ul' : [56,['13', '27', '28', '29']],
-		'180dpl_5ul' : [180,['43', '44']],
-
-		'056dpl_5ul_Glut' : [56,['14']],
-		'180dpl_5ul_Glut' : [180,['45']],
-
-		'007dpl_1ul' : [7,['24', '25']],
-
-		'007dpl_0.35ul' : [7,['26', '48']],
-		'014dpl_0.35ul' : [14,['35', '51']],
-		'021dpl_0.35ul' : [21,['34','50']],
-
-		'021dpl_0.35ul&5ul' : [21,['52']],
-
-		'021dpl_5ul_Clemastine' : [21,[ '31', '32', '33']],
-		'021dpl_5ul_PI-88' : [21,[ '41', '42', '43']],
-
-		'Normal' : [0,['46' , '47']],
-		'8wk_Cup0.2' : [56,['36', '37']],
-		'8wk_Cup0.5' : [56,['38' , '39']],
-}
-
-
 
 			
-
-
-
 
 
 
@@ -248,7 +218,8 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[9]
+setup = settings.folder_dicts[15]
+RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 imagefolpath = setup['Path']
 DataOrganizerType = setup['DataOrganizer']
