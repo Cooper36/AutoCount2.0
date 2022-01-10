@@ -1150,7 +1150,7 @@ class PolygonDrawer(object):
 			self.ScalePoints = []
 
 			# Waiting for the user to press any key
-			i = i+1
+			i = i + 1
 
 		cv.destroyWindow(self.window_name)
 
@@ -1233,7 +1233,7 @@ def GeneralROIIntensity(oriImg, labels, centroids):
 
 
 
-setup = settings.folder_dicts[7]
+setup = settings.folder_dicts[15]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1456,6 +1456,32 @@ for oriImgName in os.listdir(ImgFolderPath):
 			print("Image ",ImageID, " of ", TotalImage,": Processing User ROIs")
 			BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 			UserROIs = np.load(BinarySave, allow_pickle=True)
+			_____________________________________________________________________________________________________________________________
+			#Delete later
+			ScaledUserROIs = os.path.join(SpecificImgFolder, "ScaledUserDefinedROIs.npy")
+			if not os.path.exists(ScaledUserROIs): 
+				imgheight, imgwidth = oriImg.shape
+
+				smallwidth = int(screensize[0] * 0.8)
+				smallheight = int(smallwidth*(imgheight/imgwidth))
+				
+				if smallheight > screensize[1]:
+					smallheight = int(screensize[1] * 0.8)
+					smallwidth = int(smallheight*(imgwidth/imgheight))
+
+				scaleheight = imgheight/smallheight
+				scalewidth = imgwidth/smallwidth
+
+				ScalePoints = []
+				print(UserROIs)
+				for ROI in UserROIs:
+					for point in ROI:
+						point[0] = math.floor(point[0] * scalewidth)
+						point[1] = math.floor(point[1] * scaleheight)
+
+				polygons.append(ScalePoints)
+				print(UserROIs)
+			_____________________________________________________________________________________________________________________________
 			UserROIsOutput = LesionFigSave(DAPIImg=NucleiImg, UserROIs = UserROIs, screensize = screensize )
 
 			(numLabels, labelsUserROI, stats, centroids, IntensityStats, modeStats) = UserROIsOutput
