@@ -553,9 +553,9 @@ def LesionFigSave(DAPIImg, UserROIs, screensize):
 		cv.destroyWindow('winname')
 		thresh1 = np.uint8(thresh1)
 		"""
-		print('DAPIImg',DAPIImg.shape)
-		print('boarders',boarders.shape)
-		print('polygon',polygon)
+		#print('DAPIImg',DAPIImg.shape)
+		#print('boarders',boarders.shape)
+		#print('polygon',polygon)
 
 		cv.polylines(boarders, np.array([polygon]), True, (255, 255, 255), 5)
 		#print(Lbinarr.shape)
@@ -1233,7 +1233,7 @@ def GeneralROIIntensity(oriImg, labels, centroids):
 
 
 
-setup = settings.folder_dicts[15]
+setup = settings.folder_dicts[18]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1269,9 +1269,9 @@ FastProcess = setup['FastProcess']
 
 
 
-overwrite = True
+overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = True
+overwriteCells_Pred = False
 overwriteProcessing = True
 
 debug = False
@@ -1456,11 +1456,13 @@ for oriImgName in os.listdir(ImgFolderPath):
 			print("Image ",ImageID, " of ", TotalImage,": Processing User ROIs")
 			BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 			UserROIs = np.load(BinarySave, allow_pickle=True)
-			_____________________________________________________________________________________________________________________________
+			#_____________________________________________________________________________________________________________________________
 			#Delete later
+			'''
 			ScaledUserROIs = os.path.join(SpecificImgFolder, "ScaledUserDefinedROIs.npy")
-			if not os.path.exists(ScaledUserROIs): 
-				imgheight, imgwidth = oriImg.shape
+			if not os.path.exists(ScaledUserROIs):
+				
+				imgheight, imgwidth = oriImg[0].shape
 
 				smallwidth = int(screensize[0] * 0.8)
 				smallheight = int(smallwidth*(imgheight/imgwidth))
@@ -1471,17 +1473,25 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 				scaleheight = imgheight/smallheight
 				scalewidth = imgwidth/smallwidth
-
-				ScalePoints = []
+				print('scaleheight', scaleheight)
+				print('scalewidth', scalewidth)
+				ScaledROIs = []
 				print(UserROIs)
 				for ROI in UserROIs:
+					polygon = []
 					for point in ROI:
-						point[0] = math.floor(point[0] * scalewidth)
-						point[1] = math.floor(point[1] * scaleheight)
+						pointx = math.floor(point[0] * scalewidth)
+						pointy = math.floor(point[1] * scaleheight)
+						polygon.append([pointx,pointy])
+					ScaledROIs.append(polygon)
 
-				polygons.append(ScalePoints)
+				print(ScaledROIs)
+				#np.save(ScaledUserROIs, UserROIs, allow_pickle=True, fix_imports=True)
+				UserROIs = []
+				UserROIs = ScaledROIs
 				print(UserROIs)
-			_____________________________________________________________________________________________________________________________
+				'''
+			#_____________________________________________________________________________________________________________________________
 			UserROIsOutput = LesionFigSave(DAPIImg=NucleiImg, UserROIs = UserROIs, screensize = screensize )
 
 			(numLabels, labelsUserROI, stats, centroids, IntensityStats, modeStats) = UserROIsOutput
