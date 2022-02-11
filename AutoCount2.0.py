@@ -1044,6 +1044,19 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 			Summary[-1][cellnumtitle] = cellNumber
 			Summary[-1][celldenstitle] = density
 
+		#Add percentage calculations
+		for percentcalc in PercentCalcs:
+			PercentTitle = 'Lesion '+ str(ROI) + " " +str(percentcalc[0]) + '/' + str(percentcalc[1])
+			cellnumtitle1 = 'Lesion '+ str(ROI) +' ' + percentcalc[0] + ' Number'
+			cellnumtitle2 = 'Lesion '+ str(ROI) +' ' + percentcalc[1] + ' Number'
+			cellnum1 = Summary[-1][cellnumtitle1]
+			cellnum2 = Summary[-1][cellnumtitle2]
+			Percent = (cellnum1 / cellnum2) *100
+
+			print(PercentTitle, Percent)
+
+			Summary[-1][PercentTitle] = Percent
+
 	return Summary
 				
 class PolygonDrawer(object):
@@ -1233,7 +1246,7 @@ def GeneralROIIntensity(oriImg, labels, centroids):
 
 
 
-setup = settings.folder_dicts[18]
+setup = settings.folder_dicts[17]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1266,6 +1279,8 @@ checkfiles = setup['checkfiles']
 gammas = setup['gammas']
 
 FastProcess = setup['FastProcess']
+
+PercentCalcs = setup['PercentCalcs']
 
 
 

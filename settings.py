@@ -664,6 +664,8 @@ class Settings:
 
                 # DataOrganizer type
                 'DataOrganizer' : 'KSO_DCOLesion',
+
+                'PercentCalcs' : [['NonOligo','DAPI'],['ProlifNonOligo','NonOligo'],['ActiveOPC','OligoLineage'],['ProlifOPC','OligoLineage'],['Activated-ProliferativeOPCs','ActiveOPC']]
             },
             {
                 'name' : '18_KSOUntreated',
@@ -707,6 +709,8 @@ class Settings:
 
                 # DataOrganizer type
                 'DataOrganizer' : 'KSO_DCOLesion',
+
+                'PercentCalcs' : [['NonOligo','DAPI'],['ProlifNonOligo','NonOligo'],['ActiveOPC','OligoLineage'],['ProlifOPC','OligoLineage'],['Activated-ProliferativeOPCs','ActiveOPC']]
             },
         ]
 
