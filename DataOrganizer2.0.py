@@ -119,8 +119,9 @@ class DataOrganizer(object):
 		
 		term = 'Section'
 		search = 1
-		self.df['Section'] = self.df.apply(lambda row : str(int(row['Slide']) + (10*(1-int(row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip())))), axis = 1)
+		self.df['Section'] = self.df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
 		
+	
 		Savename = Dataname +"_For Excel.csv"
 		CsvSave = os.path.join(SaveLoc, Savename)
 		self.df.to_csv(CsvSave, index=True)
@@ -218,7 +219,7 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[17]
+setup = settings.folder_dicts[15]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 imagefolpath = setup['Path']

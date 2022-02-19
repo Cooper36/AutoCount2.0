@@ -29,7 +29,7 @@ class Settings:
 
         '021dpl_5ul_Clemastine' : [21,[ '31', '32', '33']],
         '021dpl_5ul_PI-88' : [21,[ '40','41', '42',]],
-        '056dpl_5ul+Transplant' : [21,[ '40','41', '42',]],
+        
 
         'Normal' : [0,['46' , '47', '58']],
         '8wk_Cup0.2' : [56,['36', '37']],
@@ -398,7 +398,8 @@ class Settings:
                 'RelativeIntensityThreshold' : [[1,5],[3,5],[3,5],[4,5]],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "Y:\\People\\Rich\\__Transplants\\_____Transplant Master Folder\\D\\IHC master folder\\PV-NES-NLS-Transplant1_MBP-hNA IHC images\\Tiff\\New images",
+                #'Path' : "Y:\\People\\Rich\\__Transplants\\_____Transplant Master Folder\\D\\IHC master folder\\PV-NES-NLS-Transplant1_MBP-hNA IHC images\\Tiff\\New images",
+                'Path' : "Y:\\People\\Rich\\__Transplants\\_Transplant Master Folder\\PV-NES-GFP & PV-NLS-GFP shiverer\\IHC master folder\\Transplant 1 - PV-NES&PV-NLS_MBP-hNA IHC images\\Tiff\\New images",
                 #'Path' : "Y:\\People\\Rich\\Transplant_MBP-hNA\\Tiff",
                 #'Path' : "C:\\Users\\jjmc1\\Desktop\\New folder",
                 
@@ -410,10 +411,15 @@ class Settings:
                 'useKeras' : False,
 
                 # Check files for uniformity? Good idea to do once
-                'checkfiles' : True,
+                'checkfiles' : False,
+
+                # if true, does not pull images during the ProcessRawResults
+                'FastProcess' : True,                
 
                 # DataOrganizer type
                 'DataOrganizer' : 'PVTransplants',
+
+                'PercentCalcs' : [],
             },
             {
                 'name' : '11_Cuprizone MNA',
@@ -555,13 +561,12 @@ class Settings:
                 'ROINumber' : 2,
 
                 # Name each channel present, in order (must be consistent for all images)
-
                 'channels' : ["DAPI_ch","Ki67","Sox2","Olig2"],
                 'gammas' : [0.75,0.75,1,0.25],
-                'RelativeIntensityThreshold' : [[1,5],[3,5],[3,5],[1.2,2]],
+                'RelativeIntensityThreshold' : [[1,5],[3,5],[3,5],[2,3]],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "Y:\\People\\James\\KSO Small+Treatment",
+                'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\KSO Small+Treatment",
 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo', 'Activated-ProliferativeOPCs'],
@@ -577,6 +582,8 @@ class Settings:
 
                 # DataOrganizer type
                 'DataOrganizer' : 'KSO_DCOLesion',
+
+                'PercentCalcs' : [['NonOligo','DAPI'],['ProlifNonOligo','NonOligo'],['ActiveOPC','OligoLineage'],['ProlifOPC','OligoLineage'],['Activated-ProliferativeOPCs','ActiveOPC']]
             },
             {
                 'name' : '16_KSOsmallLesion2',
@@ -694,6 +701,51 @@ class Settings:
 
                 # Path to folder containing images to be analyzed
                 'Path' : "Y:\\People\\James\\Untreated Animals\\KSO",
+
+                # Cell types to analyze
+                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo', 'Activated-ProliferativeOPCs'],
+
+                # Do you want to use the CC1 keras models (slow)
+                'useKeras' : False,
+
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
+
+                # if true, does not pull images during the ProcessRawResults
+                'FastProcess' : True,
+
+                # DataOrganizer type
+                'DataOrganizer' : 'KSO_DCOLesion',
+
+                'PercentCalcs' : [['NonOligo','DAPI'],['ProlifNonOligo','NonOligo'],['ActiveOPC','OligoLineage'],['ProlifOPC','OligoLineage'],['Activated-ProliferativeOPCs','ActiveOPC']]
+            },
+            {
+                'name' : '19_KSOLarge&SmallCombined, RB43 Retest',
+
+                # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
+                'ROI_Draw_Channel' : 0,
+
+                # Which channel to use for identifying nuclei, base 0
+                'Nuclei_Identification_Channel' : 0,
+
+                # Define size of individual cell images (in pixels, defines both height and width, so a square)
+                'cropsize' : 46,
+
+                #Change if using anything other then 10x
+                #Average scale for 10x images, pixel/micron
+                'scale' : 1.5385,
+            
+                # Define the number of ROIs you want to draw
+                'ROINumber' : 2,
+
+                # Name each channel present, in order (must be consistent for all images)
+
+                'channels' : ["DAPI_ch","Ki67","Sox2","Olig2"],
+                'gammas' : [0.75,0.75,1,0.3],
+                'RelativeIntensityThreshold' : [[1,5],[3,5],[3,5],[1.3,1.8]],
+
+                # Path to folder containing images to be analyzed
+                'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\KSO Large&Small Lesions\\RB43 Reanalysis",
 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo', 'Activated-ProliferativeOPCs'],
