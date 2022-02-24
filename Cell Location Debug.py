@@ -17,6 +17,7 @@ import shutil
 from PIL import Image 
 import PIL 
 import imageio
+from io import BytesIO
 import pandas as pd
 import random
 from scipy.stats import gaussian_kde
@@ -33,11 +34,60 @@ from settings import Settings
 import tifffile as tiff
 
 settings = Settings()
+def saveCentroids(images, df, titles='', path = ' ', text_coords = []):
+	"""Show centroids side-by-side with image."""
+
+	celltypes = plotcelltypes
+	sizeh = images.shape[1]
+	sizew = images.shape[2]
+
+	dpiscale = 1000
+	scaleh = sizeh/dpiscale
+	scalew = sizew/dpiscale
+
+	colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+	
+	dotsize = 0.5
+
+	for j in range(len(celltypes)):
+		fig = plt.figure(frameon=False, figsize=(scalew, scaleh), dpi=100)
+		ax = plt.Axes(fig, [0., 0., 1., 1.])
+		ax.set_axis_off()
+		fig.add_axes(ax)
+
+		img = np.zeros((sizeh, sizew), np.uint8)
+		ax.imshow(img, aspect='auto')
+		celltype = celltypes[j]
+		color = colors[j]
+		celltypedf = df.loc[df[celltype] == 1]
+		centroids_x = celltypedf['X']
+		centroids_y = celltypedf['Y']
+		ax.scatter(centroids_x,centroids_y, s=dotsize,c=color)
+	
+		if not len(text_coords) == 0:
+			for i in range(len(text_coords)):
+				if i > 0:
+					x = text_coords[i][0]
+					y = text_coords[i][1]
+					s = str(i)
+					plt.text(x, y, s, fontsize=12)
+		#fig.savefig(fname, dpiscale)
+		# Save the image in memory in PNG format
+		png1 = BytesIO()
+		fig.savefig(png1, format="png", dpi = dpiscale)
+
+		# Load this image into PIL
+		png2 = Image.open(png1)
+
+		# Save as TIFF
+		FigureSavePath = os.path.join(path, "Cell type location "+str(celltype)+" .tiff")
+		png2.save(FigureSavePath)
+		png1.close()
 
 def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = []):
 	"""Show centroids side-by-side with image."""
 
-	celltypes = cell_types_to_analyze
+	celltypes = plotcelltypes
 	
 	cols = int(len(images) // 2 + len(images) % 2)
 	rows = int(len(images) // cols + len(images) % cols)
@@ -54,7 +104,7 @@ def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = [])
 			colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 			
 			dotsize = 5
-			for j in range(len(celltypes)):
+			for j in range(len(celltype)):
 				celltype = celltypes[j]
 				color = colors[j]
 				celltypedf = df.loc[df[celltype] == 1]
@@ -105,10 +155,13 @@ def gammaCorrect(image, gamma: float=-1):
 	return corrected_image
 
 '____________________________________________________________________________________'
-setup = settings.folder_dicts[19]
+setup = settings.folder_dicts[18]
 #List of images you want to see, file names in he specified path
-Images = ['RB43_Stain-KSO_Slide61-71_Section_2_Ls-RH_ImageID-16336.tif',
+Images = ['RB47_Stain-KSO_Slide70-80__Section_1_Ls-RH_ImageID-15073.tif',
 		 ]
+plotcelltypes = ['DAPI','OligoLineage','ActiveOPC', 'ProlifOPC']
+#https://www.infobyip.com/detectmonitordpi.php
+my_dpi = [144,144]
 '____________________________________________________________________________________'
 
 RabbitDescriptions = settings.RabbitDescriptions
@@ -189,5 +242,6 @@ for oriImgName in os.listdir(ImgFolderPath):
 			Resultsdf = pd.read_csv(ImageResultsSave)
 
 			#FigureSavePath = os.path.join(SpecificImgFolder, "Cell_Identification.pdf")
-			showCentroids(images = Vischannels, df = Resultsdf, titles = namChannels, save = 0)
+			#showCentroids(images = Vischannels, df = Resultsdf, titles = namChannels, save = 0)
+			saveCentroids(images = Vischannels, path = SpecificImgFolder, df = Resultsdf, titles = namChannels)
 

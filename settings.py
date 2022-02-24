@@ -651,7 +651,7 @@ class Settings:
                 # Name each channel present, in order (must be consistent for all images)
 
                 'channels' : ["DAPI_ch","Ki67","Sox2","Olig2"],
-                'gammas' : [0.75,0.75,1,0.25],
+                'gammas' : [0.75,0.25,0.25,0.25],
                 'RelativeIntensityThreshold' : [[1,5],[3,5],[3,5],[2,3]],
 
                 # Path to folder containing images to be analyzed

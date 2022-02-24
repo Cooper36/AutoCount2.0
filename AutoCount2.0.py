@@ -1247,7 +1247,7 @@ def GeneralROIIntensity(oriImg, labels, centroids):
 
 
 
-setup = settings.folder_dicts[15]
+setup = settings.folder_dicts[18]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
