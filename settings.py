@@ -236,28 +236,41 @@ class Settings:
                 'cropsize' : 46,
 
                 #Change if using anything other then 10x
-                #Average scale for 4x images, pixel/micron
+                #Average scale for 10x images, pixel/micron
                 'scale' : 1.5385,
             
                 # Define the number of ROIs you want to draw
                 'ROINumber' : 1,
 
                 # Name each channel present (must be consistent for all images)
-                'channels' : ["DAPI_ch","CC1","Blank","Olig2"],
+                'channels' : ["DAPI_ch","CC1","594_ch","Olig2"],
                 'gammas' : [0.75,0.75,1,0.75],
+                'RelativeIntensityThreshold' : [[1,5],[1.2,2],[1.2,2],[2,3]],
 
                 # Path to folder containing images to be analyzed
+                # Path to folder containing images to be analyzed
                 #'Path' : "C:\\Users\\jjmc1\\Desktop\\Control KSO DCO\\DCO",
-                'Path' : "/Users/jjmc/Desktop/Control KSO DCO/DCO",
-
+                #'Path' : "/Users/jjmc/Desktop/Control KSO DCO/DCO",
+                'Path' : "/Users/jjmc/Documents/DCO Test",
+                
+                
                 # Cell types to analyze
-                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','OPC', 'CC1+', 'NonOligo', 'CC1+Olig2-'],
+                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo','CC1+Olig2-'],
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : True,
-
+                
                 # Check files for uniformity? Good idea to do once
                 'checkfiles' : False,
+
+                # if true, does not pull images during the ProcessRawResults
+                'FastProcess' : False,
+
+                # DataOrganizer type
+                'DataOrganizer' : 'KSO_DCOLesion',
+
+                'PercentCalcs' : [['NonOligo','DAPI'],['Mature Oligodendrocyte','OligoLineage'],['OPC','OligoLineage']]
+
 
                 
             },
@@ -791,8 +804,9 @@ class Settings:
                 'RelativeIntensityThreshold' : [[1,5],[1.2,2],[1.2,2],[1.25,3]],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\DCO Large&Small Lesions\\Lesion",
-
+                #'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\DCO Large&Small Lesions\\Lesion",
+                'Path' : '/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/DCO Large&Small Lesions/Lesion',    
+                
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo','CC1+Olig2-'],
 
@@ -837,7 +851,8 @@ class Settings:
 
                 # Path to folder containing images to be analyzed
                 'Path' : "Y:\\People\\James\\Untreated Animals\\DCO",
-
+                
+                
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo','CC1+Olig2-'],
 

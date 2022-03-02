@@ -458,10 +458,10 @@ def MacLearnImgPrepper(cells):
 				if i > 0 :
 					if str(ch) == 'CC1' or str(ch) == 'PLP':
 						blue = DAPI_ch
-						#green = np.uint8(gammaCorrect(img[i],gamma = gammas[i]))
-						green = img[i]
+						green = np.uint8(gammaCorrect(img[i],gamma = gammas[i]))
+						#green = img[i]
 						#to correct for gradients in staining intensity, make the max pixel in every cell image 127 (half max intensity of 8 bit image)
-						#green = cv.normalize(src=green, dst=None, alpha=0, beta=127, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
+						green = cv.normalize(src=green, dst=None, alpha=0, beta=127, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
 						red = img[-1]
 
 					else:
@@ -1131,7 +1131,7 @@ class PolygonDrawer(object):
 					# Draw all the current polygon segments
 					cv.polylines(canvas, np.array([self.points]), False, self.FINAL_LINE_COLOR, 1)
 					# And  also show what the current segment would look like
-					cv.line(canvas, self.points[-1], self.current, self.WORKING_LINE_COLOR)
+					cv.line(canvas, tuple(self.points[-1]), self.current, self.WORKING_LINE_COLOR)
 				# Update the window
 				cv.imshow(self.window_name, canvas)
 				# And wait 50ms before next iteration (this will pump window messages meanwhile)
@@ -1322,7 +1322,7 @@ def saveBorder(images, UserROIs, titles='', path = ' ', text_coords = []):
 
 
 
-setup = settings.folder_dicts[21]
+setup = settings.folder_dicts[6]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1362,7 +1362,7 @@ PercentCalcs = setup['PercentCalcs']
 
 overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = False
+overwriteCells_Pred = True
 overwriteProcessing = True
 
 debug = False
@@ -1683,6 +1683,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 				oriImg = cv.imreadmulti(fullpath, flags = -1)
 				Vischannels =[]
+				gammas[-1] = 0.25
 				for i in range(len(namChannels)):
 					Img = gammaCorrect(oriImg[1][i], gamma = gammas[i])
 					Img = proccessVisualImage(Img)
