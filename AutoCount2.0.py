@@ -1322,7 +1322,7 @@ def saveBorder(images, UserROIs, titles='', path = ' ', text_coords = []):
 
 
 
-setup = settings.folder_dicts[6]
+setup = settings.folder_dicts[20]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1683,7 +1683,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 				oriImg = cv.imreadmulti(fullpath, flags = -1)
 				Vischannels =[]
-				gammas[-1] = 0.25
+				
 				for i in range(len(namChannels)):
 					Img = gammaCorrect(oriImg[1][i], gamma = gammas[i])
 					Img = proccessVisualImage(Img)
