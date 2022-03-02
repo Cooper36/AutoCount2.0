@@ -36,6 +36,7 @@ screensize = [width, height]
 
 from settings import Settings
 import tifffile as tiff
+from io import BytesIO
 
 settings = Settings()
 
@@ -683,15 +684,17 @@ def getPredictions(cells, model):
 				c=c+1
 			for i in range(len(namChannels)):
 				if i > 0:
-					img = cell['RGBs'][namChannels[i]][0]
-					img = img.astype('float64')
-					img = np.expand_dims(img, axis=0)
+					if namChannels[i] == 'CC1' or namChannels[i] == 'PLP':
+						img = cell['RGBs'][namChannels[i]][0]
+						img = img.astype('float64')
+						img = np.expand_dims(img, axis=0)
 
-					#Comment these out to make the code go faster when debugging
-					if useKeras:
-						predict = model.predict(img)
-						predict = predict[0][0]
-					else :
+						if useKeras:
+							predict = model.predict(img)
+							predict = predict[0][0]
+						else:
+							predict = 0
+					else:
 						predict = 0
 					cell['RGBs'][namChannels[i]].append(predict)
 			
@@ -888,11 +891,6 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		elif ch == 'CC1' or ch == 'PLP':
 			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 		else:
-			if useKeras:
-				df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-				#df[Postivity_RankTitle] = np.where((df["SizeThreshed"] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-				df[Postivity_RankTitle] = np.where( (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-			else:
 				#df[Postivity_RankTitle] = np.where((df["SizeThreshed"] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 				df[Postivity_RankTitle] = np.where( (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 		ToHisto = [AreaColumnTitle,IntensColumnTitle,MeanNewcolumnTitle,RelNewcolumnTitle]
@@ -1054,7 +1052,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 				cellnum2 = Summary[-1][cellnumtitle2]
 				Percent = (cellnum1 / cellnum2) *100
 
-				print(PercentTitle, Percent)
+				#print(PercentTitle, Percent)
 
 				Summary[-1][PercentTitle] = Percent
 
@@ -1202,6 +1200,83 @@ def GeneralROIIntensity(oriImg, labels, centroids):
 		modeStats.append(chmode)
 	return [intensitStats, modeStats]
 
+def ProcessHandaudit(path, celldf, clickTolerance):
+	handAudit = pd.read_csv(path)
+	for i in range(len(namChannels)):
+		if i > 0:
+			xnam = namChannels[i] + " X"
+			Ynam = namChannels[i] + " Y"
+			chnPos = namChannels[i] + " Postivity_Rank";
+			coords = handAudit[xnam, ynam]
+			celldf[chnPos].values[:] = 0
+
+			for j in range(len(coords)):
+				distances = []
+				for k in range(len(celldf)):
+					x1 = coords[j][0]
+					y1 = coords[j][1]
+					x2 = celldf['X'][k]
+					y2 = celldf['Y'][k]
+					distances.append(math.sqrt(math.pow((x2-x1), 2) + math.pow((y2-y1), 2)))
+				min_value = min(distances)
+				min_index = distances.index(min_value)
+
+				if min_value < clickTolerance:
+					celldf[chnPos][min_index] = 1
+				else:
+					celldf[chnPos][min_index] = 0
+
+def saveBorder(images, UserROIs, titles='', path = ' ', text_coords = []):
+	"""Show centroids side-by-side with image."""
+
+	sizeh = images.shape[0]
+	sizew = images.shape[1]
+
+	dpiscale = 1000
+	scaleh = sizeh/dpiscale
+	scalew = sizew/dpiscale
+
+	colors = ['#1f77b4']
+	
+	Linewidth = 0.5
+	fig = plt.figure(frameon=False, figsize=(scalew, scaleh), dpi=100)
+	ax = plt.Axes(fig, [0., 0., 1., 1.])
+	ax.set_axis_off()
+	fig.add_axes(ax)
+
+	img = np.zeros((sizeh, sizew), np.uint8)
+	ax.imshow(img, aspect='auto')
+
+	for j in range(len(UserROIs)):
+		polygon = UserROIs[j]
+		polygon.append(polygon[0]) #repeat the first point to create a 'closed loop'
+
+		xs, ys = zip(*polygon) #create lists of x and y values
+		
+		color = colors[0]
+		
+		plt.plot(xs,ys) 
+		
+		#fig.savefig(fname, dpiscale)
+		# Save the image in memory in PNG format
+
+	png1 = BytesIO()
+	fig.savefig(png1, format="png", dpi = dpiscale)
+
+	# Load this image into PIL
+	png2 = Image.open(png1)
+
+	# Save as TIFF
+	FigureSavePath = os.path.join(path, "Borders.tiff")
+	png2.save(FigureSavePath)
+	png1.close()
+
+				
+
+
+
+
+
 """_____________________________________________________________________________________________________________________________"""
 
 #Operational code
@@ -1247,7 +1322,7 @@ def GeneralROIIntensity(oriImg, labels, centroids):
 
 
 
-setup = settings.folder_dicts[18]
+setup = settings.folder_dicts[21]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1383,7 +1458,10 @@ for oriImgName in os.listdir(ImgFolderPath):
 			Lbinarr = polyDr.run()
 			#print(Lbinarr)
 			#np.savetxt(BinarySave, Lbinarr, delimiter=',')
+			#Save fiji compatable boarder image
+
 			np.save(BinarySave, Lbinarr, allow_pickle=True, fix_imports=True)
+			saveBorder(images=img, UserROIs=Lbinarr, path =SpecificImgFolder )
 			#cv.imwrite(BinarySave,Lbinarr)
 		TotalImage = TotalImage + 1
 
@@ -1551,8 +1629,12 @@ for oriImgName in os.listdir(ImgFolderPath):
 		
 		UpdateResultSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResultsUpdate.csv")
 		if not os.path.exists(UpdateResultSave) or overwriteProcessing or overwrite:
-			if Resultsdf.empty :
-				Resultsdf = pd.read_csv(ImageResultsSave)	
+			handAuditpath = os.path.join(SpecificImgFolder, "HandAudited.csv")
+			if Resultsdf.empty or os.path.exists(handAuditpath):
+				Resultsdf = pd.read_csv(ImageResultsSave)
+				if os.path.exists(handAuditpath):
+					Resultsdf = ProcessHandaudit(path = handAuditpath, celldf = Resultsdf, clickTolerance = 5)
+						
 			#Define which cell types too look at for this analysis
 			cell_types_to_analyze = setup['cell_types_to_analyze']
 			#Define cell types. Channel names must match those defined in namChannel exactly.
