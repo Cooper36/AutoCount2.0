@@ -925,7 +925,20 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		if debugProcessRawResults or debug:
 			plt.show()
 		plt.close('all')
-	
+
+
+		#Adjust for Sox2 bleed through
+		if 'Sox2' in namChannels:
+			Sox2pos = "Sox2 Postivity_Rank"
+			Olig2pos = "Olig2 Postivity_Rank"
+
+			Sox2lowthresch = 2
+			
+
+			Sox2Rel = "Sox2 Relative Fluorescence (Main/Bkg)"
+v
+			df[Sox2pos] = np.where( (df[Olig2pos] == 0) & (df[Sox2Rel] >= Sox2lowthresch) & (df["SizeThreshed"] == 1), 1, df[Sox2pos])
+		
 
 	#Visual Validation? Need to load cells
 
@@ -1322,7 +1335,7 @@ def saveBorder(images, UserROIs, titles='', path = ' ', text_coords = []):
 
 
 
-setup = settings.folder_dicts[20]
+setup = settings.folder_dicts[17]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1362,7 +1375,7 @@ PercentCalcs = setup['PercentCalcs']
 
 overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = True
+overwriteCells_Pred = False
 overwriteProcessing = True
 
 debug = False
