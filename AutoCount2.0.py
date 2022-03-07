@@ -806,139 +806,140 @@ def Cells_to_df(cells):
 	return df
 
 def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
-	#Dataframe-wide computation
-	for i in range(len(namChannels)):
-		ToHisto = []
-		ch = namChannels[i]
-		#Calculate Main cell Mean florecence for each channel 
-		MeanNewcolumnTitle = ch + " Main Cell Mean Fluorescence (Intensity/pix^2)"
-		IntensColumnTitle1 = ch + " Main Nuclei Pixel Intensity"
-		AreaColumnTitle2 = ch + " Main Nuclei Area (pixels^2)"
-		df[MeanNewcolumnTitle] = df[IntensColumnTitle1] / df[AreaColumnTitle2]
-		ToHisto.extend([AreaColumnTitle2, MeanNewcolumnTitle])
+	if not os.path.exists(handAuditpath):
+		#Dataframe-wide computation
+		for i in range(len(namChannels)):
+			ToHisto = []
+			ch = namChannels[i]
+			#Calculate Main cell Mean florecence for each channel 
+			MeanNewcolumnTitle = ch + " Main Cell Mean Fluorescence (Intensity/pix^2)"
+			IntensColumnTitle1 = ch + " Main Nuclei Pixel Intensity"
+			AreaColumnTitle2 = ch + " Main Nuclei Area (pixels^2)"
+			df[MeanNewcolumnTitle] = df[IntensColumnTitle1] / df[AreaColumnTitle2]
+			ToHisto.extend([AreaColumnTitle2, MeanNewcolumnTitle])
 
-		#Calculate bkg Mean florecence for each channel 
-		NewcolumnTitle = ch + " Bkg Mean Fluorescence (Intensity/pix^2)"
-		ColumnTitle1 = ch + " Background Pixel Intensity"
-		ColumnTitle2 = ch + " Background Area (pixels^2)"
-		df[NewcolumnTitle] = df[ColumnTitle1] / df[ColumnTitle2]
+			#Calculate bkg Mean florecence for each channel 
+			NewcolumnTitle = ch + " Bkg Mean Fluorescence (Intensity/pix^2)"
+			ColumnTitle1 = ch + " Background Pixel Intensity"
+			ColumnTitle2 = ch + " Background Area (pixels^2)"
+			df[NewcolumnTitle] = df[ColumnTitle1] / df[ColumnTitle2]
 
-		#Calculate Relative florecence for the main cell for each channel 
-		RelNewcolumnTitle = ch + " Relative Fluorescence (Main/Bkg)"
-		ColumnTitle1 = ch + " Main Cell Mean Fluorescence (Intensity/pix^2)"
-		ColumnTitle2 = ch + " Bkg Mean Fluorescence (Intensity/pix^2)"
-		df[RelNewcolumnTitle] = df[ColumnTitle1] / df[ColumnTitle2]
-		ToHisto.extend([RelNewcolumnTitle])
+			#Calculate Relative florecence for the main cell for each channel 
+			RelNewcolumnTitle = ch + " Relative Fluorescence (Main/Bkg)"
+			ColumnTitle1 = ch + " Main Cell Mean Fluorescence (Intensity/pix^2)"
+			ColumnTitle2 = ch + " Bkg Mean Fluorescence (Intensity/pix^2)"
+			df[RelNewcolumnTitle] = df[ColumnTitle1] / df[ColumnTitle2]
+			ToHisto.extend([RelNewcolumnTitle])
 
-	#Calculate image-specific thresholds
-	#https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html
-	
-	"""	SpecificImgResultsPath = os.path.join(ResultsFolderPath,"Image_Specific_Results")
-	SpecificImgFolder = os.path.join(SpecificImgResultsPath, Image[:-4] + " Results")"""
-	
-	for i in range(len(namChannels)):
-		ToHisto = []
-		ch = namChannels[i]
-		AreaColumnTitle = ch + " Main Nuclei Area (pixels^2)"
-		IntensColumnTitle = ch + " Main Nuclei Pixel Intensity"
-		MeanNewcolumnTitle = ch + " Main Cell Mean Fluorescence (Intensity/pix^2)"
-		RelNewcolumnTitle = ch + " Relative Fluorescence (Main/Bkg)"
-		MacLearnPredTitle = ch + " Machine Learning Prediction"
-		bkgIntensTitle = ch + " Background Pixel Intensity"
-		bkgMeanTitle = ch + " Bkg Mean Fluorescence (Intensity/pix^2)"
-
-		#Define Threshold values for all of the parameters (size, mean intensity, relative intensity, maclearn(well its 1))
-		#sizethresh is set at 10 to 250 pix^2, or ~4um^2 to ~105um^2
-		sizeThresh = [10,250]
-		df["SizeThreshed"] = np.where((df[AreaColumnTitle] > sizeThresh[0]) & (df[AreaColumnTitle] < sizeThresh[1]), 1, 0)
-
-		IntensMean = np.mean(df[IntensColumnTitle])
-		IntensStd = np.std(df[IntensColumnTitle])		
-		IntensThresh = IntensMean + (0.25*IntensStd)
-		IntensThreshedTitle = ch + " IntensThreshed"
-		df[IntensThreshedTitle] = np.where((df[IntensColumnTitle] >= IntensThresh), 1, 0)
-
-		#based on the average bkg mean intensity of the whole image
-		bkgmean = np.mean(df[bkgMeanTitle])
-		MeanThresh = bkgmean + (np.std(df[bkgMeanTitle]))
-		MeanThreshedTitle = ch + " MeanThreshed"
-		df[MeanThreshedTitle] = np.where((df[MeanNewcolumnTitle] >= MeanThresh), 1, 0)
-
-		#based on relationship between the the immediate bkg around each nuclei
-		#RelMean = np.mean(df[RelNewcolumnTitle])
-		#RelStd = np.std(df[RelNewcolumnTitle])		
-		RelIntensThreshlow = Relthreshs[i][0]
-		RelIntensThreshhigh = Relthreshs[i][1]
-		RelThreshedTitle = ch + " RelThreshed"
-		#high confidence rel thresh
-		df[RelThreshedTitle] = np.where((df[RelNewcolumnTitle] >= RelIntensThreshhigh), 1, 0)
-		#low confidence rel thresh
-		df[RelThreshedTitle] = np.where((df[RelNewcolumnTitle] >= RelIntensThreshlow) & (df[IntensColumnTitle] >= bkgmean), 1, df[RelThreshedTitle])
-		if i != 0:
-			MacLearnThreshedTitle = ch + " MacLearnThreshed"
-			df[MacLearnThreshedTitle] = np.where((df[MacLearnPredTitle] >= 0.5), 1, 0)
-
-
-		#Identify different types of positivity FUNCTIONALITY NOT CURRENTLY BEING USED
-		# 1 means just maclearn predicted
-		# 2 means predicted positive in the traditional sense
-		# 3 both maclearn and traditional positive
-
-		Postivity_RankTitle = ch + " Postivity_Rank"
-		df[Postivity_RankTitle] = 0
-		if i == 0:
-			df[Postivity_RankTitle] = np.where((df[IntensColumnTitle] > 0), 1, 0)
-		elif ch == 'CC1' or ch == 'PLP':
-			df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-		else:
-				#df[Postivity_RankTitle] = np.where((df["SizeThreshed"] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-				df[Postivity_RankTitle] = np.where( (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-		ToHisto = [AreaColumnTitle,IntensColumnTitle,MeanNewcolumnTitle,RelNewcolumnTitle]
-		#debug Histograms to show distribution of values for each channel, have the threshold appear on that histogram
-		dfnonan= df.fillna(0)
-		fig, axes = plt.subplots(len(ToHisto),figsize = (10,10))
-		fig.tight_layout(h_pad=2)
-		for i in range(len(ToHisto)):
-			axes[i].hist(dfnonan[ToHisto[i]], alpha = 0.5, bins = 80, label="Main")
-			Mean = np.mean(dfnonan[ToHisto[i]])
-			Std = np.std(dfnonan[ToHisto[i]])
-			axes[i].title.set_text(ToHisto[i])
-			if i == 0:
-				axes[i].axvline(x=10, color='orange', linestyle='dashed', linewidth=1)
-				axes[i].axvline(x=250, color='orange', linestyle='dashed', linewidth=1)
-				axes[i].text(10,0,'Threshold',color='orange')
-			elif i == 2:
-				axes[i].hist(dfnonan[bkgMeanTitle],alpha = 0.5, color='pink', bins = 20, label="bkg mean")
-				axes[i].axvline(x=MeanThresh, color='orange', linestyle='dashed', linewidth=1)
-				axes[i].text(MeanThresh,0,'Threshold',color='orange')
-				axes[i].legend(loc='upper right')
-			else:
-				axes[i].axvline(x=Mean, color='blue', linestyle='dashed', linewidth=1)
-				axes[i].text(Mean,0,'mean',color='blue')
-				axes[i].axvline(x=Mean+Std, color='red', linestyle='dashed', linewidth=1)
-				axes[i].text(Mean+Std,0,'mean + 1std',color='red')
-				axes[i].axvline(x=Mean+(Std*0.25), color='orange', linestyle='dashed', linewidth=1)
-				axes[i].text(Mean+(Std*0.25),0,'Threshold',color='orange')
-			figname = ch + " Thresholding_Histograms"
-			FigureSavePath = os.path.join(SpecificImgFolder,figname)
-		plt.savefig(FigureSavePath)
-		if debugProcessRawResults or debug:
-			plt.show()
-		plt.close('all')
-
-
-		#Adjust for Sox2 bleed through
-		if 'Sox2' in namChannels:
-			Sox2pos = "Sox2 Postivity_Rank"
-			Olig2pos = "Olig2 Postivity_Rank"
-
-			Sox2lowthresch = 2
-			
-
-			Sox2Rel = "Sox2 Relative Fluorescence (Main/Bkg)"
-v
-			df[Sox2pos] = np.where( (df[Olig2pos] == 0) & (df[Sox2Rel] >= Sox2lowthresch) & (df["SizeThreshed"] == 1), 1, df[Sox2pos])
+		#Calculate image-specific thresholds
+		#https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html
 		
+		"""	SpecificImgResultsPath = os.path.join(ResultsFolderPath,"Image_Specific_Results")
+		SpecificImgFolder = os.path.join(SpecificImgResultsPath, Image[:-4] + " Results")"""
+		
+		for i in range(len(namChannels)):
+			ToHisto = []
+			ch = namChannels[i]
+			AreaColumnTitle = ch + " Main Nuclei Area (pixels^2)"
+			IntensColumnTitle = ch + " Main Nuclei Pixel Intensity"
+			MeanNewcolumnTitle = ch + " Main Cell Mean Fluorescence (Intensity/pix^2)"
+			RelNewcolumnTitle = ch + " Relative Fluorescence (Main/Bkg)"
+			MacLearnPredTitle = ch + " Machine Learning Prediction"
+			bkgIntensTitle = ch + " Background Pixel Intensity"
+			bkgMeanTitle = ch + " Bkg Mean Fluorescence (Intensity/pix^2)"
+
+			#Define Threshold values for all of the parameters (size, mean intensity, relative intensity, maclearn(well its 1))
+			#sizethresh is set at 10 to 250 pix^2, or ~4um^2 to ~105um^2
+			sizeThresh = [10,250]
+			df["SizeThreshed"] = np.where((df[AreaColumnTitle] > sizeThresh[0]) & (df[AreaColumnTitle] < sizeThresh[1]), 1, 0)
+
+			IntensMean = np.mean(df[IntensColumnTitle])
+			IntensStd = np.std(df[IntensColumnTitle])		
+			IntensThresh = IntensMean + (0.25*IntensStd)
+			IntensThreshedTitle = ch + " IntensThreshed"
+			df[IntensThreshedTitle] = np.where((df[IntensColumnTitle] >= IntensThresh), 1, 0)
+
+			#based on the average bkg mean intensity of the whole image
+			bkgmean = np.mean(df[bkgMeanTitle])
+			MeanThresh = bkgmean + (np.std(df[bkgMeanTitle]))
+			MeanThreshedTitle = ch + " MeanThreshed"
+			df[MeanThreshedTitle] = np.where((df[MeanNewcolumnTitle] >= MeanThresh), 1, 0)
+
+			#based on relationship between the the immediate bkg around each nuclei
+			#RelMean = np.mean(df[RelNewcolumnTitle])
+			#RelStd = np.std(df[RelNewcolumnTitle])		
+			RelIntensThreshlow = Relthreshs[i][0]
+			RelIntensThreshhigh = Relthreshs[i][1]
+			RelThreshedTitle = ch + " RelThreshed"
+			#high confidence rel thresh
+			df[RelThreshedTitle] = np.where((df[RelNewcolumnTitle] >= RelIntensThreshhigh), 1, 0)
+			#low confidence rel thresh
+			df[RelThreshedTitle] = np.where((df[RelNewcolumnTitle] >= RelIntensThreshlow) & (df[IntensColumnTitle] >= bkgmean), 1, df[RelThreshedTitle])
+			if i != 0:
+				MacLearnThreshedTitle = ch + " MacLearnThreshed"
+				df[MacLearnThreshedTitle] = np.where((df[MacLearnPredTitle] >= 0.5), 1, 0)
+
+
+			#Identify different types of positivity FUNCTIONALITY NOT CURRENTLY BEING USED
+			# 1 means just maclearn predicted
+			# 2 means predicted positive in the traditional sense
+			# 3 both maclearn and traditional positive
+
+			Postivity_RankTitle = ch + " Postivity_Rank"
+			df[Postivity_RankTitle] = 0
+			if i == 0:
+				df[Postivity_RankTitle] = np.where((df[IntensColumnTitle] > 0), 1, 0)
+			elif ch == 'CC1' or ch == 'PLP':
+				df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+			else:
+					#df[Postivity_RankTitle] = np.where((df["SizeThreshed"] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+					df[Postivity_RankTitle] = np.where( (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1), 1, df[Postivity_RankTitle])
+			ToHisto = [AreaColumnTitle,IntensColumnTitle,MeanNewcolumnTitle,RelNewcolumnTitle]
+			#debug Histograms to show distribution of values for each channel, have the threshold appear on that histogram
+			dfnonan= df.fillna(0)
+			fig, axes = plt.subplots(len(ToHisto),figsize = (10,10))
+			fig.tight_layout(h_pad=2)
+			for i in range(len(ToHisto)):
+				axes[i].hist(dfnonan[ToHisto[i]], alpha = 0.5, bins = 80, label="Main")
+				Mean = np.mean(dfnonan[ToHisto[i]])
+				Std = np.std(dfnonan[ToHisto[i]])
+				axes[i].title.set_text(ToHisto[i])
+				if i == 0:
+					axes[i].axvline(x=10, color='orange', linestyle='dashed', linewidth=1)
+					axes[i].axvline(x=250, color='orange', linestyle='dashed', linewidth=1)
+					axes[i].text(10,0,'Threshold',color='orange')
+				elif i == 2:
+					axes[i].hist(dfnonan[bkgMeanTitle],alpha = 0.5, color='pink', bins = 20, label="bkg mean")
+					axes[i].axvline(x=MeanThresh, color='orange', linestyle='dashed', linewidth=1)
+					axes[i].text(MeanThresh,0,'Threshold',color='orange')
+					axes[i].legend(loc='upper right')
+				else:
+					axes[i].axvline(x=Mean, color='blue', linestyle='dashed', linewidth=1)
+					axes[i].text(Mean,0,'mean',color='blue')
+					axes[i].axvline(x=Mean+Std, color='red', linestyle='dashed', linewidth=1)
+					axes[i].text(Mean+Std,0,'mean + 1std',color='red')
+					axes[i].axvline(x=Mean+(Std*0.25), color='orange', linestyle='dashed', linewidth=1)
+					axes[i].text(Mean+(Std*0.25),0,'Threshold',color='orange')
+				figname = ch + " Thresholding_Histograms"
+				FigureSavePath = os.path.join(SpecificImgFolder,figname)
+			plt.savefig(FigureSavePath)
+			if debugProcessRawResults or debug:
+				plt.show()
+			plt.close('all')
+
+
+			#Adjust for Sox2 bleed through
+			if 'Sox2' in namChannels:
+				Sox2pos = "Sox2 Postivity_Rank"
+				Olig2pos = "Olig2 Postivity_Rank"
+
+				Sox2lowthresch = 2
+				
+				Sox2Rel = "Sox2 Relative Fluorescence (Main/Bkg)"
+				df[Sox2pos] = np.where( (df[Olig2pos] == 0) & (df[Sox2Rel] >= Sox2lowthresch) & (df["SizeThreshed"] == 1), 1, df[Sox2pos])
+		
+
+
 
 	#Visual Validation? Need to load cells
 
@@ -1216,28 +1217,48 @@ def GeneralROIIntensity(oriImg, labels, centroids):
 def ProcessHandaudit(path, celldf, clickTolerance):
 	handAudit = pd.read_csv(path)
 	for i in range(len(namChannels)):
+		chnPos = namChannels[i] + " Postivity_Rank";
+		IntensColumnTitle = namChannels[i] + " Main Nuclei Pixel Intensity"
+		if i == 0:
+			celldf[chnPos] = np.where((celldf[IntensColumnTitle] > 0), 1, 0)
 		if i > 0:
 			xnam = namChannels[i] + " X"
-			Ynam = namChannels[i] + " Y"
-			chnPos = namChannels[i] + " Postivity_Rank";
-			coords = handAudit[xnam, ynam]
-			celldf[chnPos].values[:] = 0
+			ynam = namChannels[i] + " Y"
+			coords = handAudit[[xnam, ynam]]
+			celldf[chnPos] = 0
+			counter = 0
 
 			for j in range(len(coords)):
-				distances = []
-				for k in range(len(celldf)):
-					x1 = coords[j][0]
-					y1 = coords[j][1]
-					x2 = celldf['X'][k]
-					y2 = celldf['Y'][k]
-					distances.append(math.sqrt(math.pow((x2-x1), 2) + math.pow((y2-y1), 2)))
+				
+				xco = coords[xnam][j]
+				yco = coords[ynam][j]
+				
+				xycell = celldf[['X','Y']].values.tolist()
+				
+				#distances = map(FindDistance, xycell)
+
+				distances = map(lambda x: FindDistance(xco,yco,x), xycell)
+				distances = list(distances)
+				
 				min_value = min(distances)
 				min_index = distances.index(min_value)
-
 				if min_value < clickTolerance:
 					celldf[chnPos][min_index] = 1
+
 				else:
 					celldf[chnPos][min_index] = 0
+
+				counter = counter + 1
+				Cordspercent = str((counter/len(coords))*100)
+				print(namChannels[i],Cordspercent[0:6])
+	return celldf
+
+def FindDistance(x1,y1,compcoords):
+	x2 = compcoords[0]
+	y2 = compcoords[1]
+	distance = math.sqrt(math.pow((x2-x1), 2) + math.pow((y2-y1), 2))
+	return distance
+
 
 def saveBorder(images, UserROIs, titles='', path = ' ', text_coords = []):
 	"""Show centroids side-by-side with image."""
@@ -1335,7 +1356,7 @@ def saveBorder(images, UserROIs, titles='', path = ' ', text_coords = []):
 
 
 
-setup = settings.folder_dicts[17]
+setup = settings.folder_dicts[20]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1645,9 +1666,10 @@ for oriImgName in os.listdir(ImgFolderPath):
 			handAuditpath = os.path.join(SpecificImgFolder, "HandAudited.csv")
 			if Resultsdf.empty or os.path.exists(handAuditpath):
 				Resultsdf = pd.read_csv(ImageResultsSave)
+				print('1',list(Resultsdf.columns.values))
 				if os.path.exists(handAuditpath):
-					Resultsdf = ProcessHandaudit(path = handAuditpath, celldf = Resultsdf, clickTolerance = 5)
-						
+					Resultsdf = ProcessHandaudit(path = handAuditpath, celldf = Resultsdf, clickTolerance = 10)
+					print('2',list(Resultsdf.columns.values))
 			#Define which cell types too look at for this analysis
 			cell_types_to_analyze = setup['cell_types_to_analyze']
 			#Define cell types. Channel names must match those defined in namChannel exactly.
@@ -1690,6 +1712,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'Myelinating Human Cell' : [['DAPI_ch', 1], ['hNA', 1], ['MBP', 1]],
 
 			}
+			print('3',list(Resultsdf.columns.values))
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 			
 			if not FastProcess:

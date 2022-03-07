@@ -851,7 +851,8 @@ class Settings:
 
                 # Path to folder containing images to be analyzed
                 #'Path' : "Y:\\People\\James\\Untreated Animals\\DCO",
-                'Path' : "/Volumes/labdata/People/James/Untreated Animals/DCO",
+                #'Path' : "/Volumes/labdata/People/James/Untreated Animals/DCO",
+                'Path' : "/Users/jjmc/Desktop/DCO",
                 
                 
                 # Cell types to analyze
