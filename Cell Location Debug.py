@@ -155,13 +155,15 @@ def gammaCorrect(image, gamma: float=-1):
 	return corrected_image
 
 '____________________________________________________________________________________'
-setup = settings.folder_dicts[18]
+setup = settings.folder_dicts[20]
 #List of images you want to see, file names in he specified path
-Images = ['RB47_Stain-KSO_Slide70-80__Section_1_Ls-RH_ImageID-15073.tif',
+Images = ['RB45_Stain-DCO_Slide163-173_Section_1_Ls-RH_ImageID-16519.tif',
 		 ]
-plotcelltypes = ['DAPI','OligoLineage','ActiveOPC', 'ProlifOPC']
+plotcelltypes = ['DAPI','OPC','Mature Oligodendrocyte']
 #https://www.infobyip.com/detectmonitordpi.php
-my_dpi = [144,144]
+#my_dpi = [144,144]
+my_dpi = [192,192]
+
 '____________________________________________________________________________________'
 
 RabbitDescriptions = settings.RabbitDescriptions
