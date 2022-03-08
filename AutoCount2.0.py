@@ -1666,10 +1666,10 @@ for oriImgName in os.listdir(ImgFolderPath):
 			handAuditpath = os.path.join(SpecificImgFolder, "HandAudited.csv")
 			if Resultsdf.empty or os.path.exists(handAuditpath):
 				Resultsdf = pd.read_csv(ImageResultsSave)
-				print('1',list(Resultsdf.columns.values))
+				
 				if os.path.exists(handAuditpath):
 					Resultsdf = ProcessHandaudit(path = handAuditpath, celldf = Resultsdf, clickTolerance = 10)
-					print('2',list(Resultsdf.columns.values))
+					
 			#Define which cell types too look at for this analysis
 			cell_types_to_analyze = setup['cell_types_to_analyze']
 			#Define cell types. Channel names must match those defined in namChannel exactly.
@@ -1712,7 +1712,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'Myelinating Human Cell' : [['DAPI_ch', 1], ['hNA', 1], ['MBP', 1]],
 
 			}
-			print('3',list(Resultsdf.columns.values))
+			
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 			
 			if not FastProcess:
