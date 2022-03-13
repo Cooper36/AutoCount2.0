@@ -202,7 +202,39 @@ class DataOrganizer(object):
 		self.df.to_csv(CsvSave, index=True)
 
 
+	def DGILesion(self):
+		# Get RB number from filename
+		term = 'RB'
+		search = 2
+		self.df['RB'] = self.df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
+		
+		"""term = ' S'
+		search = 2
+		self.df['Section Number'] = df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search], axis = 1)"""
 
+		self.df['Location'] = 'Not Found'
+
+		term = "LH"
+		self.df['Location'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
+
+		term = "RH"
+		self.df['Location'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
+
+		term = "CC"
+		self.df['Location'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
+
+
+		self.df['Treatment'] = 'Not Specified'
+		self.df['dpl'] = 'Not Specified'
+
+		for RBGroup in RabbitDescriptions.keys():
+			term = RBGroup
+			self.df['Treatment'] = self.df.apply(lambda row : term if row['RB'] in RabbitDescriptions[RBGroup][1] else row['Treatment']  , axis = 1)
+			self.df['dpl'] = self.df.apply(lambda row : RabbitDescriptions[RBGroup][0] if row['RB'] in RabbitDescriptions[RBGroup][1] else row['dpl']  , axis = 1)
+		
+		Savename = Dataname +"_For Excel.csv"
+		CsvSave = os.path.join(SaveLoc, Savename)
+		self.df.to_csv(CsvSave, index=True)
 
 			
 
@@ -219,7 +251,7 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[20]
+setup = settings.folder_dicts[23]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 imagefolpath = setup['Path']
@@ -269,6 +301,9 @@ elif DataOrganizerType == 'CuprizoneMNA':
 
 elif DataOrganizerType == 'Neostigmine7dplRoopa':
 	dO.Neostigmine7dplRoopa()
+
+elif DataOrganizerType == 'DGILesion':
+	dO.DGILesion()
 
 else:
 	print('DataOrganizer type not selected')

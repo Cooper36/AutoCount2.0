@@ -155,9 +155,9 @@ def gammaCorrect(image, gamma: float=-1):
 	return corrected_image
 
 '____________________________________________________________________________________'
-setup = settings.folder_dicts[20]
+setup = settings.folder_dicts[21]
 #List of images you want to see, file names in he specified path
-Images = ['RB45_Stain-DCO_Slide163-173_Section_1_Ls-RH_ImageID-16519.tif',
+Images = ['RB47 S39 DCO LH 2_current_13600.tif',
 		 ]
 plotcelltypes = ['DAPI','OPC','Mature Oligodendrocyte']
 #https://www.infobyip.com/detectmonitordpi.php
