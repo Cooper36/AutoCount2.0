@@ -25,6 +25,14 @@ class DataOrganizer(object):
 
 		return substring
 
+	def strfindUntil(self, string, term, end):
+		#find a values between the end of term, until end
+		start = string.index(term) + len(term)
+		until = string.index(end,start) 
+		substring = string[start : until]
+
+		return substring
+
 	'''
 	def name_plot(pivotdf,, name):
 	    data = pivotdf.loc[sex, name]
@@ -202,15 +210,16 @@ class DataOrganizer(object):
 		self.df.to_csv(CsvSave, index=True)
 
 
+
 	def DGILesion(self):
 		# Get RB number from filename
 		term = 'RB'
-		search = 2
-		self.df['RB'] = self.df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
+		end = '_'
+		self.df['RB'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
 		
-		"""term = ' S'
-		search = 2
-		self.df['Section Number'] = df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search], axis = 1)"""
+		term = '_Section_'
+		search = 1
+		self.df['Section Number'] = self.df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search], axis = 1)
 
 		self.df['Location'] = 'Not Found'
 
