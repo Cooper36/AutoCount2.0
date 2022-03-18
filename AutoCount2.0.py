@@ -928,16 +928,16 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 			plt.close('all')
 
 
-			#Adjust for Sox2 bleed through
-			if 'Sox2' in namChannels:
-				Sox2pos = "Sox2 Postivity_Rank"
-				Olig2pos = "Olig2 Postivity_Rank"
+		#Adjust for Sox2 bleed through
+		if 'Sox2' in namChannels:
+			Sox2pos = "Sox2 Postivity_Rank"
+			Olig2pos = "Olig2 Postivity_Rank"
 
-				Sox2lowthresch = 2
-				
-				Sox2Rel = "Sox2 Relative Fluorescence (Main/Bkg)"
-				df[Sox2pos] = np.where( (df[Olig2pos] == 0) & (df[Sox2Rel] >= Sox2lowthresch) & (df["SizeThreshed"] == 1), 1, df[Sox2pos])
-		
+			Sox2lowthresch = 2
+			
+			Sox2Rel = "Sox2 Relative Fluorescence (Main/Bkg)"
+			df[Sox2pos] = np.where( (df[Olig2pos] == 0) & (df[Sox2Rel] >= Sox2lowthresch) & (df["SizeThreshed"] == 1), 1, df[Sox2pos])
+	
 
 
 
@@ -1306,6 +1306,63 @@ def saveBorder(images, UserROIs, titles='', path = ' ', text_coords = []):
 	png1.close()
 
 				
+def perilesionAnalyser(df,ROIs):
+	#make new perilesion ROI that is x amount smaller then the original, and spit out a new resutlsdf that has the info in it
+	bordersize = 100 
+	pxbordersize = scale * bordersize
+	sizeh = images.shape[0]
+	sizew = images.shape[1]
+	points = df[['X','Y']].values.tolist()
+
+	
+
+	ROI = UserROIs[0]
+	xs, ys = zip(*polygon) #create lists of x and y values
+
+	centx,centy = centroid(ROI)
+
+	#scale points between centroid and userroi points
+	perilesioncoords = []
+	
+	for i in range(len(xs)):
+		x2 = xs[i]
+		y2 = ys[i]
+
+		dis = math.sqrt( ((x2-centx) **2)+((y2-centy) **2) )
+		angle = math.asin((y2-centy)/dis)
+		scalex = math.cos(angle)*(dis-pxbordersize)
+		scaley = math.sin(angle)*(dis-pxbordersize)
+
+		perilesioncoords.append([scalex,scaley])
+		
+	#Assign perilesion
+
+	polypath = mpltPath.Path(perilesioncoords)
+	inperi = polypath.contains_points(points)
+
+	print(inperi)
+
+	if debugperilesion:
+		polygon = UserROIs[0]
+		polygon.append(polygon[0])
+		xs, ys = zip(*polygon)
+		
+		perilesioncoords.append(perilesioncoords[0])
+		xp, yp = zip(*polygon)
+
+		plt.figure()
+		plt.plot(xs,ys)
+		plt.plot(xp,yp)
+		plt.show()
+
+
+def centroid(vertexes):
+     _x_list = [vertex [0] for vertex in vertexes]
+     _y_list = [vertex [1] for vertex in vertexes]
+     _len = len(vertexes)
+     _x = sum(_x_list) / _len
+     _y = sum(_y_list) / _len
+     return(_x, _y)
 
 
 
@@ -1356,7 +1413,7 @@ def saveBorder(images, UserROIs, titles='', path = ' ', text_coords = []):
 
 
 
-setup = settings.folder_dicts[20]
+setup = settings.folder_dicts[22]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1411,6 +1468,7 @@ debugLesionIdenification1 = False
 debugLesionIdenification2 = False
 debugProcessRawResults = False
 debugCellLocations = False
+debugperilesion = True
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
 Summary = []
@@ -1662,14 +1720,23 @@ for oriImgName in os.listdir(ImgFolderPath):
 		#Shift to individual image analysis, as in just work with the current csv
 		
 		UpdateResultSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResultsUpdate.csv")
-		if not os.path.exists(UpdateResultSave) or overwriteProcessing or overwrite:
-			handAuditpath = os.path.join(SpecificImgFolder, "HandAudited.csv")
-			if Resultsdf.empty or os.path.exists(handAuditpath):
+		handAuditpath = os.path.join(SpecificImgFolder, "HandAudited.csv")
+		HandAuditdfsave = os.path.join(SpecificImgFolder, "ImageCellSpecificResultsHandAudit.csv")
+		
+		if Resultsdf.empty:
+			if os.path.exists(HandAuditdfsave):
+				Resultsdf = pd.read_csv(HandAuditdfsave)
+			elif os.path.exists(handAuditpath) or handAuditoverwrite:
 				Resultsdf = pd.read_csv(ImageResultsSave)
-				
-				if os.path.exists(handAuditpath):
-					Resultsdf = ProcessHandaudit(path = handAuditpath, celldf = Resultsdf, clickTolerance = 10)
-					
+				Resultsdf = ProcessHandaudit(path = handAuditpath, celldf = Resultsdf, clickTolerance = 10)
+			else :
+				Resultsdf = pd.read_csv(ImageResultsSave)
+
+		if perilesionanalysis:
+			Resultsdf = perilesionAnalyser(df = Resultsdf, ROIs = UserROIs)
+
+
+		if not os.path.exists(UpdateResultSave) or overwriteProcessing or overwrite:			
 			#Define which cell types too look at for this analysis
 			cell_types_to_analyze = setup['cell_types_to_analyze']
 			#Define cell types. Channel names must match those defined in namChannel exactly.

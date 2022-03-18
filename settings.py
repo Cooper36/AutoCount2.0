@@ -668,6 +668,7 @@ class Settings:
                 'channels' : ["DAPI_ch","Ki67","Sox2","Olig2"],
                 'gammas' : [0.75,0.25,0.25,0.25],
                 'RelativeIntensityThreshold' : [[1,5],[3,5],[3,5],[2,3]],
+                
 
                 # Path to folder containing images to be analyzed
                 'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\KSO Large&Small Lesions",
@@ -802,10 +803,11 @@ class Settings:
                 'channels' : ["DAPI_ch","CC1","594_ch","Olig2"],
                 'gammas' : [0.75,0.75,1,0.25],
                 'RelativeIntensityThreshold' : [[1,5],[1.2,2],[1.2,2],[2,3]],
+                #'RelativeIntensityThreshold' : [[1,5],[1.2,2],[1.2,2],[1.7,3]],
 
                 # Path to folder containing images to be analyzed
-                #'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\DCO Large&Small Lesions\\Lesion",
-                'Path' : '/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/DCO Large&Small Lesions/Lesion',    
+                'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\DCO Large&Small Lesions\\Lesion",
+                #'Path' : '/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/DCO Large&Small Lesions/Lesion',    
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo','CC1+Olig2-'],
@@ -898,9 +900,9 @@ class Settings:
                 'RelativeIntensityThreshold' : [[1,5],[1.2,2],[1.2,2],[1.3,1.8]],
 
                 # Path to folder containing images to be analyzed
-                #'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\DCO Large&Small Lesions\\Lesion",
+                'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\DCO Large&Small Lesions\\Lesion\\43 reanalysis",
                 #'Path' : '/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/DCO Large&Small Lesions/Lesion',
-                'Path' : "/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/DCO Large&Small Lesions/Lesion/43 reanalysis",   
+                #'Path' : "/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/DCO Large&Small Lesions/Lesion/43 reanalysis",   
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo','CC1+Olig2-'],
