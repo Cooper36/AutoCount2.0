@@ -7,6 +7,8 @@ import sys
 
 import numpy as np
 import matplotlib
+
+import matplotlib.path as mpltPath
 matplotlib.use("TkAgg")
 from matplotlib import pyplot as plt
 import xml.etree.ElementTree as ET
@@ -1018,6 +1020,8 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		Summary[-1][cellnumtitle] = cellNumber
 		Summary[-1][celldenstitle] = density
 
+	
+
 	for i in range(ROINumber):
 		ROI = i+1
 		lesTitle = 'Lesion '+ str(ROI) +' Area (mm^2)'
@@ -1069,6 +1073,56 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 				#print(PercentTitle, Percent)
 
 				Summary[-1][PercentTitle] = Percent
+
+
+	if perilesionanalysis:
+		pericore = ["Perilesion","Core"]
+		for k in range(len(pericore)):
+			ROI = pericore[k]
+			pericoreKey = k + 1
+			lesTitle = str(ROI) +' Area (mm^2)'
+			lesTitlepix = str(ROI) +' Area (mm^2)'
+			areapix = pericoreAreapx[k]
+			area = (areapix/(scale**2))/1000000
+
+			Summary[-1][lesTitle] = area
+			Summary[-1][lesTitlepix] = areapix
+			for y in range(len(namChannels)):
+				ch = namChannels[y]
+				Postivity_RankTitle = ch + " Postivity_Rank"
+				df['Quantification'] = np.where((df[Postivity_RankTitle] == 1) & (df["Peri1Core2"] == pericoreKey), 1, 0)
+				cellNumber = np.sum(df['Quantification'])
+				density = cellNumber/area
+				cellnumtitle = str(ROI) + ' ' + ch + ' Positive Cell Number'
+				celldenstitle = str(ROI) + ' ' + ch + ' Positive Cells Density (cells/mm^2)'
+
+				Summary[-1][cellnumtitle] = cellNumber
+				Summary[-1][celldenstitle] = density
+
+
+			for cell_type in cell_types:
+				df['Quantification'] = np.where((df[cell_type] == 1) & (df["Peri1Core2"] == pericoreKey), 1, 0)
+				cellNumber = np.sum(df['Quantification'])
+				density = cellNumber/area
+				cellnumtitle = str(ROI) +' ' + cell_type + ' Number'
+				celldenstitle = str(ROI) +' ' + cell_type + ' Density (cells/mm^2)'
+				Summary[-1][cellnumtitle] = cellNumber
+				Summary[-1][celldenstitle] = density
+
+			#Add percentage calculations
+			if bool(PercentCalcs):
+				for percentcalc in PercentCalcs:
+					PercentTitle = str(ROI) + " " +str(percentcalc[0]) + '/' + str(percentcalc[1])
+					cellnumtitle1 = str(ROI) +' ' + percentcalc[0] + ' Number'
+					cellnumtitle2 = str(ROI) +' ' + percentcalc[1] + ' Number'
+					cellnum1 = Summary[-1][cellnumtitle1]
+					cellnum2 = Summary[-1][cellnumtitle2]
+					Percent = (cellnum1 / cellnum2) *100
+
+					#print(PercentTitle, Percent)
+
+					Summary[-1][PercentTitle] = Percent
+
 
 	return Summary
 				
@@ -1306,54 +1360,71 @@ def saveBorder(images, UserROIs, titles='', path = ' ', text_coords = []):
 	png1.close()
 
 				
-def perilesionAnalyser(df,ROIs):
+def perilesionAnalyser(df,images,ROIs):
 	#make new perilesion ROI that is x amount smaller then the original, and spit out a new resutlsdf that has the info in it
-	bordersize = 100 
+	bordersize = 100
+	images = images[0]
 	pxbordersize = scale * bordersize
+	points = df[['X','Y']].values.tolist()
 	sizeh = images.shape[0]
 	sizew = images.shape[1]
-	points = df[['X','Y']].values.tolist()
+	canvas = np.zeros((sizeh,sizew), dtype= np.uint8)
 
 	
 
-	ROI = UserROIs[0]
-	xs, ys = zip(*polygon) #create lists of x and y values
+	polygon = UserROIs[0]
 
-	centx,centy = centroid(ROI)
-
-	#scale points between centroid and userroi points
 	perilesioncoords = []
+
 	
-	for i in range(len(xs)):
-		x2 = xs[i]
-		y2 = ys[i]
+	polygon = np.array([polygon])
+	oripoly = np.zeros((sizeh,sizew), dtype= np.uint8)
+	fill = 255
 
-		dis = math.sqrt( ((x2-centx) **2)+((y2-centy) **2) )
-		angle = math.asin((y2-centy)/dis)
-		scalex = math.cos(angle)*(dis-pxbordersize)
-		scaley = math.sin(angle)*(dis-pxbordersize)
+	cv.fillPoly(oripoly, polygon, fill)
 
-		perilesioncoords.append([scalex,scaley])
-		
-	#Assign perilesion
+	smallpoly = np.copy(oripoly)
+	
+	#ret, thresh1 = cv.threshold(bincanvas, 0, 255, cv.THRESH_BINARY)
+	output = cv.connectedComponentsWithStats(oripoly)
 
-	polypath = mpltPath.Path(perilesioncoords)
-	inperi = polypath.contains_points(points)
+	polyWidth = output[2][1][2]
+	iterWidth = output[2][1][2]
 
-	print(inperi)
+	kernel = np.ones((5,5),np.uint8)
+	oripoly = np.where(oripoly == 255, 127, oripoly)
+	#make smaller polygon
+	while iterWidth > (polyWidth-(2*pxbordersize)):
+		smallpoly = cv.erode(smallpoly, kernel, iterations= 10)
+		iteroutput = cv.connectedComponentsWithStats(smallpoly)
+		iterWidth = iteroutput[2][1][2]
+
+	#change the values arround the lesion that are in the perilesion
+	oripoly = np.where( smallpoly == 255, 255 , oripoly)
 
 	if debugperilesion:
-		polygon = UserROIs[0]
-		polygon.append(polygon[0])
-		xs, ys = zip(*polygon)
-		
-		perilesioncoords.append(perilesioncoords[0])
-		xp, yp = zip(*polygon)
+		cv.imshow("bitch",oripoly)
+		cv.waitKey(0)
 
-		plt.figure()
-		plt.plot(xs,ys)
-		plt.plot(xp,yp)
-		plt.show()
+	#go through all of the cell coordinates, and if its location = 127 then give it a perilesion flag
+
+	perilesioncoords = map(lambda x: inperi(x, oripoly), points)
+	perilesioncoords = list(perilesioncoords)
+
+	df['Peri1Core2'] = perilesioncoords
+
+	perilesion = np.copy(oripoly)
+	core = np.copy(oripoly)
+
+	perilesion = np.where( perilesion == 127, 1 , 0)
+	core = np.where( core == 255, 1 , 0)
+
+	perilesAreapx = np.sum(perilesion)
+	coreAreapx = np.sum(core)
+
+	pericore = [perilesAreapx,coreAreapx]
+
+	return df, pericore
 
 
 def centroid(vertexes):
@@ -1363,6 +1434,17 @@ def centroid(vertexes):
      _x = sum(_x_list) / _len
      _y = sum(_y_list) / _len
      return(_x, _y)
+
+def inperi(x,oripoly):
+	loc = oripoly[int(x[1]), int(x[0])]
+	val = 0
+	if loc == 127:
+		val = 1
+	if loc == 255:
+		val = 2
+
+	return val
+
 
 
 
@@ -1413,7 +1495,7 @@ def centroid(vertexes):
 
 
 
-setup = settings.folder_dicts[22]
+setup = settings.folder_dicts[24]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1449,12 +1531,15 @@ FastProcess = setup['FastProcess']
 
 PercentCalcs = setup['PercentCalcs']
 
+perilesionanalysis = setup['PerilesionAnalysis']
+
 
 
 overwrite = False
 overwriteROIS = False
 overwriteCells_Pred = False
 overwriteProcessing = True
+handAuditoverwrite = False
 
 debug = False
 debugThreshold = False
@@ -1468,7 +1553,7 @@ debugLesionIdenification1 = False
 debugLesionIdenification2 = False
 debugProcessRawResults = False
 debugCellLocations = False
-debugperilesion = True
+debugperilesion = False
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
 Summary = []
@@ -1733,7 +1818,11 @@ for oriImgName in os.listdir(ImgFolderPath):
 				Resultsdf = pd.read_csv(ImageResultsSave)
 
 		if perilesionanalysis:
-			Resultsdf = perilesionAnalyser(df = Resultsdf, ROIs = UserROIs)
+			oriImg = cv.imreadmulti(fullpath, flags = -1)
+			oriImg = oriImg[1]
+			oriImg = np.array(oriImg)
+			UserROIs = np.load(BinarySave, allow_pickle=True)
+			Resultsdf, pericoreAreapx = perilesionAnalyser(images = oriImg, df = Resultsdf, ROIs = UserROIs)
 
 
 		if not os.path.exists(UpdateResultSave) or overwriteProcessing or overwrite:			
@@ -1784,7 +1873,6 @@ for oriImgName in os.listdir(ImgFolderPath):
 			
 			if not FastProcess:
 
-				oriImg = cv.imreadmulti(fullpath, flags = -1)
 				Vischannels =[]
 				
 				for i in range(len(namChannels)):
