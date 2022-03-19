@@ -1394,8 +1394,8 @@ def perilesionAnalyser(df,images,ROIs):
 	kernel = np.ones((5,5),np.uint8)
 	oripoly = np.where(oripoly == 255, 127, oripoly)
 	#make smaller polygon
-	while iterWidth > (polyWidth-(2*pxbordersize)):
-		smallpoly = cv.erode(smallpoly, kernel, iterations= 10)
+	while iterWidth < (polyWidth+(2*pxbordersize)):
+		smallpoly = cv.dilate(smallpoly, kernel, iterations= 10)
 		iteroutput = cv.connectedComponentsWithStats(smallpoly)
 		iterWidth = iteroutput[2][1][2]
 
@@ -1495,7 +1495,7 @@ def inperi(x,oripoly):
 
 
 
-setup = settings.folder_dicts[24]
+setup = settings.folder_dicts[17]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1814,6 +1814,8 @@ for oriImgName in os.listdir(ImgFolderPath):
 			elif os.path.exists(handAuditpath) or handAuditoverwrite:
 				Resultsdf = pd.read_csv(ImageResultsSave)
 				Resultsdf = ProcessHandaudit(path = handAuditpath, celldf = Resultsdf, clickTolerance = 10)
+				Resultsdf.to_csv(HandAuditdfsave, index = False)
+				
 			else :
 				Resultsdf = pd.read_csv(ImageResultsSave)
 
