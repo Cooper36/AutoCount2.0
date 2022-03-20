@@ -1076,7 +1076,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 
 	if perilesionanalysis:
-		pericore = ["Perilesion","Core"]
+		pericore = ["LesionEdge","Core"]
 		for k in range(len(pericore)):
 			ROI = pericore[k]
 			pericoreKey = k + 1
@@ -1090,7 +1090,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 			for y in range(len(namChannels)):
 				ch = namChannels[y]
 				Postivity_RankTitle = ch + " Postivity_Rank"
-				df['Quantification'] = np.where((df[Postivity_RankTitle] == 1) & (df["Peri1Core2"] == pericoreKey), 1, 0)
+				df['Quantification'] = np.where((df[Postivity_RankTitle] == 1) & (df["Edge1Core2"] == pericoreKey), 1, 0)
 				cellNumber = np.sum(df['Quantification'])
 				density = cellNumber/area
 				cellnumtitle = str(ROI) + ' ' + ch + ' Positive Cell Number'
@@ -1101,7 +1101,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 
 			for cell_type in cell_types:
-				df['Quantification'] = np.where((df[cell_type] == 1) & (df["Peri1Core2"] == pericoreKey), 1, 0)
+				df['Quantification'] = np.where((df[cell_type] == 1) & (df["Edge1Core2"] == pericoreKey), 1, 0)
 				cellNumber = np.sum(df['Quantification'])
 				density = cellNumber/area
 				cellnumtitle = str(ROI) +' ' + cell_type + ' Number'
@@ -1361,7 +1361,7 @@ def saveBorder(images, UserROIs, titles='', path = ' ', text_coords = []):
 
 				
 def perilesionAnalyser(df,images,ROIs):
-	#make new perilesion ROI that is x amount smaller then the original, and spit out a new resutlsdf that has the info in it
+	#make new perilesion ROI that is x amount bigger then the original, and spit out a new resutlsdf that has the info in it
 	bordersize = 100
 	images = images[0]
 	pxbordersize = scale * bordersize
@@ -1383,7 +1383,7 @@ def perilesionAnalyser(df,images,ROIs):
 
 	cv.fillPoly(oripoly, polygon, fill)
 
-	smallpoly = np.copy(oripoly)
+	Largepoly = np.copy(oripoly)
 	
 	#ret, thresh1 = cv.threshold(bincanvas, 0, 255, cv.THRESH_BINARY)
 	output = cv.connectedComponentsWithStats(oripoly)
@@ -1394,30 +1394,30 @@ def perilesionAnalyser(df,images,ROIs):
 	kernel = np.ones((5,5),np.uint8)
 	oripoly = np.where(oripoly == 255, 127, oripoly)
 	#make smaller polygon
-	while iterWidth < (polyWidth+(2*pxbordersize)):
-		smallpoly = cv.dilate(smallpoly, kernel, iterations= 10)
-		iteroutput = cv.connectedComponentsWithStats(smallpoly)
+	while iterWidth < (polyWidth+(2*pxbordersize) or iterWidth < sizew):
+		Largepoly = cv.dilate(Largepoly, kernel, iterations= 10)
+		iteroutput = cv.connectedComponentsWithStats(Largepoly)
 		iterWidth = iteroutput[2][1][2]
 
 	#change the values arround the lesion that are in the perilesion
-	oripoly = np.where( smallpoly == 255, 255 , oripoly)
+	Largepoly = np.where( oripoly == 127, 127 , Largepoly)
 
 	if debugperilesion:
-		cv.imshow("bitch",oripoly)
+		cv.imshow("bitch",Largepoly)
 		cv.waitKey(0)
 
 	#go through all of the cell coordinates, and if its location = 127 then give it a perilesion flag
 
-	perilesioncoords = map(lambda x: inperi(x, oripoly), points)
+	perilesioncoords = map(lambda x: inperi(x, Largepoly), points)
 	perilesioncoords = list(perilesioncoords)
 
-	df['Peri1Core2'] = perilesioncoords
+	df['Edge1Core2'] = perilesioncoords
 
-	perilesion = np.copy(oripoly)
-	core = np.copy(oripoly)
+	perilesion = np.copy(Largepoly)
+	core = np.copy(Largepoly)
 
-	perilesion = np.where( perilesion == 127, 1 , 0)
-	core = np.where( core == 255, 1 , 0)
+	perilesion = np.where( perilesion == 255, 1 , 0)
+	core = np.where( core == 127, 1 , 0)
 
 	perilesAreapx = np.sum(perilesion)
 	coreAreapx = np.sum(core)
@@ -1438,9 +1438,9 @@ def centroid(vertexes):
 def inperi(x,oripoly):
 	loc = oripoly[int(x[1]), int(x[0])]
 	val = 0
-	if loc == 127:
-		val = 1
 	if loc == 255:
+		val = 1
+	if loc == 127:
 		val = 2
 
 	return val
