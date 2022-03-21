@@ -1396,8 +1396,6 @@ def perilesionAnalyser(df,images,ROIs):
 
 	#kernel = np.ones((5,5),np.uint8)
 	kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE,(pxbordersize,pxbordersize))
-	cv.imshow("bitch", oripoly)
-	cv.waitKey(0)
 
 	oripoly = np.where(oripoly == 255, 127, oripoly)
 
@@ -1412,8 +1410,8 @@ def perilesionAnalyser(df,images,ROIs):
 	oripoly = np.where( Largepoly == 255, 255 , oripoly)
 
 	if debugperilesion:
-		cv.imshow("bitch", oripoly)
-		cv.waitKey(0)
+		plt.imshow(oripoly,cmap="gray")
+		plt.show()
 
 	#go through all of the cell coordinates, and if its location = 127 then give it a perilesion flag
 
@@ -1507,7 +1505,7 @@ def round_up_to_odd(f):
 
 
 
-setup = settings.folder_dicts[20]
+setup = settings.folder_dicts[24]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
