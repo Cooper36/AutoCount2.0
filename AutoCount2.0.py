@@ -1365,7 +1365,7 @@ def perilesionAnalyser(df,images,ROIs):
 	bordersize = 50
 	images = images[0]
 	pxbordersize = scale * bordersize
-	pxbordersize = round_up_to_odd(pxbordersize)
+	pxbordersize = int(round_up_to_odd(pxbordersize))
 
 	points = df[['X','Y']].values.tolist()
 	sizeh = images.shape[0]
@@ -1395,7 +1395,10 @@ def perilesionAnalyser(df,images,ROIs):
 	iterWidth = output[2][1][2]
 
 	#kernel = np.ones((5,5),np.uint8)
-	kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE,(5,5))
+	kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE,(pxbordersize,pxbordersize))
+	cv.imshow("bitch", oripoly)
+	cv.waitKey(0)
+
 	oripoly = np.where(oripoly == 255, 127, oripoly)
 
 	#Circular erode a 50um circ. kernel
@@ -1409,7 +1412,7 @@ def perilesionAnalyser(df,images,ROIs):
 	oripoly = np.where( Largepoly == 255, 255 , oripoly)
 
 	if debugperilesion:
-		cv.imshow("bitch",oripoly)
+		cv.imshow("bitch", oripoly)
 		cv.waitKey(0)
 
 	#go through all of the cell coordinates, and if its location = 127 then give it a perilesion flag
@@ -1504,7 +1507,7 @@ def round_up_to_odd(f):
 
 
 
-setup = settings.folder_dicts[19]
+setup = settings.folder_dicts[20]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1562,7 +1565,7 @@ debugLesionIdenification1 = False
 debugLesionIdenification2 = False
 debugProcessRawResults = False
 debugCellLocations = False
-debugperilesion = False
+debugperilesion = True
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
 Summary = []
