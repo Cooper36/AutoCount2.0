@@ -1081,7 +1081,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 			ROI = pericore[k]
 			pericoreKey = k + 1
 			lesTitle = str(ROI) +' Area (mm^2)'
-			lesTitlepix = str(ROI) +' Area (mm^2)'
+			lesTitlepix = str(ROI) +' Area (pixels^2)'
 			areapix = pericoreAreapx[k]
 			area = (areapix/(scale**2))/1000000
 
@@ -1362,9 +1362,11 @@ def saveBorder(images, UserROIs, titles='', path = ' ', text_coords = []):
 				
 def perilesionAnalyser(df,images,ROIs):
 	#make new perilesion ROI that is x amount bigger then the original, and spit out a new resutlsdf that has the info in it
-	bordersize = 100
+	bordersize = 50
 	images = images[0]
 	pxbordersize = scale * bordersize
+	pxbordersize = round_up_to_odd(pxbordersize)
+
 	points = df[['X','Y']].values.tolist()
 	sizeh = images.shape[0]
 	sizew = images.shape[1]
@@ -1389,35 +1391,39 @@ def perilesionAnalyser(df,images,ROIs):
 	output = cv.connectedComponentsWithStats(oripoly)
 
 	polyWidth = output[2][1][2]
+	polyarea = output[2][1][4]
 	iterWidth = output[2][1][2]
 
-	kernel = np.ones((5,5),np.uint8)
+	#kernel = np.ones((5,5),np.uint8)
+	kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE,(5,5))
 	oripoly = np.where(oripoly == 255, 127, oripoly)
-	#make smaller polygon
-	while iterWidth < (polyWidth+(2*pxbordersize) or iterWidth < sizew):
-		Largepoly = cv.dilate(Largepoly, kernel, iterations= 10)
-		iteroutput = cv.connectedComponentsWithStats(Largepoly)
-		iterWidth = iteroutput[2][1][2]
+
+	#Circular erode a 50um circ. kernel
+	Largepoly = cv.erode(Largepoly, kernel, iterations= 1)
+	iteroutput = cv.connectedComponentsWithStats(Largepoly)
+	iterWidth = iteroutput[2][1][2]
+	iterarea = iteroutput[2][1][4]
+
 
 	#change the values arround the lesion that are in the perilesion
-	Largepoly = np.where( oripoly == 127, 127 , Largepoly)
+	oripoly = np.where( Largepoly == 255, 255 , oripoly)
 
 	if debugperilesion:
-		cv.imshow("bitch",Largepoly)
+		cv.imshow("bitch",oripoly)
 		cv.waitKey(0)
 
 	#go through all of the cell coordinates, and if its location = 127 then give it a perilesion flag
 
-	perilesioncoords = map(lambda x: inperi(x, Largepoly), points)
+	perilesioncoords = map(lambda x: inperi(x, oripoly), points)
 	perilesioncoords = list(perilesioncoords)
 
 	df['Edge1Core2'] = perilesioncoords
 
-	perilesion = np.copy(Largepoly)
-	core = np.copy(Largepoly)
+	perilesion = np.copy(oripoly)
+	core = np.copy(oripoly)
 
-	perilesion = np.where( perilesion == 255, 1 , 0)
-	core = np.where( core == 127, 1 , 0)
+	perilesion = np.where( perilesion == 127, 1 , 0)
+	core = np.where( core == 255, 1 , 0)
 
 	perilesAreapx = np.sum(perilesion)
 	coreAreapx = np.sum(core)
@@ -1444,6 +1450,9 @@ def inperi(x,oripoly):
 		val = 2
 
 	return val
+
+def round_up_to_odd(f):
+    return np.ceil(f) // 2 * 2 + 1
 
 
 
@@ -1495,7 +1504,7 @@ def inperi(x,oripoly):
 
 
 
-setup = settings.folder_dicts[17]
+setup = settings.folder_dicts[19]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']

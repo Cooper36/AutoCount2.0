@@ -762,8 +762,8 @@ class Settings:
                 'RelativeIntensityThreshold' : [[1,5],[3,5],[3,5],[1.3,1.8]],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\KSO Large&Small Lesions\\RB43 Reanalysis",
-
+                #'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\KSO Large&Small Lesions\\RB43 Reanalysis",
+                'Path' : "/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/KSO Large&Small Lesions/RB43 Reanalysis",
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo', 'Activated-ProliferativeOPCs'],
 
@@ -779,7 +779,8 @@ class Settings:
                 # DataOrganizer type
                 'DataOrganizer' : 'KSO_DCOLesion',
 
-                'PercentCalcs' : [['NonOligo','DAPI'],['ProlifNonOligo','NonOligo'],['ActiveOPC','OligoLineage'],['ProlifOPC','OligoLineage'],['Activated-ProliferativeOPCs','ActiveOPC']]
+                'PercentCalcs' : [['NonOligo','DAPI'],['ProlifNonOligo','NonOligo'],['ActiveOPC','OligoLineage'],['ProlifOPC','OligoLineage'],['Activated-ProliferativeOPCs','ActiveOPC']],
+                'PerilesionAnalysis' : True,
             },
             {
                 'name' : '20_DCOLarge&SmallCombined',
