@@ -289,7 +289,7 @@ class Settings:
                 'scale' : 1.5385,
             
                 # Define the number of ROIs you want to draw
-                'ROINumber' : 1,
+                'ROINumber' : 0,
 
                 # Name each channel present, in order (must be consistent for all images)
 
@@ -311,6 +311,9 @@ class Settings:
 
                 # if true, does not pull images during the ProcessRawResults
                 'FastProcess' : True,
+                'PercentCalcs' : [],
+
+                'PerilesionAnalysis' : False,
             },
             {
                 'name' : '8_RoopaNeostigmineLesionSize',
@@ -410,10 +413,10 @@ class Settings:
 
                 'channels' : ["DAPI_ch","MBP","mCherry","hNA"],
                 'gammas' : [0.75,0.75,1,0.25],
-                'RelativeIntensityThreshold' : [[1,5],[3,5],[3,5],[4,5]],
+                'RelativeIntensityThreshold' : [[1,5],[3,5],[3,5],[3,5]],
 
                 # Path to folder containing images to be analyzed
-                #'Path' : "Y:\\People\\Rich\\__Transplants\\_____Transplant Master Folder\\D\\IHC master folder\\PV-NES-NLS-Transplant1_MBP-hNA IHC images\\Tiff\\New images",
+                #'Path' : "Y:\\People\\Rich\\__Transplants\\_Transplant Master Folder\\PV-NES-GFP & PV-NLS-GFP shiverer\\IHC master folder\\Transplant 1 - PV-NES&PV-NLS_MBP-hNA IHC images\\Tiff\\New images",
                 'Path' : "Y:\\People\\Rich\\__Transplants\\_Transplant Master Folder\\PV-NES-GFP & PV-NLS-GFP shiverer\\IHC master folder\\Transplant 1 - PV-NES&PV-NLS_MBP-hNA IHC images\\Tiff",
                 #'Path' : "Y:\\People\\Rich\\Transplant_MBP-hNA\\Tiff",
                 #'Path' : "C:\\Users\\jjmc1\\Desktop\\New folder",
@@ -435,6 +438,8 @@ class Settings:
                 'DataOrganizer' : 'PVTransplants',
 
                 'PercentCalcs' : [],
+
+                'PerilesionAnalysis' : True,
             },
             {
                 'name' : '11_Cuprizone MNA',
@@ -671,8 +676,8 @@ class Settings:
                 
 
                 # Path to folder containing images to be analyzed
-                #'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\KSO Large&Small Lesions",
-                'Path' : '/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/KSO Large&Small Lesions',    
+                'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\KSO Large&Small Lesions",
+                #'Path' : '/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/KSO Large&Small Lesions',    
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo', 'Activated-ProliferativeOPCs'],
 
@@ -734,7 +739,8 @@ class Settings:
                 # DataOrganizer type
                 'DataOrganizer' : 'KSO_DCOLesion',
 
-                'PercentCalcs' : [['NonOligo','DAPI'],['ProlifNonOligo','NonOligo'],['ActiveOPC','OligoLineage'],['ProlifOPC','OligoLineage'],['Activated-ProliferativeOPCs','ActiveOPC']]
+                'PercentCalcs' : [['NonOligo','DAPI'],['ProlifNonOligo','NonOligo'],['ActiveOPC','OligoLineage'],['ProlifOPC','OligoLineage'],['Activated-ProliferativeOPCs','ActiveOPC']],
+                'PerilesionAnalysis' : False,
             },
             {
                 'name' : '19_KSOLarge&SmallCombined, RB43 Retest',
@@ -762,8 +768,8 @@ class Settings:
                 'RelativeIntensityThreshold' : [[1,5],[3,5],[3,5],[1.3,1.8]],
 
                 # Path to folder containing images to be analyzed
-                #'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\KSO Large&Small Lesions\\RB43 Reanalysis",
-                'Path' : "/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/KSO Large&Small Lesions/RB43 Reanalysis",
+                'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\KSO Large&Small Lesions\\RB43 Reanalysis",
+                #'Path' : "/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/KSO Large&Small Lesions/RB43 Reanalysis",
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo', 'Activated-ProliferativeOPCs'],
 
@@ -828,6 +834,8 @@ class Settings:
 
                 'PercentCalcs' : [['NonOligo','DAPI'],['Mature Oligodendrocyte','OligoLineage'],['OPC','OligoLineage']],
                 'PerilesionAnalysis' : True,
+
+                'threshmethod' : 2,
 
             },
             {
@@ -903,9 +911,9 @@ class Settings:
                 'RelativeIntensityThreshold' : [[1,5],[1.2,2],[1.2,2],[1.3,1.8]],
 
                 # Path to folder containing images to be analyzed
-                #'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\DCO Large&Small Lesions\\Lesion\\43 reanalysis",
+                'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\DCO Large&Small Lesions\\Lesion\\43 reanalysis",
                 #'Path' : '/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/DCO Large&Small Lesions/Lesion',
-                'Path' : "/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/DCO Large&Small Lesions/Lesion/43 reanalysis",   
+                #'Path' : "/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/DCO Large&Small Lesions/Lesion/43 reanalysis",   
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo','CC1+Olig2-'],
@@ -1023,7 +1031,56 @@ class Settings:
                 'PerilesionAnalysis' : True,
 
             },
+             {
+                'name' : '25_JC-Lck-EGFP-Plate',
 
+                # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
+                'ROI_Draw_Channel' : 0,
+
+                # Which channel to use for identifying nuclei, base 0
+                'Nuclei_Identification_Channel' : 1,
+
+                # Define size of individual cell images (in pixels, defines both height and width, so a square)
+                'cropsize' : 140,
+
+                #Change if using anything other then 10x
+                #Average scale for 10x images, pixel/micron
+                'scale' : 3.0769,
+            
+                # Define the number of ROIs you want to draw
+                'ROINumber' : 0,
+
+                # Name each channel present (must be consistent for all images)
+                'channels' : ["Phase","DAPI_ch","EGFP"],
+                'gammas' : [1,0.75,1],
+                'RelativeIntensityThreshold' : [[200,200],[1,5],[200,200]],
+
+                # Path to folder containing images to be analyzed
+                'Path' : "Y:\\People\\James\\Transplant Expt\\Lck EGFP Titer",
+                
+                
+                # Cell types to analyze
+                'cell_types_to_analyze' : ['DAPI', 'Alive', 'Dead','EGFP Tagged'],
+
+                # Do you want to use the keras models (slow)
+                'useKeras' : False,
+                
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
+
+                # if true, does not pull images during the ProcessRawResults
+                'FastProcess' : True,
+
+                # DataOrganizer type
+                'DataOrganizer' : "poop",
+
+                'PercentCalcs' : [['Alive','DAPI'],['Dead','DAPI'],['EGFP Tagged','Alive']],
+
+                'PerilesionAnalysis' : False,
+
+                'threshmethod' : 1,
+
+            },
         ]
 
 

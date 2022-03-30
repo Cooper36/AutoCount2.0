@@ -31,6 +31,8 @@ from keras.models import load_model
 import csv
 import tkinter as tk
 import ctypes
+
+#matplotlib.use('Agg')
 root = tk.Tk()
 width = root.winfo_screenwidth()
 height = root.winfo_screenheight()
@@ -52,7 +54,7 @@ def openVSI(fullpath):
 
     return images
 
-def imageThreshold(img,):
+def imageThreshold(img,threshmethod):
 
     """IMAGE THRESHOLDING."""
     # based on - https://docs.opencv.org/3.4/d7/d4d/tutorial_py_thresholding.html
@@ -72,7 +74,7 @@ def imageThreshold(img,):
     if debug or debugThreshold:
         showImages(images, titles)
 
-    return cv.bitwise_not(th2)
+    return cv.bitwise_not(images[threshmethod])
 
 def proccessVisualImage(img):
     """Function to proccess a flourescence image with nuclear localized signal (e.g. DAPI)."""
@@ -852,7 +854,8 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 			#Define Threshold values for all of the parameters (size, mean intensity, relative intensity, maclearn(well its 1))
 			#sizethresh is set at 10 to 250 pix^2, or ~4um^2 to ~105um^2
-			sizeThresh = [10,250]
+			sizeThresh_um2 = [4.3,150]
+			sizeThresh = [sizeThresh_um2[0]*(scale**2),sizeThresh_um2[1]*(scale**2)]
 			df["SizeThreshed"] = np.where((df[AreaColumnTitle] > sizeThresh[0]) & (df[AreaColumnTitle] < sizeThresh[1]), 1, 0)
 
 			IntensMean = np.mean(df[IntensColumnTitle])
@@ -889,7 +892,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 			Postivity_RankTitle = ch + " Postivity_Rank"
 			df[Postivity_RankTitle] = 0
-			if i == 0:
+			if ch == 'DAPI_ch':
 				df[Postivity_RankTitle] = np.where((df[IntensColumnTitle] > 0), 1, 0)
 			elif ch == 'CC1' or ch == 'PLP':
 				df[Postivity_RankTitle] = np.where((df[MacLearnThreshedTitle] == 1), 1, df[Postivity_RankTitle])
@@ -1273,7 +1276,7 @@ def ProcessHandaudit(path, celldf, clickTolerance):
 	for i in range(len(namChannels)):
 		chnPos = namChannels[i] + " Postivity_Rank";
 		IntensColumnTitle = namChannels[i] + " Main Nuclei Pixel Intensity"
-		if i == 0:
+		if namChannels[i] == 'DAPI_ch':
 			celldf[chnPos] = np.where((celldf[IntensColumnTitle] > 0), 1, 0)
 		if i > 0:
 			xnam = namChannels[i] + " X"
@@ -1362,7 +1365,7 @@ def saveBorder(images, UserROIs, titles='', path = ' ', text_coords = []):
 				
 def perilesionAnalyser(df,images,ROIs):
 	#make new perilesion ROI that is x amount bigger then the original, and spit out a new resutlsdf that has the info in it
-	bordersize = 50
+	bordersize = 75
 	images = images[0]
 	pxbordersize = scale * bordersize
 	pxbordersize = int(round_up_to_odd(pxbordersize))
@@ -1445,9 +1448,9 @@ def centroid(vertexes):
 def inperi(x,oripoly):
 	loc = oripoly[int(x[1]), int(x[0])]
 	val = 0
-	if loc == 255:
-		val = 1
 	if loc == 127:
+		val = 1
+	if loc == 255:
 		val = 2
 
 	return val
@@ -1505,7 +1508,7 @@ def round_up_to_odd(f):
 
 
 
-setup = settings.folder_dicts[24]
+setup = settings.folder_dicts[25]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1543,11 +1546,13 @@ PercentCalcs = setup['PercentCalcs']
 
 perilesionanalysis = setup['PerilesionAnalysis']
 
+threshmethod = setup['threshmethod']
+
 
 
 overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = False
+overwriteCells_Pred = True
 overwriteProcessing = True
 handAuditoverwrite = False
 
@@ -1563,7 +1568,7 @@ debugLesionIdenification1 = False
 debugLesionIdenification2 = False
 debugProcessRawResults = False
 debugCellLocations = False
-debugperilesion = True
+debugperilesion = False
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
 Summary = []
@@ -1633,19 +1638,25 @@ for oriImgName in os.listdir(ImgFolderPath):
 			img = cv.imreadmulti(fullpath, flags = -1)[1][ROI_Draw_Channel]
 			Dapi = adjust_visual(img, [0.05,0.98])
 			Dapi = np.array(Dapi)
+			sizeh = Dapi.shape[0]
+			sizew = Dapi.shape[1]
 			'''
 			if oriImgName.find('RB') > 0:
 				RBstartread = oriImgName.find('RB')+2
 				RBendread = RBstartread + 2
 				windowname =
 			'''
-			windowname = str(oriImgName) +" : Draw " + str(ROINumber) + " ROIs"
-			Dapi = np.uint8(Dapi)
-			polyDr = PolygonDrawer(windowname, Dapi, ROINumber,screensize)
-			Lbinarr = polyDr.run()
-			#print(Lbinarr)
-			#np.savetxt(BinarySave, Lbinarr, delimiter=',')
-			#Save fiji compatable boarder image
+			if ROINumber > 0:
+				windowname = str(oriImgName) +" : Draw " + str(ROINumber) + " ROIs"
+				Dapi = np.uint8(Dapi)
+				polyDr = PolygonDrawer(windowname, Dapi, ROINumber,screensize)
+				Lbinarr = polyDr.run()
+				#print(Lbinarr)
+				#np.savetxt(BinarySave, Lbinarr, delimiter=',')
+				#Save fiji compatable boarder image
+
+			else:
+				Lbinarr = [[[1,1],[1,sizeh-1],[sizew-1,sizeh-1],[sizew-1,1]]]
 
 			np.save(BinarySave, Lbinarr, allow_pickle=True, fix_imports=True)
 			saveBorder(images=img, UserROIs=Lbinarr, path =SpecificImgFolder )
@@ -1713,7 +1724,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			NucleiImg = gammaCorrect(NucleiImg, gamma = gammas[Nuclei_Identification_Channel])
 			NucleiImg = cv.bitwise_not(proccessVisualImage(NucleiImg))
 
-			thresh = imageThreshold(NucleiImg)
+			thresh = imageThreshold(NucleiImg,threshmethod)
 
 			output = thresholdSegmentation(thresh,NucleiImg)
 			centroids = output[1][3]
@@ -1833,6 +1844,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			oriImg = cv.imreadmulti(fullpath, flags = -1)
 			oriImg = oriImg[1]
 			oriImg = np.array(oriImg)
+			BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
 			UserROIs = np.load(BinarySave, allow_pickle=True)
 			Resultsdf, pericoreAreapx = perilesionAnalyser(images = oriImg, df = Resultsdf, ROIs = UserROIs)
 
@@ -1879,6 +1891,12 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			'Myelinating Human Cell' : [['DAPI_ch', 1], ['hNA', 1], ['MBP', 1]],
 
+			'Alive' : [['DAPI_ch', 1], ['Phase', 1]],
+
+			'Dead' : [['DAPI_ch', 1], ['Phase', 0]],
+
+			'EGFP Tagged' : [['DAPI_ch', 1], ['Phase', 1], ['EGFP', 1]],
+
 			}
 			
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
@@ -1888,6 +1906,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 				Vischannels =[]
 				
 				for i in range(len(namChannels)):
+					oriImg = cv.imreadmulti(fullpath, flags = -1)
 					Img = gammaCorrect(oriImg[1][i], gamma = gammas[i])
 					Img = proccessVisualImage(Img)
 					Vischannels.append(Img)
