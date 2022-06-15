@@ -246,8 +246,15 @@ class DataOrganizer(object):
 		self.df.to_csv(CsvSave, index=True)
 
 			
+	def Plates(self):
+			# Get RB number from filename
+			term = 'Label-'
+			end = '_'
+			self.df['Label'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
 
-
+			Savename = Dataname +"_For Excel.csv"
+			CsvSave = os.path.join(SaveLoc, Savename)
+			self.df.to_csv(CsvSave, index=True)
 
 
 from settings import Settings
@@ -260,7 +267,7 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[10]
+setup = settings.folder_dicts[25]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 imagefolpath = setup['Path']
@@ -313,6 +320,9 @@ elif DataOrganizerType == 'Neostigmine7dplRoopa':
 
 elif DataOrganizerType == 'DGILesion':
 	dO.DGILesion()
+
+elif DataOrganizerType == 'Plates':
+	dO.Plates()
 
 else:
 	print('DataOrganizer type not selected')

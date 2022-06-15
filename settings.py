@@ -1056,8 +1056,8 @@ class Settings:
                 'RelativeIntensityThreshold' : [[200,200],[1,5],[200,200]],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "Y:\\People\\James\\Transplant Expt\\Lck EGFP Titer",
-                
+                #'Path' : "Y:\\People\\James\\Transplant Expt\\Lck EGFP Titer",
+                'Path' : "/Volumes/labdata/People/James/Transplant Expt/Lck EGFP Titer",
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'Alive', 'Dead','EGFP Tagged'],
@@ -1072,7 +1072,7 @@ class Settings:
                 'FastProcess' : True,
 
                 # DataOrganizer type
-                'DataOrganizer' : "poop",
+                'DataOrganizer' : "Plates",
 
                 'PercentCalcs' : [['Alive','DAPI'],['Dead','DAPI'],['EGFP Tagged','Alive']],
 
