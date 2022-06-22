@@ -152,18 +152,18 @@ class DataOrganizer(object):
 		term = "RH"
 		self.df['Location'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
 
-
 		term = "CC"
 		self.df['Location'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Location']  , axis = 1)
+		
 		self.df['Location cont'] = 'NA'
 		self.df['Location cont'] = self.df.apply(lambda row : self.strfinder(row[self.filenameCol],"_c",-1) if self.strfinder(row[self.filenameCol],"_c",-1).isnumeric() else row['Location cont']  , axis = 1)
 		Normal = ['46' , '47']
 		Cup02 = ['36', '37']
 		Cup05 = ['38' , '39']
+		CupRecov = ['63' , '64', '65']
 
 		self.df['Treatment'] = 'Not Specified'
 		
-
 		term = "WT"
 		self.df['Treatment'] = self.df.apply(lambda row : term if row['RB'] in Normal else row['Treatment']  , axis = 1)
 
@@ -172,6 +172,9 @@ class DataOrganizer(object):
 		
 		term = "Cuprizone_0.5"
 		self.df['Treatment'] = self.df.apply(lambda row : term if row['RB'] in Cup05 else row['Treatment']  , axis = 1)
+
+		term = "Cuprizone_8+2"
+		self.df['Treatment'] = self.df.apply(lambda row : term if row['RB'] in CupRecov else row['Treatment']  , axis = 1)
 
 		Savename = Dataname +"_For Excel.csv"
 		CsvSave = os.path.join(SaveLoc, Savename)
@@ -267,7 +270,7 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[25]
+setup = settings.folder_dicts[26]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 imagefolpath = setup['Path']

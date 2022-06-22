@@ -1081,6 +1081,54 @@ class Settings:
                 'threshmethod' : 1,
 
             },
+             {
+                'name' : '26_Cuprizone_8and8+2',
+                
+                # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
+                'ROI_Draw_Channel' : 0,
+
+                # Which channel to use for identifying nuclei, base 0
+                'Nuclei_Identification_Channel' : 0,
+
+                # Define size of individual cell images (in pixels, defines both height and width, so a square)
+                'cropsize' : 46,
+
+                #Change if using anything other then 10x
+                #Average scale for 10x images, pixel/micron
+                'scale' : 1.5385,
+            
+                # Define the number of ROIs you want to draw
+                'ROINumber' : 1,
+
+                # Name each channel present (must be consistent for all images)
+                'channels' : ["DAPI_ch","CC1","Olig2"],
+                'gammas' : [0.75,0.75,1,0.25],
+                'RelativeIntensityThreshold' : [[1,5],[1.2,2],[1.2,2],[2,3]],
+                #'RelativeIntensityThreshold' : [[1,5],[1.2,2],[1.2,2],[1.7,3]],
+
+                # Path to folder containing images to be analyzed
+                'Path' : "/Users/jjmc/Desktop/8 and 8+2/DCO",   
+                
+                # Cell types to analyze
+                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo','CC1+Olig2-'],
+
+                # Do you want to use the keras models (slow)
+                'useKeras' : True,
+                
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
+
+                # if true, does not pull images during the ProcessRawResults
+                'FastProcess' : True,
+
+                # DataOrganizer type
+                'DataOrganizer' : 'Cuprizone',
+
+                'PercentCalcs' : [['NonOligo','DAPI'],['Mature Oligodendrocyte','OligoLineage'],['OPC','OligoLineage']],
+                'PerilesionAnalysis' : True,
+
+                'threshmethod' : 2,
+                }
         ]
 
 

@@ -1508,7 +1508,7 @@ def round_up_to_odd(f):
 
 
 
-setup = settings.folder_dicts[25]
+setup = settings.folder_dicts[26]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1552,7 +1552,7 @@ threshmethod = setup['threshmethod']
 
 overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = True
+overwriteCells_Pred = False
 overwriteProcessing = True
 handAuditoverwrite = False
 
