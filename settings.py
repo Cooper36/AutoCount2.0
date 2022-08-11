@@ -1177,6 +1177,55 @@ class Settings:
 
                 'threshmethod' : 2,
             },
+            {
+                'name' : '28_pTrip-Ef1a-Noggin-p2A-H2B-mCherry Titration',
+
+                # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
+                'ROI_Draw_Channel' : 0,
+
+                # Which channel to use for identifying nuclei, base 0
+                'Nuclei_Identification_Channel' : 0,
+
+                # Define size of individual cell images (in pixels, defines both height and width, so a square)
+                'cropsize' : 140,
+
+                #Change if using anything other then 10x
+                #Average scale for 10x images, pixel/micron
+                'scale' : 3.0769,
+            
+                # Define the number of ROIs you want to draw
+                'ROINumber' : 0,
+
+                # Name each channel present (must be consistent for all images)
+                'channels' : ["DAPI_ch","Phase","488-blank","H2B-mCherry"],
+                'gammas' : [0.75,1,0.75,0.75],
+                'RelativeIntensityThreshold' : [[1,5],[200,200],[1.2,5],[1.2,5]],
+
+                # Path to folder containing images to be analyzed
+                'Path' : "/Volumes/LABDATA/People/James/Transplant Expt/pTrip-Ef1a-Noggin-p2A-H2B-mCherry Titration",
+                
+                # Cell types to analyze
+                'cell_types_to_analyze' : ['DAPI', 'Alive', 'Dead','mCherry Tagged'],
+
+                # Do you want to use the keras models (slow)
+                'useKeras' : False,
+                
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
+
+                # if true, does not pull images during the ProcessRawResults
+                'FastProcess' : True,
+
+                # DataOrganizer type
+                'DataOrganizer' : "Plates",
+
+                'PercentCalcs' : [['Alive','DAPI'],['Dead','DAPI'],['mCherry Tagged','Alive']],
+
+                'PerilesionAnalysis' : False,
+
+                'threshmethod' : 1,
+
+            },
 
         ]
 

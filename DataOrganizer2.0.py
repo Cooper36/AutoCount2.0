@@ -13,6 +13,8 @@ class DataOrganizer(object):
 		self.filenameCol = self.columns[0]
 
 
+
+
 	def strfinder(self, string, term, looklen):
 		#find a number in a substring of length looklen that trails term
 		if looklen > 0:
@@ -27,9 +29,12 @@ class DataOrganizer(object):
 
 	def strfindUntil(self, string, term, end):
 		#find a values between the end of term, until end
-		start = string.index(term) + len(term)
-		until = string.index(end,start) 
-		substring = string[start : until]
+		try:
+			start = string.index(term) + len(term)
+			until = string.index(end,start) 
+			substring = string[start : until]
+		except:
+			substring = "Not found"
 
 		return substring
 
@@ -63,7 +68,7 @@ class DataOrganizer(object):
 
 	
 	def CuprizoneMNA(self):
-		'RB38_Cuprizone_MNA_S21-31_Section1_PosLHIC_ImageID-14610.tif'
+		
 		# Get RB number from filename
 		term = 'RB'
 		search = 2
@@ -108,7 +113,7 @@ class DataOrganizer(object):
 			self.df['dpl'] = self.df.apply(lambda row : RabbitDescriptions[RBGroup][0] if row['RB'] in RabbitDescriptions[RBGroup][1] else row['dpl']  , axis = 1)
 		
 		self.df['Treatment'] = self.df.apply(lambda row : "NP Ctrl" if row['NP Ctrl'] == 'Yes' else row['Treatment']  , axis = 1)
-		print(self.df.columns)
+		
 
 		Savename = Dataname +"_For Excel.csv"
 		CsvSave = os.path.join(SaveLoc, Savename)
@@ -251,8 +256,9 @@ class DataOrganizer(object):
 			
 	def Plates(self):
 			# Get RB number from filename
-			term = 'Label-'
+			term = '_MOI'
 			end = '_'
+			
 			self.df['Label'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
 
 			Savename = Dataname +"_For Excel.csv"
@@ -270,7 +276,7 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[27]
+setup = settings.folder_dicts[28]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 imagefolpath = setup['Path']

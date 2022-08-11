@@ -1508,7 +1508,7 @@ def round_up_to_odd(f):
 
 
 
-setup = settings.folder_dicts[27]
+setup = settings.folder_dicts[28]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1896,6 +1896,8 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'Dead' : [['DAPI_ch', 1], ['Phase', 0]],
 
 			'EGFP Tagged' : [['DAPI_ch', 1], ['Phase', 1], ['EGFP', 1]],
+
+			'mCherry Tagged' : [['DAPI_ch', 1], ['Phase', 1], ['H2B-mCherry', 1]],
 
 			}
 			
