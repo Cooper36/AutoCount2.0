@@ -1025,7 +1025,12 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 	
 
-	for i in range(ROINumber):
+	if ROINumber == 0:
+		ROIcycle = 1
+	else:
+		ROIcycle = ROINumber
+
+	for i in range(ROIcycle):
 		ROI = i+1
 		lesTitle = 'Lesion '+ str(ROI) +' Area (mm^2)'
 		lesTitlepix = 'Lesion '+ str(ROI) +' Area (pixels^2)'
@@ -1550,7 +1555,7 @@ threshmethod = setup['threshmethod']
 
 
 
-overwrite = False
+overwrite = True
 overwriteROIS = False
 overwriteCells_Pred = False
 overwriteProcessing = True
@@ -1646,6 +1651,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 				RBendread = RBstartread + 2
 				windowname =
 			'''
+
 			if ROINumber > 0:
 				windowname = str(oriImgName) +" : Draw " + str(ROINumber) + " ROIs"
 				Dapi = np.uint8(Dapi)
@@ -1685,7 +1691,6 @@ for oriImgName in os.listdir(ImgFolderPath):
 		print("Image --> " + oriImgName)
 
 		if not os.path.exists(ImageResultsSave) or overwriteCells_Pred or overwrite:
-			
 			
 			#Additional folder structures
 
