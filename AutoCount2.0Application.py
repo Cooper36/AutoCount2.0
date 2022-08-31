@@ -44,7 +44,7 @@ loadROI_btn.grid(row = 12, column = 3, rowspan = 1, )
 
 #Channel Settings
 hlineChan_sep = ttk.Separator(app, orient='horizontal')
-hlineChan_sep.grid(row = 2, column = 0, sticky = EW)
+hlineChan_sep.grid(row = 2, column = 0, columnspan=2, sticky = EW)
 
 ChannelTitle_label = Label(app, text = 'Channel Settings', font = ('bold', 18),padx = 10)
 ChannelTitle_label.grid(row = 2, column = 0, rowspan = 2, sticky=W)
