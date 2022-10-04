@@ -1131,6 +1131,17 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 					Summary[-1][PercentTitle] = Percent
 
+	if MFIPercAreaAnalysis:
+		for i in range(len(ROINames)):
+			AreaTitle = ROINames[i] + " Area (mm^2)"
+			Summary[-1][AreaTitle] = ROIAreaList[i]
+			for j in range(len(namChannels)):
+				MFITitle =  ROINames[i] + namChannels[j] + " MFI"
+				PercAreaThreshTitle = ROINames[i] +  namChannels[j] + " Percent Thresh Area"
+
+				Summary[-1][MFITitle] = ROIMFIList[i][j]
+				Summary[-1][PercAreaThreshTitle] = ROIPercAreaList[i][j]
+
 
 	return Summary
 				
@@ -1369,7 +1380,6 @@ def saveBorder(images, UserROIs, titles='', path = ' ', text_coords = []):
 
 				
 def perilesionAnalyser(df,images,ROIs):
-	#make new perilesion ROI that is x amount bigger then the original, and spit out a new resutlsdf that has the info in it
 	bordersize = 75
 	images = images[0]
 	pxbordersize = scale * bordersize
@@ -1465,6 +1475,116 @@ def round_up_to_odd(f):
 
 
 
+def MFI_PerctArea(df,images,UserROIs):
+	sizeh = images.shape[1]
+	sizew = images.shape[2]
+	canvas = np.zeros((sizeh,sizew), dtype= np.uint8)
+	ROImaskList = []
+	mainROIint = 0
+
+	PLWM = True
+	PLWMROIint = 1
+
+	roiInt = 0
+
+	#Create a list of masks where the ROI area is labelled with 1s
+
+	for roi in UserROIs:
+		roiInt = 1
+		polygon = np.array([roi])
+		roicanvas = np.copy(canvas)
+
+		fill = roiInt
+
+		cv.fillPoly(roicanvas, polygon, fill)
+
+		ROImaskList.append(roicanvas)
+
+	if PLWM:
+		mainROI = np.copy(ROImaskList[mainROIint])
+		PLWMROI = np.copy(ROImaskList[PLWMROIint])
+		PLWMROI = np.where(mainROI == 1, 0,PLWMROI)
+		ROImaskList[PLWMROIint] = PLWMROI
+
+	if perilesionanalysis:
+		bordersize = 75
+		pxbordersize = scale * bordersize
+		pxbordersize = int(round_up_to_odd(pxbordersize))
+		kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE,(pxbordersize,pxbordersize))
+		mainROI = np.copy(ROImaskList[mainROIint])
+		mainROI = np.where( mainROI == 1, 255 , mainROI)
+		core = np.copy(mainROI)
+		core = cv.erode(mainROI, kernel, iterations= 1)
+		perilesion = np.copy(mainROI)
+		perilesion = np.where(core == 255, 0, perilesion)
+
+		core = np.where(core == 255, 1, core)
+		perilesion = np.where(perilesion == 255, 1, perilesion)
+
+		ROImaskList.extend([core, perilesion])
+
+	#Calculate Areas for each ROI
+	ROIAreaList = []
+	ROIAreapixList = []
+	for roi in ROImaskList:
+		areapix = np.sum(roi)
+		area = (areapix/(scale**2))/1000000
+		ROIAreaList.append(area)
+		ROIAreapixList.append(areapix)
+
+	#calculate MFI for each channel for each ROI
+	ROIMFIList = []
+	for i in range(len(ROImaskList)):
+		roi = ROImaskList[i]
+		roiArea = ROIAreaList[i]
+		mfiList = []
+		for j in range(len(namChannels)):
+			chanimg = images[j]
+			IntesityMask = np.copy(roi)
+			IntesityMask = np.where(roi == 1, chanimg, 0)
+			TotalIntensity = np.sum(IntesityMask)
+			MFIchan = TotalIntensity/roiArea
+			mfiList.append(MFIchan)
+
+		ROIMFIList.append(mfiList)
+
+
+	#calculate % area above threshold
+	ROIPercAreaList = []
+	for i in range(len(ROImaskList)):
+		print(i)
+		roi = ROImaskList[i]
+		roiArea = ROIAreaList[i]
+		roiAreapix = ROIAreapixList[i]
+		PercAreaList = []
+		for j in range(len(namChannels)):
+			#Threshold each channel, compare thresh methods?
+			chanimg = np.copy(images[j])
+			#chanimg = chanimg.astype('uint8')
+			chanimg = cv.bitwise_not(proccessVisualImage(chanimg))
+			thresh = imageThreshold(chanimg,threshmethod)
+			ThreshMask = np.copy(roi)
+			ThreshMask = np.where(thresh == 0,0,ThreshMask)
+			TotalMaskArea = np.sum(ThreshMask)
+			PercAreachan = (TotalMaskArea/roiAreapix)*100
+			PercAreaList.append(PercAreachan)
+
+		ROIPercAreaList.append(PercAreaList)
+
+	#Add Results to Resultsdf
+	ROINames = ['Lesion', 'PLWM', 'Core','Perilesion']
+	for i in range(len(ROImaskList)):
+		AreaTitle = ROINames[i] + " Area (mm^2)"
+		df[AreaTitle] = ROIAreaList[i]
+		for j in range(len(namChannels)):
+			print(ROIMFIList)
+			MFITitle =  namChannels[j] + " MFI"
+			PercAreaThreshTitle = namChannels[j] + " Percent Thresh Area"
+			df[MFITitle] = ROIMFIList[i][j]
+			df[PercAreaThreshTitle] = ROIPercAreaList[i][j]
+
+		return df, ROINames, ROIAreaList, ROIMFIList, ROIPercAreaList
+
 
 
 
@@ -1513,7 +1633,7 @@ def round_up_to_odd(f):
 
 
 
-setup = settings.folder_dicts[28]
+setup = settings.folder_dicts[29]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1553,11 +1673,13 @@ perilesionanalysis = setup['PerilesionAnalysis']
 
 threshmethod = setup['threshmethod']
 
+MFIPercAreaAnalysis = setup['MFIPercAreaAnalysis']
 
 
-overwrite = True
+
+overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = False
+overwriteCells_Pred = True
 overwriteProcessing = True
 handAuditoverwrite = False
 
@@ -1853,6 +1975,15 @@ for oriImgName in os.listdir(ImgFolderPath):
 			UserROIs = np.load(BinarySave, allow_pickle=True)
 			Resultsdf, pericoreAreapx = perilesionAnalyser(images = oriImg, df = Resultsdf, ROIs = UserROIs)
 
+		if MFIPercAreaAnalysis:
+			oriImg = cv.imreadmulti(fullpath, flags = -1)
+			oriImg = oriImg[1]
+			oriImg = np.array(oriImg)
+			
+			BinarySave = os.path.join(SpecificImgFolder, "UserDefinedROIs.npy")
+			UserROIs = np.load(BinarySave, allow_pickle=True)
+			Resultsdf, ROINames, ROIAreaList, ROIMFIList, ROIPercAreaList = MFI_PerctArea(df = Resultsdf, images = oriImg,UserROIs = UserROIs)
+
 
 		if not os.path.exists(UpdateResultSave) or overwriteProcessing or overwrite:			
 			#Define which cell types too look at for this analysis
@@ -1905,6 +2036,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'mCherry Tagged' : [['DAPI_ch', 1], ['Phase', 1], ['H2B-mCherry', 1]],
 
 			}
+
 			
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 			
