@@ -1481,7 +1481,7 @@ def MFI_PerctArea(df,images,UserROIs):
 	canvas = np.zeros((sizeh,sizew), dtype= np.uint8)
 	ROImaskList = []
 	mainROIint = 0
-
+	ROINames = ['Lesion', 'PLWM', 'Core','Perilesion']
 	PLWM = True
 	PLWMROIint = 1
 
@@ -1523,6 +1523,9 @@ def MFI_PerctArea(df,images,UserROIs):
 
 		ROImaskList.extend([core, perilesion])
 
+	#if debugMFI:
+		#showImages(ROImaskList, titles=ROINames)
+
 	#Calculate Areas for each ROI
 	ROIAreaList = []
 	ROIAreapixList = []
@@ -1552,15 +1555,17 @@ def MFI_PerctArea(df,images,UserROIs):
 	#calculate % area above threshold
 	ROIPercAreaList = []
 	for i in range(len(ROImaskList)):
-		print(i)
+		#print(i)
 		roi = ROImaskList[i]
 		roiArea = ROIAreaList[i]
 		roiAreapix = ROIAreapixList[i]
 		PercAreaList = []
+		print('roiAreapix ', roiAreapix)
 		for j in range(len(namChannels)):
 			#Threshold each channel, compare thresh methods?
 			chanimg = np.copy(images[j])
-			#chanimg = chanimg.astype('uint8')
+			#chanimg = chanimg.astype('uint8')\
+			chanimg = gammaCorrect(chanimg, gamma = gammas[j])
 			chanimg = cv.bitwise_not(proccessVisualImage(chanimg))
 			thresh = imageThreshold(chanimg,threshmethod)
 			ThreshMask = np.copy(roi)
@@ -1569,15 +1574,28 @@ def MFI_PerctArea(df,images,UserROIs):
 			PercAreachan = (TotalMaskArea/roiAreapix)*100
 			PercAreaList.append(PercAreachan)
 
+			if debugMFI and namChannels[j] == 'NF' :
+				ShowIMG = [images[j],chanimg,thresh,ThreshMask]
+				Titles = ['images[j]','chanimg','thresh','ThreshMask']
+				debugMFIsave = os.path.join(SpecificImgFolder,"MFI Debug"+ROINames[i])
+				showImages(ShowIMG, titles=Titles, save = 1, path = debugMFIsave)
+
+				ShowIMG = [roi, ThreshMask]
+				Titles = ['roi '+ str(roiAreapix) ,'ThreshMask '+ str(TotalMaskArea)+ " " + str(round(PercAreachan, 2)) + "%"]
+				debugMFIsave = os.path.join(SpecificImgFolder,"MFI Debug 2"+ROINames[i])
+				showImages(ShowIMG, titles=Titles, save = 1, path = debugMFIsave)				
+
+				print('TotalMaskArea', TotalMaskArea)
+
 		ROIPercAreaList.append(PercAreaList)
 
 	#Add Results to Resultsdf
-	ROINames = ['Lesion', 'PLWM', 'Core','Perilesion']
+	
 	for i in range(len(ROImaskList)):
 		AreaTitle = ROINames[i] + " Area (mm^2)"
 		df[AreaTitle] = ROIAreaList[i]
 		for j in range(len(namChannels)):
-			print(ROIMFIList)
+			#print(ROIMFIList)
 			MFITitle =  namChannels[j] + " MFI"
 			PercAreaThreshTitle = namChannels[j] + " Percent Thresh Area"
 			df[MFITitle] = ROIMFIList[i][j]
@@ -1696,6 +1714,7 @@ debugLesionIdenification2 = False
 debugProcessRawResults = False
 debugCellLocations = False
 debugperilesion = False
+debugMFI = True
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
 Summary = []

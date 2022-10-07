@@ -1247,8 +1247,8 @@ class Settings:
 
                 # Name each channel present (must be consistent for all images)
                 'channels' : ["DAPI_ch","MBP","NF"],
-                'gammas' : [0.75,1,0.75,0.75],
-                'RelativeIntensityThreshold' : [[1,5],[200,200],[1.2,5],[1.2,5]],
+                'gammas' : [0.75,0.75,0.75],
+                'RelativeIntensityThreshold' : [[1,5],[1.2,5],[1.2,5]],
 
                 # Path to folder containing images to be analyzed
                 'Path' : "/Users/jjmc/Desktop/Axon MBP quantification",
