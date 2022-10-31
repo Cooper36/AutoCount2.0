@@ -256,11 +256,13 @@ class DataOrganizer(object):
 			
 	def Plates(self):
 			# Get RB number from filename
-			term = '_MOI'
+			term = '_Virus'
 			end = '_'
-			
-			self.df['Label'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
+			self.df['Virus'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
 
+			term = '_BMP'
+			end = '_'
+			self.df['BMP Dose'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
 			Savename = Dataname +"_For Excel.csv"
 			CsvSave = os.path.join(SaveLoc, Savename)
 			self.df.to_csv(CsvSave, index=True)
@@ -276,7 +278,7 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[29]
+setup = settings.folder_dicts[30]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 imagefolpath = setup['Path']

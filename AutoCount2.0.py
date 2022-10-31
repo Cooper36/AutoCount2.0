@@ -1651,7 +1651,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[29]
+setup = settings.folder_dicts[30]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1697,7 +1697,7 @@ MFIPercAreaAnalysis = setup['MFIPercAreaAnalysis']
 
 overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = True
+overwriteCells_Pred = False
 overwriteProcessing = True
 handAuditoverwrite = False
 
@@ -1714,7 +1714,7 @@ debugLesionIdenification2 = False
 debugProcessRawResults = False
 debugCellLocations = False
 debugperilesion = False
-debugMFI = True
+debugMFI = False
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
 Summary = []
@@ -2052,8 +2052,9 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			'EGFP Tagged' : [['DAPI_ch', 1], ['Phase', 1], ['EGFP', 1]],
 
-			'mCherry Tagged' : [['DAPI_ch', 1], ['Phase', 1], ['H2B-mCherry', 1]],
+			'mCherry Tagged' : [['DAPI_ch', 1], ['H2B-mCherry', 1]],
 
+			'O4_GFAP' : [['DAPI_ch', 1], ['O4_GFAPCh', 1]],
 			}
 
 			
