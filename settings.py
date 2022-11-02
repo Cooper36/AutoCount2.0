@@ -1299,10 +1299,10 @@ class Settings:
                 # Name each channel present (must be consistent for all images)
                 'channels' : ["DAPI_ch","Phase","O4_GFAPCh","H2B-mCherry"],
                 'gammas' : [0.75,1,0.75,0.75],
-                'RelativeIntensityThreshold' : [[2,5],[200,200],[5,10],[5,10]],
+                'RelativeIntensityThreshold' : [[1,5],[200,200],[2,5],[2,5]],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "/Volumes/LABDATA/People/James/Transplant Expt/noggin virus validation/O4",
+                'Path' : "/Volumes/LABDATA/People/James/Transplant Expt/noggin virus validation/GFAP",
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI','mCherry Tagged', 'O4_GFAP'],

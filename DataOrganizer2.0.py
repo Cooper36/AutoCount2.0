@@ -256,13 +256,48 @@ class DataOrganizer(object):
 			
 	def Plates(self):
 			# Get RB number from filename
-			term = '_Virus'
+			term = 'GFAP_'
 			end = '_'
-			self.df['Virus'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
+			self.df['Well'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
 
-			term = '_BMP'
-			end = '_'
-			self.df['BMP Dose'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
+			#term = '_BMP'
+			#end = '_'
+			#self.df['BMP Dose'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
+			
+			self.df['Virus'] = 'Not Found'
+			self.df['BMP'] = 'Not Found'
+
+
+			BMP0 = ['A4','B4','C1','D1', 'F2', 'F4']
+			BMP5 = ['A5','B5','C2', 'D2']
+			BMP50 = ['A6', 'B6', 'C3', 'D3']
+
+			Ctrl = ['A4','A5','A6','B4','B5','B6']
+			Noggin = ['C1','C2','C3', 'D1','D2','D3']
+			GFminus = ['F2']
+			GFplus = ['F4']
+			
+			term = "0"
+			self.df['BMP'] = self.df.apply(lambda row : term if row['Well'] in BMP0 else row['BMP']  , axis = 1)
+
+			term = "5"
+			self.df['BMP'] = self.df.apply(lambda row : term if row['Well'] in BMP5 else row['BMP']  , axis = 1)
+
+			term = "50"
+			self.df['BMP'] = self.df.apply(lambda row : term if row['Well'] in BMP50 else row['BMP']  , axis = 1)
+
+			term = "Ctrl"
+			self.df['Virus'] = self.df.apply(lambda row : term if row['Well'] in Ctrl else row['Virus']  , axis = 1)
+
+			term = "Noggin"
+			self.df['Virus'] = self.df.apply(lambda row : term if row['Well'] in Noggin else row['Virus']  , axis = 1)
+
+			term = "GFminus"
+			self.df['Virus'] = self.df.apply(lambda row : term if row['Well'] in GFminus else row['Virus']  , axis = 1)
+
+			term = "GFplus"
+			self.df['Virus'] = self.df.apply(lambda row : term if row['Well'] in GFplus else row['Virus']  , axis = 1)
+
 			Savename = Dataname +"_For Excel.csv"
 			CsvSave = os.path.join(SaveLoc, Savename)
 			self.df.to_csv(CsvSave, index=True)
