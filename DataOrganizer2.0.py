@@ -38,6 +38,24 @@ class DataOrganizer(object):
 
 		return substring
 
+	def strfindBefore(self, string, term, until):
+		#find a values between the end of term, until end
+		#Reverse string
+		Rstring = string[::-1]
+		
+		
+		
+		try:
+			Rterm = term[::-1]
+			end = Rstring.index(Rterm) + len(Rterm)
+			untilval = Rstring.index(until, end) 
+			substring = Rstring[end : untilval]
+			substring = substring[::-1]
+		except:
+			substring = "Not found"
+
+		return substring
+
 	'''
 	def name_plot(pivotdf,, name):
 	    data = pivotdf.loc[sex, name]
@@ -256,15 +274,19 @@ class DataOrganizer(object):
 			
 	def Plates(self):
 			# Get RB number from filename
-			term = 'GFAP_'
-			end = '_'
-			self.df['Well'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
+			term = '_ImageID'
+			until = '_'
+			self.df['Well'] = self.df.apply(lambda row :self.strfindBefore(string = row[self.filenameCol], term = term, until = until) , axis = 1)
 
-			#term = '_BMP'
-			#end = '_'
-			#self.df['BMP Dose'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
+			term = '_BMP'
+			end = '_'
+			self.df['BMP Dose'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
 			
-			self.df['Virus'] = 'Not Found'
+			term = '_Virus'
+			end = '_'
+			self.df['Virus'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
+			
+			"""self.df['Virus'] = 'Not Found'
 			self.df['BMP'] = 'Not Found'
 
 
@@ -297,7 +319,7 @@ class DataOrganizer(object):
 
 			term = "GFplus"
 			self.df['Virus'] = self.df.apply(lambda row : term if row['Well'] in GFplus else row['Virus']  , axis = 1)
-
+			"""
 			Savename = Dataname +"_For Excel.csv"
 			CsvSave = os.path.join(SaveLoc, Savename)
 			self.df.to_csv(CsvSave, index=True)
@@ -313,7 +335,7 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[30]
+setup = settings.folder_dicts[31]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 imagefolpath = setup['Path']
