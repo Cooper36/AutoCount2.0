@@ -1335,7 +1335,7 @@ class Settings:
                 'ROI_Draw_Channel' : 0,
 
                 # Which channel to use for identifying nuclei, base 0
-                'Nuclei_Identification_Channel' : 0,
+                'Nuclei_Identification_Channel' : 1,
 
                 # Define size of individual cell images (in pixels, defines both height and width, so a square)
                 'cropsize' : 46,
@@ -1348,12 +1348,12 @@ class Settings:
                 'ROINumber' : 0,
 
                 # Name each channel present (must be consistent for all images)
-                'channels' : ["DAPI_ch","O4_GFAPCh","H2B-mCherry"],
+                'channels' : ["O4_GFAPCh","DAPI_ch","H2B-mCherry"],
                 'gammas' : [0.75,1,0.75,0.75],
-                'RelativeIntensityThreshold' : [[1,5],[200,200],[2,5],[2,5]],
+                'RelativeIntensityThreshold' : [[200,200],[1,5],[2,5],[2,5]],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "/Volumes/LABDATA/People/James/Transplant Expt/Noggin Validation 2/O4",
+                'Path' : "/Volumes/LABDATA/People/James/Transplant Expt/Noggin Validation 2/GFAP",
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI','mCherry Tagged', 'O4_GFAP'],
