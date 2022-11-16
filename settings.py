@@ -814,8 +814,9 @@ class Settings:
                 #'RelativeIntensityThreshold' : [[1,5],[1.2,2],[1.2,2],[1.7,3]],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\DCO Large&Small Lesions\\Lesion",
-                #'Path' : '/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/DCO Large&Small Lesions/Lesion',    
+                #'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\DCO Large&Small Lesions\\Lesion",
+                'Path' : '/Volumes/LABDATA/People/James/Large vs Small Lesion Expt/__Cell Dynamics/DCO Large&Small Lesions/Lesion',
+               
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo','CC1+Olig2-'],
@@ -833,7 +834,7 @@ class Settings:
                 'DataOrganizer' : 'KSO_DCOLesion',
 
                 'PercentCalcs' : [['NonOligo','DAPI'],['Mature Oligodendrocyte','OligoLineage'],['OPC','OligoLineage']],
-                'PerilesionAnalysis' : True,
+                'PerilesionAna20lysis' : True,
 
                 'threshmethod' : 2,
 
