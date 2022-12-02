@@ -1651,7 +1651,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[31]
+setup = settings.folder_dicts[32]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1667,7 +1667,7 @@ Relthreshs = setup['RelativeIntensityThreshold']
 #cell_types_to_analyze = ['OPC', 'Oligo', 'NonOligo']
 
 #Desired cell image size
-cropsize = setup['cropsize']
+cropsize = setup['cropsize']0506
 
 #How many ROIs do you want to define?
 ROINumber = setup['ROINumber']
@@ -2055,6 +2055,12 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'mCherry Tagged' : [['DAPI_ch', 1], ['H2B-mCherry', 1]],
 
 			'O4_GFAP' : [['DAPI_ch', 1], ['O4_GFAPCh', 1]],
+
+			'EDU+' : [['DAPI_ch', 1], ['EDU', 1]],
+
+			'EDU+Olig2-' : [['DAPI_ch', 1], ['EDU', 1], ['Olig2', 0]],
+
+			'EDU+Olig2+' : [['DAPI_ch', 1], ['EDU', 1], ['Olig2', 1]],
 			}
 
 			
