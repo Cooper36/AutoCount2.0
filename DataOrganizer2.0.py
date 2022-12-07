@@ -325,6 +325,31 @@ class DataOrganizer(object):
 			self.df.to_csv(CsvSave, index=True)
 
 
+	def Farah(self):
+			# Get RB number from filename
+
+			term = '_ImageID-'
+			end = '.'
+			self.df['ImageID'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
+			
+			self.df['Condition'] = 'Not Found'
+
+			term = "KO"
+			search = 'KO'
+			self.df['Condition'] = self.df.apply(lambda row : term if search in row[self.filenameCol] else row['Condition']  , axis = 1)
+
+			term = "WT"
+			search = '(wild type)'
+			self.df['Condition'] = self.df.apply(lambda row : term if search in row[self.filenameCol] else row['Condition']  , axis = 1)
+
+			term = '_AN'
+			end = '_'
+			self.df['Animal'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
+			
+			Savename = Dataname +"_For Excel.csv"
+			CsvSave = os.path.join(SaveLoc, Savename)
+			self.df.to_csv(CsvSave, index=True)
+
 from settings import Settings
 settings = Settings()
 import pandas as pd
@@ -335,7 +360,7 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[20]
+setup = settings.folder_dicts[32]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 imagefolpath = setup['Path']
@@ -391,6 +416,9 @@ elif DataOrganizerType == 'DGILesion':
 
 elif DataOrganizerType == 'Plates':
 	dO.Plates()
+
+elif DataOrganizerType == 'Farah':
+	dO.Farah()
 
 else:
 	print('DataOrganizer type not selected')

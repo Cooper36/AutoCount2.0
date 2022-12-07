@@ -9,7 +9,9 @@ import numpy as np
 import matplotlib
 
 import matplotlib.path as mpltPath
-matplotlib.use("TkAgg")
+
+#matplotlib.use("TkAgg")
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import xml.etree.ElementTree as ET
 import math
@@ -1667,7 +1669,7 @@ Relthreshs = setup['RelativeIntensityThreshold']
 #cell_types_to_analyze = ['OPC', 'Oligo', 'NonOligo']
 
 #Desired cell image size
-cropsize = setup['cropsize']0506
+cropsize = setup['cropsize']
 
 #How many ROIs do you want to define?
 ROINumber = setup['ROINumber']
@@ -1697,7 +1699,7 @@ MFIPercAreaAnalysis = setup['MFIPercAreaAnalysis']
 
 overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = False
+overwriteCells_Pred = True
 overwriteProcessing = True
 handAuditoverwrite = False
 
