@@ -135,7 +135,7 @@ def showImages(images, titles='', save = 0, path = ' ', text_coords = []):
 def thresholdSegmentation( 
     thresh, 
     img, 
-    opening_kernel = np.ones((3,3),np.uint8),
+    opening_kernel = np.ones((1,1),np.uint8),
     opening_iterations = 2, 
     background_kernel = np.ones((3,3),np.uint8),
     background_iterations = 1,
@@ -1699,7 +1699,7 @@ MFIPercAreaAnalysis = setup['MFIPercAreaAnalysis']
 
 overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = True
+overwriteCells_Pred = False
 overwriteProcessing = True
 handAuditoverwrite = False
 
@@ -1784,7 +1784,10 @@ for oriImgName in os.listdir(ImgFolderPath):
 			
 			print('Image name:', oriImgName)
 			img = cv.imreadmulti(fullpath, flags = -1)[1][ROI_Draw_Channel]
-			Dapi = adjust_visual(img, [0.05,0.98])
+			#Dapi = adjust_visual(img, [0.05,0.98])
+			#img = cv.bitwise_not(img)
+			Dapi = gammaCorrect(img, gamma = gammas[Nuclei_Identification_Channel])
+			Dapi = cv.bitwise_not(proccessVisualImage(Dapi))
 			Dapi = np.array(Dapi)
 			sizeh = Dapi.shape[0]
 			sizew = Dapi.shape[1]
@@ -1797,7 +1800,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			if ROINumber > 0:
 				windowname = str(oriImgName) +" : Draw " + str(ROINumber) + " ROIs"
-				Dapi = np.uint8(Dapi)
+				#Dapi = np.uint8(Dapi)
 				polyDr = PolygonDrawer(windowname, Dapi, ROINumber,screensize)
 				Lbinarr = polyDr.run()
 				#print(Lbinarr)
@@ -1815,7 +1818,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 
 
-#Main For Loop
+#Main For-Loop
 for oriImgName in os.listdir(ImgFolderPath):
 	fullpath = os.path.join(ImgFolderPath, oriImgName)
 	
