@@ -1407,7 +1407,7 @@ class Settings:
                 # Path to folder containing images to be analyzed
                 #'Path' : "Y:\\People\\Farah\\STIM 2 (KO & wild type) EDU-Olig2 staining\\Combined",
                 #'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/Farah/STIM 2 (KO & wild type) EDU-Olig2 staining/Combined",
-                'Path' : "/Volumes/LABDATA/People/Farah/STIM 2 (KO & wild type) EDU-Olig2 staining/Combined",
+                'Path' : "/Volumes/LABDATA/People/Farah/STIM 2 (KO & wild type) EDU-Olig2 staining/Test",
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI','EDU+', 'EDU+Olig2-','OligoLineage', 'EDU+Olig2+'],

@@ -1699,7 +1699,7 @@ MFIPercAreaAnalysis = setup['MFIPercAreaAnalysis']
 
 overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = False
+overwriteCells_Pred = True
 overwriteProcessing = True
 handAuditoverwrite = False
 
