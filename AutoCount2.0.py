@@ -10,8 +10,8 @@ import matplotlib
 
 import matplotlib.path as mpltPath
 
-#matplotlib.use("TkAgg")
-matplotlib.use('Agg')
+matplotlib.use("TkAgg")
+#matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import xml.etree.ElementTree as ET
 import math
@@ -236,8 +236,6 @@ def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = [])
 	plt.suptitle("press 'Q' to move to next step", verticalalignment="bottom")
 	if debugCellLocations:
 		plt.show()
-	else:
-		plt.savefig(path, bbox_inches='tight')
 	plt.close('all')
 
 
@@ -606,10 +604,10 @@ def LesionFigSave(DAPIImg, UserROIs, screensize):
 	outputT = (numLabelsT, labelsT, statsT, centroidsT, IntensityStatsT, modeStatsT)
 	
 	FigureSavePath = os.path.join(SpecificImgFolder, "Lesion_Boarder_Visualization.pdf")
-	images = [ threshAll, boarders]
-	print(threshAll.size,boarders.size)
-	titles = ["Mask","Boarder" ]
-	showImages(images, titles, save = 1, path = FigureSavePath, text_coords = centroidsT)
+	images = [boarders]
+	#print(threshAll.size,boarders.size)
+	titles = ["Boarder" ]
+	#showImages(images, titles, save = 1, path = FigureSavePath, text_coords = centroidsT)
 
 	#print("Intensity stats: ")
 	#print(IntensityStatsT)
@@ -901,38 +899,40 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 			else:
 					#df[Postivity_RankTitle] = np.where((df["SizeThreshed"] == 1) & (df[MeanThreshedTitle] == 1), 1, df[Postivity_RankTitle])
 					df[Postivity_RankTitle] = np.where( (df["SizeThreshed"] == 1) & (df[RelThreshedTitle] == 1), 1, df[Postivity_RankTitle])
-			ToHisto = [AreaColumnTitle,IntensColumnTitle,MeanNewcolumnTitle,RelNewcolumnTitle]
-			#debug Histograms to show distribution of values for each channel, have the threshold appear on that histogram
-			dfnonan= df.fillna(0)
-			fig, axes = plt.subplots(len(ToHisto),figsize = (10,10))
-			fig.tight_layout(h_pad=2)
-			for i in range(len(ToHisto)):
-				axes[i].hist(dfnonan[ToHisto[i]], alpha = 0.5, bins = 80, label="Main")
-				Mean = np.mean(dfnonan[ToHisto[i]])
-				Std = np.std(dfnonan[ToHisto[i]])
-				axes[i].title.set_text(ToHisto[i])
-				if i == 0:
-					axes[i].axvline(x=10, color='orange', linestyle='dashed', linewidth=1)
-					axes[i].axvline(x=250, color='orange', linestyle='dashed', linewidth=1)
-					axes[i].text(10,0,'Threshold',color='orange')
-				elif i == 2:
-					axes[i].hist(dfnonan[bkgMeanTitle],alpha = 0.5, color='pink', bins = 20, label="bkg mean")
-					axes[i].axvline(x=MeanThresh, color='orange', linestyle='dashed', linewidth=1)
-					axes[i].text(MeanThresh,0,'Threshold',color='orange')
-					axes[i].legend(loc='upper right')
-				else:
-					axes[i].axvline(x=Mean, color='blue', linestyle='dashed', linewidth=1)
-					axes[i].text(Mean,0,'mean',color='blue')
-					axes[i].axvline(x=Mean+Std, color='red', linestyle='dashed', linewidth=1)
-					axes[i].text(Mean+Std,0,'mean + 1std',color='red')
-					axes[i].axvline(x=Mean+(Std*0.25), color='orange', linestyle='dashed', linewidth=1)
-					axes[i].text(Mean+(Std*0.25),0,'Threshold',color='orange')
-				figname = ch + " Thresholding_Histograms"
-				FigureSavePath = os.path.join(SpecificImgFolder,figname)
-			plt.savefig(FigureSavePath)
+			
 			if debugProcessRawResults or debug:
+				ToHisto = [AreaColumnTitle,IntensColumnTitle,MeanNewcolumnTitle,RelNewcolumnTitle]
+				#debug Histograms to show distribution of values for each channel, have the threshold appear on that histogram
+				dfnonan= df.fillna(0)
+				fig, axes = plt.subplots(len(ToHisto),figsize = (10,10))
+				fig.tight_layout(h_pad=2)
+				for i in range(len(ToHisto)):
+					axes[i].hist(dfnonan[ToHisto[i]], alpha = 0.5, bins = 80, label="Main")
+					Mean = np.mean(dfnonan[ToHisto[i]])
+					Std = np.std(dfnonan[ToHisto[i]])
+					axes[i].title.set_text(ToHisto[i])
+					if i == 0:
+						axes[i].axvline(x=10, color='orange', linestyle='dashed', linewidth=1)
+						axes[i].axvline(x=250, color='orange', linestyle='dashed', linewidth=1)
+						axes[i].text(10,0,'Threshold',color='orange')
+					elif i == 2:
+						axes[i].hist(dfnonan[bkgMeanTitle],alpha = 0.5, color='pink', bins = 20, label="bkg mean")
+						axes[i].axvline(x=MeanThresh, color='orange', linestyle='dashed', linewidth=1)
+						axes[i].text(MeanThresh,0,'Threshold',color='orange')
+						axes[i].legend(loc='upper right')
+					else:
+						axes[i].axvline(x=Mean, color='blue', linestyle='dashed', linewidth=1)
+						axes[i].text(Mean,0,'mean',color='blue')
+						axes[i].axvline(x=Mean+Std, color='red', linestyle='dashed', linewidth=1)
+						axes[i].text(Mean+Std,0,'mean + 1std',color='red')
+						axes[i].axvline(x=Mean+(Std*0.25), color='orange', linestyle='dashed', linewidth=1)
+						axes[i].text(Mean+(Std*0.25),0,'Threshold',color='orange')
+					figname = ch + " Thresholding_Histograms"
+					FigureSavePath = os.path.join(SpecificImgFolder,figname)
+				plt.savefig(FigureSavePath)
+				
 				plt.show()
-			plt.close('all')
+				plt.close('all')
 
 
 		#Adjust for Sox2 bleed through
@@ -1483,8 +1483,8 @@ def MFI_PerctArea(df,images,UserROIs):
 	canvas = np.zeros((sizeh,sizew), dtype= np.uint8)
 	ROImaskList = []
 	mainROIint = 0
-	ROINames = ['Lesion', 'PLWM', 'Core','Perilesion']
-	PLWM = True
+	ROINames = ROITitles
+	PLWM = False
 	PLWMROIint = 1
 
 	roiInt = 0
@@ -1653,7 +1653,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[32]
+setup = settings.folder_dicts[31]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1695,11 +1695,13 @@ threshmethod = setup['threshmethod']
 
 MFIPercAreaAnalysis = setup['MFIPercAreaAnalysis']
 
+ROITitles = setup['ROITitles']
+
 
 
 overwrite = False
 overwriteROIS = False
-overwriteCells_Pred = True
+overwriteCells_Pred = False
 overwriteProcessing = True
 handAuditoverwrite = False
 
@@ -1714,9 +1716,10 @@ debugcells = False
 debugLesionIdenification1 = False
 debugLesionIdenification2 = False
 debugProcessRawResults = False
-debugCellLocations = False
+debugCellLocations = True
 debugperilesion = False
 debugMFI = False
+
 
 #Make Summary and  AllCellSpecificResults list of dictionaries
 Summary = []
@@ -1787,7 +1790,8 @@ for oriImgName in os.listdir(ImgFolderPath):
 			#Dapi = adjust_visual(img, [0.05,0.98])
 			#img = cv.bitwise_not(img)
 			Dapi = gammaCorrect(img, gamma = gammas[Nuclei_Identification_Channel])
-			Dapi = cv.bitwise_not(proccessVisualImage(Dapi))
+			#Dapi = cv.bitwise_not(proccessVisualImage(Dapi))
+			Dapi = proccessVisualImage(Dapi)
 			Dapi = np.array(Dapi)
 			sizeh = Dapi.shape[0]
 			sizew = Dapi.shape[1]
@@ -2071,7 +2075,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 			
-			if not FastProcess:
+			if debugCellLocations:
 
 				Vischannels =[]
 				
