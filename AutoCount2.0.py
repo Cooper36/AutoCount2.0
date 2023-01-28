@@ -1653,7 +1653,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[31]
+setup = settings.folder_dicts[32]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1716,7 +1716,7 @@ debugcells = False
 debugLesionIdenification1 = False
 debugLesionIdenification2 = False
 debugProcessRawResults = False
-debugCellLocations = True
+debugCellLocations = False
 debugperilesion = False
 debugMFI = False
 

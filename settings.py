@@ -1359,7 +1359,7 @@ class Settings:
                 # Name each channel present (must be consistent for all images)
                 'channels' : ["Phase","DAPI_ch","O4_GFAPCh","H2B-mCherry"],
                 'gammas' : [0.75,0.75,0.75,0.75],
-                'RelativeIntensityThreshold' : [[200,200],[1,5],[2,5], [2,5]],
+                'RelativeIntensityThreshold' : [[200,200],[1,5],[2,5], [1.05,5]],
 
                 # Path to folder containing images to be analyzed
                 'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/Greg/TIF images from 01242023",
@@ -1406,16 +1406,17 @@ class Settings:
             
                 # Define the number of ROIs you want to draw
                 'ROINumber' : 2,
+                'ROITitles' : ['Dorsal', 'Ventral'],
 
                 # Name each channel present (must be consistent for all images)
                 'channels' : ["DAPI_ch","EDU","Olig2"],
-                'gammas' : [1.5,0.75,0.75],
-                'RelativeIntensityThreshold' : [[1,5],[2,5],[2,5]],
+                'gammas' : [1.5,1,1],
+                'RelativeIntensityThreshold' : [[1.5,5],[1.7,5],[1.6,5]],
 
                 # Path to folder containing images to be analyzed
                 #'Path' : "Y:\\People\\Farah\\STIM 2 (KO & wild type) EDU-Olig2 staining\\Combined",
-                #'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/Farah/STIM 2 (KO & wild type) EDU-Olig2 staining/Combined",
-                'Path' : "/Volumes/LABDATA/People/Farah/STIM 2 (KO & wild type) EDU-Olig2 staining/Test",
+                'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/Farah/STIM 2 (KO & wild type) EDU-Olig2 staining/Combined",
+                #'Path' : "/Volumes/LABDATA/People/Farah/STIM 2 (KO & wild type) EDU-Olig2 staining/Combined",
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI','EDU+', 'EDU+Olig2-','OligoLineage', 'EDU+Olig2+'],
@@ -1427,7 +1428,7 @@ class Settings:
                 'checkfiles' : False,
 
                 # if true, does not pull images during the ProcessRawResults
-                'FastProcess' : False,
+                'FastProcess' : True,
 
                 # DataOrganizer type
                 'DataOrganizer' : "Farah",
