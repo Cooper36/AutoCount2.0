@@ -854,7 +854,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 			#Define Threshold values for all of the parameters (size, mean intensity, relative intensity, maclearn(well its 1))
 			#sizethresh is set at 10 to 250 pix^2, or ~4um^2 to ~105um^2
-			sizeThresh_um2 = [4.3,150]
+			sizeThresh_um2 = [4.3,300]
 			sizeThresh = [sizeThresh_um2[0]*(scale**2),sizeThresh_um2[1]*(scale**2)]
 			df["SizeThreshed"] = np.where((df[AreaColumnTitle] > sizeThresh[0]) & (df[AreaColumnTitle] < sizeThresh[1]), 1, 0)
 
@@ -929,7 +929,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 						axes[i].text(Mean+(Std*0.25),0,'Threshold',color='orange')
 					figname = ch + " Thresholding_Histograms"
 					FigureSavePath = os.path.join(SpecificImgFolder,figname)
-				plt.savefig(FigureSavePath)
+				#plt.savefig(FigureSavePath)
 				
 				plt.show()
 				plt.close('all')
@@ -1653,7 +1653,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[32]
+setup = settings.folder_dicts[31]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1706,7 +1706,7 @@ overwriteProcessing = True
 handAuditoverwrite = False
 
 debug = False
-debugThreshold = False
+debugThreshold = True
 debugGamma = False
 debugMarkers = False
 debugChannels = False
@@ -1715,7 +1715,7 @@ debugImgPrepper = False
 debugcells = False
 debugLesionIdenification1 = False
 debugLesionIdenification2 = False
-debugProcessRawResults = False
+debugProcessRawResults = False 
 debugCellLocations = False
 debugperilesion = False
 debugMFI = False
@@ -1732,6 +1732,7 @@ if not os.path.exists(ResultsFolderPath):
 	os.mkdir(ResultsFolderPath)
 
 SummarySave = os.path.join(ResultsFolderPath, Dataname + '_Summary.csv')
+
 
 SpecificImgResultsPath = os.path.join(ResultsFolderPath,"Image_Specific_Results")
 if not os.path.exists(SpecificImgResultsPath):
