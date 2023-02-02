@@ -1624,7 +1624,7 @@ class Settings:
                 'ROITitles' : ['NAWM'],
 
                 # Name each channel present (must be consistent for all images)
-                'channels' : ["DAPI_ch",'IBA1',],
+                'channels' : ["DAPI_ch",'IBA1','GFAP'],
                 'gammas' : [0.75,0.75],
                 'RelativeIntensityThreshold' : [[1,5],[1.2,5]],
 
