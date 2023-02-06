@@ -745,14 +745,14 @@ def Cells_to_df(cells):
 				LesTitles.append(chmode)
 
 		else :
-			LesAreaNam = "Lesion " + str(i) + " Area (mm^2)"
+			LesAreaNam = "ROI " + str(i) + " Area (mm^2)"
 			LesTitles.append(LesAreaNam)
-			LesAreapixNam = "Lesion " + str(i) + " Area (pixels^2)"
+			LesAreapixNam = "ROI " + str(i) + " Area (pixels^2)"
 			LesTitles.append(LesAreapixNam)
 			for chnam in namChannels:
-				chInten = "Lesion " + str(i) + " Raw Intensity " + chnam
+				chInten = "ROI " + str(i) + " Raw Intensity " + chnam
 				LesTitles.append(chInten)
-				chmode = "Lesion " + str(i) + " Mode Intensity Value " + chnam
+				chmode = "ROI " + str(i) + " Mode Intensity Value " + chnam
 				LesTitles.append(chmode)
 
 	columnTitles.extend(LesTitles)
@@ -982,11 +982,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 	#Build Summary
 
-	Summary.append({'Original Filename': df['Original Filename'][0], 
-					'Background Area (mm^2)': df['Background Area (mm^2)'][0],
-					'Background Area (mm^2)': df['Background Area (mm^2)'][0],
-
-					})
+	Summary.append({'Original Filename': df['Original Filename'][0]})
 	cell_types = cell_types_to_analyze.copy()
 	
 
@@ -1008,12 +1004,12 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		meanIntens = RawIntens/areapix
 		cellnumtitle = 'Background ' + ch + ' Positive Cell Number'
 		celldenstitle = 'Background ' + ch + ' Positive Cells Density (cells/mm^2)'
-		Summary[-1][cellnumtitle] = cellNumber
-		Summary[-1][celldenstitle] = density
-		Summary[-1][RawIntenstitle] = RawIntens
+		#Summary[-1][cellnumtitle] = cellNumber
+		#Summary[-1][celldenstitle] = density
+		#Summary[-1][RawIntenstitle] = RawIntens
 		#print("rawintens", RawIntens)
-		Summary[-1][meanIntenstitle] = meanIntens
-		Summary[-1][ModeIntenstitle] = ModeIntens
+		#Summary[-1][meanIntenstitle] = meanIntens
+		#Summary[-1][ModeIntenstitle] = ModeIntens
 
 	for cell_type in cell_types:
 		df['Quantification'] = np.where((df[cell_type] == 1) & (df["location"] == 0), 1, 0)
@@ -1022,8 +1018,8 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		density = cellNumber/area
 		cellnumtitle = 'Background ' + cell_type + ' Number'
 		celldenstitle = 'Background ' + cell_type + ' Density (cells/mm^2)'
-		Summary[-1][cellnumtitle] = cellNumber
-		Summary[-1][celldenstitle] = density
+		#Summary[-1][cellnumtitle] = cellNumber
+		#Summary[-1][celldenstitle] = density
 
 	
 
@@ -1031,11 +1027,11 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		ROIcycle = 1
 	else:
 		ROIcycle = ROINumber
-
+	seperator = "||"
 	for i in range(ROIcycle):
 		ROI = i+1
-		lesTitle = 'Lesion '+ str(ROI) +' Area (mm^2)'
-		lesTitlepix = 'Lesion '+ str(ROI) +' Area (pixels^2)'
+		lesTitle = 'ROI '+ str(ROI) +' Area (mm^2)'
+		lesTitlepix = 'ROI '+ str(ROI) +' Area (pixels^2)'
 		area = df[lesTitle][0]
 		areapix = df[lesTitlepix][0]
 		Summary[-1][lesTitle] = area
@@ -1046,36 +1042,38 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 			df['Quantification'] = np.where((df[Postivity_RankTitle] == 1) & (df["location"] == ROI), 1, 0)
 			cellNumber = np.sum(df['Quantification'])
 			density = cellNumber/area
-			cellnumtitle = 'Lesion '+ str(ROI) + ' ' + ch + ' Positive Cell Number'
-			celldenstitle = 'Lesion '+ str(ROI) + ' ' + ch + ' Positive Cells Density (cells/mm^2)'
-			ModeIntenstitle = "Lesion " + str(ROI) + " Mode Intensity Value " + ch
+			cellnumtitle = 'ROI '+ str(ROI) + ' ' + ch + ' Positive Cell Number'
+			celldenstitle = 'ROI '+ str(ROI) + ' ' + ch + ' Positive Cells Density (cells/mm^2)'
+			ModeIntenstitle = "ROI " + str(ROI) + " Mode Intensity Value " + ch
 			ModeIntens = df[ModeIntenstitle][0]
-			RawIntenstitle = 'Lesion '+ str(ROI) + ' Raw Intensity ' + ch
+			RawIntenstitle = 'ROI '+ str(ROI) + ' Raw Intensity ' + ch
 			RawIntens = df[RawIntenstitle][0]
-			meanIntenstitle = 'Lesion '+ str(ROI) + ' Mean Intensity ' + ch + ' (Sum Intensity/pixels^2)'
+			meanIntenstitle = 'ROI '+ str(ROI) + ' Mean Intensity ' + ch + ' (Sum Intensity/pixels^2)'
 			meanIntens = RawIntens/areapix
 
 			Summary[-1][cellnumtitle] = cellNumber
-			Summary[-1][celldenstitle] = density
+			#Summary[-1][celldenstitle] = density
 			Summary[-1][RawIntenstitle] = RawIntens
-			Summary[-1][meanIntenstitle] = meanIntens
-			Summary[-1][ModeIntenstitle] = ModeIntens
+			#Summary[-1][meanIntenstitle] = meanIntens
+			#Summary[-1][ModeIntenstitle] = ModeIntens
+
 
 		for cell_type in cell_types:
 			df['Quantification'] = np.where((df[cell_type] == 1) & (df["location"] == ROI), 1, 0)
 			cellNumber = np.sum(df['Quantification'])
 			density = cellNumber/area
-			cellnumtitle = 'Lesion '+ str(ROI) +' ' + cell_type + ' Number'
-			celldenstitle = 'Lesion '+ str(ROI) +' ' + cell_type + ' Density (cells/mm^2)'
+			cellnumtitle = 'ROI '+ str(ROI) +' ' + cell_type + ' Number'
+			celldenstitle = 'ROI '+ str(ROI) +' ' + cell_type + ' Density (cells/mm^2)'
 			Summary[-1][cellnumtitle] = cellNumber
-			Summary[-1][celldenstitle] = density
+			#Summary[-1][celldenstitle] = density
 
+		'''
 		#Add percentage calculations
 		if bool(PercentCalcs):
 			for percentcalc in PercentCalcs:
-				PercentTitle = 'Lesion '+ str(ROI) + " " +str(percentcalc[0]) + '/' + str(percentcalc[1])
-				cellnumtitle1 = 'Lesion '+ str(ROI) +' ' + percentcalc[0] + ' Number'
-				cellnumtitle2 = 'Lesion '+ str(ROI) +' ' + percentcalc[1] + ' Number'
+				PercentTitle = 'ROI '+ str(ROI) + " " +str(percentcalc[0]) + '/' + str(percentcalc[1])
+				cellnumtitle1 = 'ROI '+ str(ROI) +' ' + percentcalc[0] + ' Number'
+				cellnumtitle2 = 'ROI '+ str(ROI) +' ' + percentcalc[1] + ' Number'
 				cellnum1 = Summary[-1][cellnumtitle1]
 				cellnum2 = Summary[-1][cellnumtitle2]
 				Percent = (cellnum1 / cellnum2) *100
@@ -1084,6 +1082,9 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 				Summary[-1][PercentTitle] = Percent
 
+		'''
+		seperator = seperator +' '
+		Summary[-1][seperator] = '||'
 
 	if perilesionanalysis:
 		pericore = ["LesionEdge","Core"]
@@ -1541,7 +1542,7 @@ def MFI_PerctArea(df,images,UserROIs):
 	ROIMFIList = []
 	for i in range(len(ROImaskList)):
 		roi = ROImaskList[i]
-		roiArea = ROIAreaList[i]
+		roiArea = ROIAreapixList[i]
 		mfiList = []
 		for j in range(len(namChannels)):
 			chanimg = images[j]
@@ -1653,7 +1654,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[31]
+setup = settings.folder_dicts[33]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1700,13 +1701,13 @@ ROITitles = setup['ROITitles']
 
 
 overwrite = False
-overwriteROIS = False
+overwriteROIS = False 
 overwriteCells_Pred = False
 overwriteProcessing = True
 handAuditoverwrite = False
 
 debug = False
-debugThreshold = True
+debugThreshold = False
 debugGamma = False
 debugMarkers = False
 debugChannels = False

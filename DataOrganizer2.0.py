@@ -80,7 +80,7 @@ class DataOrganizer(object):
 		term = "Ctrl"
 		self.df['Treatment'] = self.df.apply(lambda row : term if term in row[self.filenameCol] else row['Treatment']  , axis = 1)
 
-		Savename = Dataname +"_For Excel.csv"
+		Savename = "Tagged_" + Dataname + ".csv"
 		CsvSave = os.path.join(SaveLoc, Savename)
 		self.df.to_csv(CsvSave, index=True)
 
@@ -133,7 +133,7 @@ class DataOrganizer(object):
 		self.df['Treatment'] = self.df.apply(lambda row : "NP Ctrl" if row['NP Ctrl'] == 'Yes' else row['Treatment']  , axis = 1)
 		
 
-		Savename = Dataname +"_For Excel.csv"
+		Savename = "Tagged_" + Dataname + ".csv"
 		CsvSave = os.path.join(SaveLoc, Savename)
 		self.df.to_csv(CsvSave, index=True)
 		
@@ -153,7 +153,7 @@ class DataOrganizer(object):
 		self.df['Section'] = self.df.apply(lambda row : row[self.filenameCol][row[self.filenameCol].index(term)+len(term):row[self.filenameCol].index(term)+len(term)+search].lstrip('0').strip(), axis = 1)
 		
 	
-		Savename = Dataname +"_For Excel.csv"
+		Savename = "Tagged_" + Dataname + ".csv"
 		CsvSave = os.path.join(SaveLoc, Savename)
 		self.df.to_csv(CsvSave, index=True)
 
@@ -199,7 +199,7 @@ class DataOrganizer(object):
 		term = "Cuprizone_8+2"
 		self.df['Treatment'] = self.df.apply(lambda row : term if row['RB'] in CupRecov else row['Treatment']  , axis = 1)
 
-		Savename = Dataname +"_For Excel.csv"
+		Savename = "Tagged_" + Dataname + ".csv"
 		CsvSave = os.path.join(SaveLoc, Savename)
 		self.df.to_csv(CsvSave, index=True)
 
@@ -231,7 +231,7 @@ class DataOrganizer(object):
 			self.df['Treatment'] = self.df.apply(lambda row : term if row['RB'] in RabbitDescriptions[RBGroup][1] else row['Treatment']  , axis = 1)
 			self.df['dpl'] = self.df.apply(lambda row : RabbitDescriptions[RBGroup][0] if row['RB'] in RabbitDescriptions[RBGroup][1] else row['dpl']  , axis = 1)
 		
-		Savename = Dataname +"_For Excel.csv"
+		Savename = "Tagged_" + Dataname + ".csv"
 		CsvSave = os.path.join(SaveLoc, Savename)
 		self.df.to_csv(CsvSave, index=True)
 
@@ -267,7 +267,7 @@ class DataOrganizer(object):
 			self.df['Treatment'] = self.df.apply(lambda row : term if row['RB'] in RabbitDescriptions[RBGroup][1] else row['Treatment']  , axis = 1)
 			self.df['dpl'] = self.df.apply(lambda row : RabbitDescriptions[RBGroup][0] if row['RB'] in RabbitDescriptions[RBGroup][1] else row['dpl']  , axis = 1)
 		
-		Savename = Dataname +"_For Excel.csv"
+		Savename = "Tagged_" + Dataname + ".csv"
 		CsvSave = os.path.join(SaveLoc, Savename)
 		self.df.to_csv(CsvSave, index=True)
 
@@ -320,7 +320,7 @@ class DataOrganizer(object):
 			term = "GFplus"
 			self.df['Virus'] = self.df.apply(lambda row : term if row['Well'] in GFplus else row['Virus']  , axis = 1)
 			"""
-			Savename = Dataname +"_For Excel.csv"
+			Savename = "Tagged_" + Dataname + ".csv"
 			CsvSave = os.path.join(SaveLoc, Savename)
 			self.df.to_csv(CsvSave, index=True)
 
@@ -346,7 +346,7 @@ class DataOrganizer(object):
 			end = '_'
 			self.df['Animal'] = self.df.apply(lambda row :self.strfindUntil(string = row[self.filenameCol], term = term, end = end) , axis = 1)
 			
-			Savename = Dataname +"_For Excel.csv"
+			Savename = "Tagged_" + Dataname + ".csv"
 			CsvSave = os.path.join(SaveLoc, Savename)
 			self.df.to_csv(CsvSave, index=True)
 
@@ -360,7 +360,7 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[32]
+setup = settings.folder_dicts[36]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 imagefolpath = setup['Path']
@@ -369,8 +369,8 @@ Resultsfolpath = os.path.join(imagefolpath,'Results')
 Summarypath = os.path.join(Resultsfolpath,Dataname+'_Summary.csv')
 
 head, tail = os.path.split(Summarypath)
-SaveLoc = os.path.join(head,"Summary_DataVis")
-if not os.path.exists(SaveLoc):
+SaveLoc = Resultsfolpath
+'''if not os.path.exists(SaveLoc):
 	os.mkdir(SaveLoc)
 
 ChannelSave = os.path.join(SaveLoc,"Channel Densities")
@@ -387,7 +387,7 @@ if not os.path.exists(PercentCalcSave):
 
 ScatterPlots = os.path.join(SaveLoc,"ScatterPlots")
 if not os.path.exists(ScatterPlots):
-	os.mkdir(ScatterPlots)
+	os.mkdir(ScatterPlots)'''
 
 namChannels = setup['channels']
 cell_types_to_analyze = setup['cell_types_to_analyze']

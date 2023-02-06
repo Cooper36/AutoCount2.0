@@ -1340,7 +1340,7 @@ class Settings:
                 'name' : '31_pTrip-Ef1a-Noggin-p2A-H2B-mCherry BMP Dose Response',
 
                 # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
-                'ROI_Draw_Channel' : 0,
+                'ROI_Draw_Channel' : 1,
 
                 # Which channel to use for identifying nuclei, base 0
                 'Nuclei_Identification_Channel' : 1,
@@ -1353,8 +1353,8 @@ class Settings:
                 'scale' : 1.5385,
             
                 # Define the number of ROIs you want to draw
-                'ROINumber' : 0,
-                'ROITitles' : [],
+                'ROINumber' : 2,
+                'ROITitles' : [''],
 
                 # Name each channel present (must be consistent for all images)
                 'channels' : ["Phase","DAPI_ch","O4_GFAPCh","H2B-mCherry"],
@@ -1362,8 +1362,8 @@ class Settings:
                 'RelativeIntensityThreshold' : [[200,200],[1,5],[2,5],[1.05,5]],
 
                 # Path to folder containing images to be analyzed
-                #'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/Greg/TIF images from 01242023",
-                'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/Greg/20230201",
+                'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/Greg/TIF images from 01242023/Test",
+                #'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/Greg/20230201",
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI','mCherry Tagged', 'O4_GFAP'],
@@ -1604,10 +1604,10 @@ class Settings:
             },
 
             {
-                'name' : '36_DGIClemAndSpatial',
+                'name' : '36_NAWMDGIClemAndSpatial',
 
                 # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
-                'ROI_Draw_Channel' : 1,
+                'ROI_Draw_Channel' : 0,
 
                 # Which channel to use for identifying nuclei, base 0
                 'Nuclei_Identification_Channel' : 0,
@@ -1621,15 +1621,72 @@ class Settings:
             
                 # Define the number of ROIs you want to draw
                 'ROINumber' : 1,
+                #'ROITitles' : ['Core','Lesion', 'PLWM'],
                 'ROITitles' : ['NAWM'],
+
 
                 # Name each channel present (must be consistent for all images)
                 'channels' : ["DAPI_ch",'IBA1','GFAP'],
-                'gammas' : [0.75,0.75],
-                'RelativeIntensityThreshold' : [[1,5],[1.2,5]],
+                'gammas' : [0.75, 0.75, 0.75],
+                'RelativeIntensityThreshold' : [[1,5],[1.2,5],[1.2,5]],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/James/Remyelination Expt (Drugz)/NF/NAWM",
+                'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/James/Remyelination Expt (Drugz)/DGI/NAWM",
+                
+                # Cell types to analyze
+                'cell_types_to_analyze' : ['DAPI'],
+
+                # Do you want to use the keras models (slow)
+                'useKeras' : False,
+                
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
+
+                # if true, does not pull images during the ProcessRawResults
+                'FastProcess' : True,
+
+                # DataOrganizer type
+                'DataOrganizer' : "KSO_DCOLesion",
+
+                'PercentCalcs' : [],
+
+                'PerilesionAnalysis' : False,
+
+                'threshmethod' : 1,
+
+                'MFIPercAreaAnalysis' : True,
+
+            },
+
+            {
+                'name' : '37_DGIClemAndSpatial',
+
+                # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
+                'ROI_Draw_Channel' : 0,
+
+                # Which channel to use for identifying nuclei, base 0
+                'Nuclei_Identification_Channel' : 0,
+
+                # Define size of individual cell images (in pixels, defines both height and width, so a square)
+                'cropsize' : 46,
+
+                #Change if using anything other then 10x
+                #Average scale for 10x images, pixel/micron
+                'scale' : 1.5385,
+            
+                # Define the number of ROIs you want to draw
+                'ROINumber' : 3,
+                'ROITitles' : ['Core','Lesion', 'PLWM'],
+                #'ROITitles' : ['NAWM'],
+
+
+                # Name each channel present (must be consistent for all images)
+                'channels' : ["DAPI_ch",'IBA1','GFAP'],
+                'gammas' : [0.75,0.75, 0.75],
+                'RelativeIntensityThreshold' : [[1,5],[1.2,5],[1.2,5]],
+
+                # Path to folder containing images to be analyzed
+                'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/James/Remyelination Expt (Drugz)/DGI",
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI'],
