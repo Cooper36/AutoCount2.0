@@ -1415,8 +1415,8 @@ class Settings:
                 'RelativeIntensityThreshold' : [[1.5,5],[1.7,5],[1.6,5]],
 
                 # Path to folder containing images to be analyzed
-                #'Path' : "Y:\\People\\Farah\\STIM 2 (KO & wild type) EDU-Olig2 staining\\Combined",
-                'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/Farah/STIM 2 (KO & wild type) EDU-Olig2 staining/Combined",
+                'Path' : "Y:\\People\\Farah\\STIM 2 (KO & wild type) EDU-Olig2 staining\\Combined",
+                #'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/Farah/STIM 2 (KO & wild type) EDU-Olig2 staining/Combined",
                 #'Path' : "/Volumes/LABDATA/People/Farah/STIM 2 (KO & wild type) EDU-Olig2 staining/Combined",
                 
                 # Cell types to analyze

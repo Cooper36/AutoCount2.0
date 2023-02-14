@@ -1653,7 +1653,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[33]
+setup = settings.folder_dicts[32]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1706,7 +1706,7 @@ overwriteProcessing = True
 handAuditoverwrite = False
 
 debug = False
-debugThreshold = True
+debugThreshold = False
 debugGamma = False
 debugMarkers = False
 debugChannels = False
