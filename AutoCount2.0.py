@@ -936,6 +936,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 
 
 		#Adjust for Sox2 bleed through
+		'''		
 		if 'Sox2' in namChannels:
 			Sox2pos = "Sox2 Postivity_Rank"
 			Olig2pos = "Olig2 Postivity_Rank"
@@ -945,7 +946,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 			Sox2Rel = "Sox2 Relative Fluorescence (Main/Bkg)"
 			df[Sox2pos] = np.where( (df[Olig2pos] == 0) & (df[Sox2Rel] >= Sox2lowthresch) & (df["SizeThreshed"] == 1), 1, df[Sox2pos])
 	
-
+		'''
 
 
 	#Visual Validation? Need to load cells
@@ -1653,7 +1654,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[32]
+setup = settings.folder_dicts[33]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']

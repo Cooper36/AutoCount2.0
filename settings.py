@@ -1468,7 +1468,7 @@ class Settings:
                 'channels' : ["DAPI_ch","Ki67","Sox2","Olig2"],
                 'gammas' : [0.75,0.75,0.75,0.75],
 
-                'RelativeIntensityThreshold' : [[1,5],[2.5,5],[1.8,5],[1.5,3]],
+                'RelativeIntensityThreshold' : [[1,5],[2.5,5],[1.5,5],[1.5,3]],
                 
 
                 # Path to folder containing images to be analyzed
