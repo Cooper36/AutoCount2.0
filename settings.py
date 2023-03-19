@@ -1473,7 +1473,8 @@ class Settings:
 
                 # Path to folder containing images to be analyzed
                 #'Path' : "/Volumes/LABDATA/People/James/Remyelination Expt (Drugz)/KSO",
-                'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/James/Remyelination Expt (Drugz)/KSO",
+                #'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/James/Remyelination Expt (Drugz)/KSO",
+                'Path' : "/Volumes/fjsim/LabData/People/James/Remyelination Expt (Drugz)/KSO",
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo', 'Activated-ProliferativeOPCs'],
