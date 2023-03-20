@@ -1525,7 +1525,8 @@ class Settings:
                 'RelativeIntensityThreshold' : [[1,5],[1.2,5]],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/James/Remyelination Expt (Drugz)/NF",
+                #'Path' : "/Users/jjmc/Library/CloudStorage/Box-Box/NewLabData/People/James/Remyelination Expt (Drugz)/NF",
+                'Path' : '/Volumes/fjsim/LabData/People/James/Remyelination Expt (Drugz)/NF',
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI'],
