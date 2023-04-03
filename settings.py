@@ -1740,7 +1740,7 @@ class Settings:
                 'RelativeIntensityThreshold' : [[1,5],[1.2,5],[1.2,5]],
 
                 # Path to folder containing images to be analyzed
-                'Path' : "/Volumes/LABDATA/People/James/Remyelination Expt (Drugz)/DCO",
+                'Path' : "/Volumes/LABDATA/People/James/Remyelination Expt (Drugz)/DCO/Oldimages",
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo','CC1+Olig2-'],

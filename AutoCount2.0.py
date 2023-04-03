@@ -1659,7 +1659,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[39]
+setup = settings.folder_dicts[38]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
