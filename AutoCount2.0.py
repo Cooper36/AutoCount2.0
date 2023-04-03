@@ -810,7 +810,7 @@ def Cells_to_df(cells):
 	return df
 
 def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
-	if not os.path.exists(handAuditpath):
+	if not os.path.exists(HandAuditdfsave):
 		#Dataframe-wide computation
 		for i in range(len(namChannels)):
 			ToHisto = []
@@ -958,6 +958,7 @@ def ProcessRawResults(df, Summary, cell_type_conditions, cell_types_to_analyze):
 		Definitions = cell_type_conditions[celltypename]
 		#make a boolean array for each condition then compare the booleans at each positon
 		for j in range(len(Definitions)):
+
 			ch_nam = Definitions[j][0]
 			val = Definitions[j][1]
 			Postivity_RankTitle = ch_nam + " Postivity_Rank"
@@ -1303,6 +1304,7 @@ def ProcessHandaudit(path, celldf, clickTolerance):
 			coords = handAudit[[xnam, ynam]]
 			celldf[chnPos] = 0
 			counter = 0
+			tocker = 0
 
 			for j in range(len(coords)):
 				
@@ -1325,8 +1327,11 @@ def ProcessHandaudit(path, celldf, clickTolerance):
 					celldf[chnPos][min_index] = 0
 
 				counter = counter + 1
+				tocker = tocker + 1
 				Cordspercent = str((counter/len(coords))*100)
-				print(namChannels[i],Cordspercent[0:6])
+				if tocker > 50:
+					print(namChannels[i],Cordspercent[0:6])
+					tocker = 0
 	return celldf
 
 def FindDistance(x1,y1,compcoords):
@@ -1654,7 +1659,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[38]
+setup = settings.folder_dicts[39]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1668,7 +1673,7 @@ Relthreshs = setup['RelativeIntensityThreshold']
 
 #What cell types are you looking to analyze?
 #cell_types_to_analyze = ['OPC', 'Oligo', 'NonOligo']
-
+	
 #Desired cell image size
 cropsize = setup['cropsize']
 
@@ -2077,6 +2082,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 			
 			Summary = ProcessRawResults(df = Resultsdf, Summary=Summary, cell_type_conditions=cell_type_conditions, cell_types_to_analyze=cell_types_to_analyze)
 			
+
 			if debugCellLocations:
 
 				Vischannels =[]
