@@ -465,7 +465,7 @@ def MacLearnImgPrepper(cells):
 						green = np.uint8(gammaCorrect(img[i],gamma = gammas[i]))
 						#green = img[i]
 						#to correct for gradients in staining intensity, make the max pixel in every cell image 127 (half max intensity of 8 bit image)
-						green = cv.normalize(src=green, dst=None, alpha=0, beta=127, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
+						#green = cv.normalize(src=green, dst=None, alpha=0, beta=127, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
 						red = img[-1]
 
 					else:
@@ -1659,7 +1659,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[40]
+setup = settings.folder_dicts[41]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1707,7 +1707,7 @@ ROITitles = setup['ROITitles']
 
 overwrite = False
 overwriteROIS = False 
-overwriteCells_Pred = False
+overwriteCells_Pred = True
 overwriteProcessing = True
 handAuditoverwrite = False
 
