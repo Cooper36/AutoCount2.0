@@ -132,6 +132,49 @@ def showImages(images, titles='', save = 0, path = ' ', text_coords = []):
 		plt.savefig(path, bbox_inches='tight')
 	plt.close("all")
 
+def cellshowImages(images, titles='', save = 0, path = ' ', text_coords = []):
+	"""For debugging, show images and titles so that they ahare the same axis (zoom together)"""
+	# mng = plt.get_current_fig_manager()
+	# mng.full_screen_toggle()
+
+	# doesn't show both only most recent...
+	#plt.suptitle(suptitle)
+	# 
+	cols = int(len(images) // 2 + len(images) % 2)
+	rows = int(len(images) // cols + len(images) % cols)
+	#plt.figure(figsize = (rows,cols))
+	# print("cells/rows",cols,rows)
+	fig, axes = plt.subplots(rows,cols, sharex=True, sharey=True, figsize=(10,10))
+	# for i in range(len(images)):
+	for i, ax in enumerate(axes.flat):
+		if i < len(images):
+			img = images[i]
+			# img = self.gammaCorrect(img)
+			#img = cv.normalize(src=img, dst=None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
+			ax.imshow(img,'gray', vmin=0, vmax=255)
+			if titles != '':
+				ax.set_title(titles[i])
+			# plt.xticks([]),plt.yticks([])
+			else:
+				fig.delaxes(ax)
+		if not len(text_coords) == 0:
+			for i in range(len(text_coords)):
+				if i > 0:
+					x = text_coords[i][0]
+					y = text_coords[i][1]
+					s = str(i)
+					plt.text(x, y, s, fontsize=12)
+	plt.tight_layout()
+	plt.suptitle("press 'Q' to move to next step", verticalalignment="bottom")
+
+
+	if save == 0:
+		plt.show()
+	else:
+		plt.savefig(path, bbox_inches='tight')
+	plt.close("all")
+
+
 def thresholdSegmentation( 
     thresh, 
     img, 
@@ -448,7 +491,7 @@ def MacLearnImgPrepper(cells):
 		skipped = cell['skipped']
 		if skipped == "No":
 			#raw
-
+			#[
 			img = np.copy(cell['cellimg'][1])
 
 			#img = (img/256).astype('uint8')
@@ -462,11 +505,12 @@ def MacLearnImgPrepper(cells):
 				if i > 0 :
 					if str(ch) == 'CC1' or str(ch) == 'PLP':
 						blue = DAPI_ch
-						green = np.uint8(gammaCorrect(img[i],gamma = gammas[i]))
-						#green = img[i]
+						#green = np.uint8(gammaCorrect(img[i],gamma = gammas[i]))
+						green = img[i]
 						#to correct for gradients in staining intensity, make the max pixel in every cell image 127 (half max intensity of 8 bit image)
 						#green = cv.normalize(src=green, dst=None, alpha=0, beta=127, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
 						red = img[-1]
+						#red = cv.normalize(src=red, dst=None, alpha=0, beta=127, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
 
 					else:
 						blue = DAPI_ch
@@ -476,7 +520,7 @@ def MacLearnImgPrepper(cells):
 					chrgb = cv.merge([blue, green, red])
 					
 					if debugImgPrepper or debug:
-						showImages([blue, green, red],['1','2','3'])
+						cellshowImages([blue, green, red],['1','2','3'])
 
 					RGBs[namChannels[i]] = [chrgb]
 
@@ -1722,7 +1766,7 @@ debugcells = False
 debugLesionIdenification1 = False
 debugLesionIdenification2 = False
 debugProcessRawResults = False 
-debugCellLocations = False
+debugCellLocations = True
 debugperilesion = False
 debugMFI = False
 
@@ -1857,9 +1901,9 @@ for oriImgName in os.listdir(ImgFolderPath):
 			oriImg = np.array(oriImg)
 			visoriImg = np.copy(oriImg)
 			
-			for i in range(len(namChannels)):
-				#visoriImg[i] = gammaCorrect(visoriImg[i], gammas[i]) 
+			for i in range(len(namChannels)): 
 				visoriImg[i] = proccessVisualImage(visoriImg[i])
+				visoriImg[i] = gammaCorrect(visoriImg[i], gammas[i])
 
 			visoriImg = np.uint8(visoriImg)
 			#MAKE DEEP COPIES (OR JUST ONE IMAGE AND ADJUST AS NEEDED)
@@ -1976,7 +2020,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			print("Image ",ImageID, " of ", TotalImage,": Saveing a Sample of the Cells")
 			#Uncomment this to save x number of random cells (for survaying)
-			#RandomSampler(cells, 100, SampleCellsFolder)
+			#RandomSampler(cells, 10, SampleCellsFolder)
 
 			print("Image ",ImageID, " of ", TotalImage,": Crafting the DataFrame and Saving the .csv file")
 			#Build the Dataframe to analyse the data

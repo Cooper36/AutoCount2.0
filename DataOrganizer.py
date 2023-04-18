@@ -1264,7 +1264,7 @@ import os
 
 debug = False 
 
-setup = settings.folder_dicts[14]
+setup = settings.folder_dicts[40]
 Dataname = 
 imagefolpath = setup['Path']
 Resultsfolpath = os.path.join(imagefolpath,'Results')
