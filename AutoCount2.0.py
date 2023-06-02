@@ -1703,7 +1703,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[41]
+setup = settings.folder_dicts[42]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1751,7 +1751,7 @@ ROITitles = setup['ROITitles']
 
 overwrite = False
 overwriteROIS = False 
-overwriteCells_Pred = True
+overwriteCells_Pred = False
 overwriteProcessing = True
 handAuditoverwrite = False
 
@@ -1765,8 +1765,8 @@ debugImgPrepper = False
 debugcells = False
 debugLesionIdenification1 = False
 debugLesionIdenification2 = False
-debugProcessRawResults = False 
-debugCellLocations = True
+debugProcessRawResults = False     
+debugCellLocations = False
 debugperilesion = False
 debugMFI = False
 
@@ -2121,6 +2121,14 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'EDU+Olig2-' : [['DAPI_ch', 1], ['EDU', 1], ['Olig2', 0]],
 
 			'EDU+Olig2+' : [['DAPI_ch', 1], ['EDU', 1], ['Olig2', 1]],
+
+			'RS_Oligodendrocyte' : [['DAPI_ch', 1], ['RS_PLP1', 1]],
+
+			'RS_OPC' : [['DAPI_ch', 1], ['RS_Olig2', 1], ['RS_PDGFRa', 1], ['RS_PLP1', 0]],
+
+			'RS_Olig2Only' : [['DAPI_ch', 1], ['RS_Olig2', 1], ['RS_PDGFRa', 0], ['RS_PLP1', 0]],
+
+			'RS_OL-OPCMixed' : [['DAPI_ch', 1], ['RS_Olig2', 1], ['RS_PDGFRa', 1], ['RS_PLP1', 1]],
 			}
 
 			
