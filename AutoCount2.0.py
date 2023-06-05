@@ -2036,9 +2036,9 @@ for oriImgName in os.listdir(ImgFolderPath):
 		HandAuditdfsave = os.path.join(SpecificImgFolder, "ImageCellSpecificResultsHandAudit.csv")
 		
 		if Resultsdf.empty:
-			if os.path.exists(HandAuditdfsave):
+			if os.path.exists(HandAuditdfsave) and not handAuditoverwrite:
 				Resultsdf = pd.read_csv(HandAuditdfsave)
-			elif os.path.exists(handAuditpath) or handAuditoverwrite:
+			elif os.path.exists(handAuditpath):
 				Resultsdf = pd.read_csv(ImageResultsSave)
 				Resultsdf = ProcessHandaudit(path = handAuditpath, celldf = Resultsdf, clickTolerance = 10)
 				Resultsdf.to_csv(HandAuditdfsave, index = False)
@@ -2124,7 +2124,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			'RS_Oligodendrocyte' : [['DAPI_ch', 1], ['RS_PLP1', 1]],
 
-			'RS_OPC' : [['DAPI_ch', 1], ['RS_Olig2', 1], ['RS_PDGFRa', 1], ['RS_PLP1', 0]],
+			'RS_OPC' : [['DAPI_ch', 1], ['RS_PDGFRa', 1], ['RS_PLP1', 0]],
 
 			'RS_Olig2Only' : [['DAPI_ch', 1], ['RS_Olig2', 1], ['RS_PDGFRa', 0], ['RS_PLP1', 0]],
 
