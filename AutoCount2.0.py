@@ -1703,7 +1703,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[43]
+setup = settings.folder_dicts[44]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -2129,6 +2129,11 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'RS_Olig2Only' : [['DAPI_ch', 1], ['RS_Olig2', 1], ['RS_PDGFRa', 0], ['RS_PLP1', 0]],
 
 			'RS_OL-OPCMixed' : [['DAPI_ch', 1], ['RS_Olig2', 1], ['RS_PDGFRa', 1], ['RS_PLP1', 1]],
+
+			'RS_p21-Olig2' : [['DAPI_ch', 1], ['RS_Olig2', 1], ['RS_p21', 1]],
+
+			'RS_p21-OPC' : [['DAPI_ch', 1], ['RS_PDGFRa', 1], ['RS_p21', 1]],
+
 			}
 
 			
