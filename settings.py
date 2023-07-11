@@ -2036,7 +2036,7 @@ class Settings:
 
             },
             {
-                'name' : '44_PlP1_Olig2_PDGFRa',
+                'name' : '44_PDGFRa_p21_Olig2',
 
                 # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
                 'ROI_Draw_Channel' : 0,
@@ -2057,7 +2057,7 @@ class Settings:
 
 
                 # Name each channel present (must be consistent for all images)
-                'channels' : ["DAPI_ch",'RS_PDGFRa','RS_p21','RS_Olig2',],
+                'channels' : ["DAPI_ch",'RS_PDGFRa','RS_p21','RS_Olig2'],
                 'gammas' : [1.1,0.75, 0.5, 0.5],
                 'RelativeIntensityThreshold' : [[1,5],[1.8,5],[1.5,5], [1.5,5]],
 
@@ -2065,7 +2065,7 @@ class Settings:
                 'Path' : "Y:\\People\\James\\Remyelination Expt (Drugz)\\RNAscope\\p21",
                 
                 # Cell types to analyze
-                'cell_types_to_analyze' : ['DAPI', 'RS_OPC', 'RS_Olig2Only', "RS_p21-Olig2", "RS_p21-OPC"],
+                'cell_types_to_analyze' : ['DAPI', 'RS_OPC', "RS_p21-Olig2", "RS_p21-OPC"],
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : False,
