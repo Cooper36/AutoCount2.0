@@ -2124,7 +2124,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			'RS_Oligodendrocyte' : [['DAPI_ch', 1], ['RS_PLP1', 1]],
 
-			'RS_OPC' : [['DAPI_ch', 1], ['RS_PDGFRa', 1], ['RS_PLP1', 0]],
+			'RS_OPC' : [['DAPI_ch', 1], ['RS_PDGFRa', 1]],
 
 			'RS_Olig2Only' : [['DAPI_ch', 1], ['RS_Olig2', 1], ['RS_PDGFRa', 0], ['RS_PLP1', 0]],
 
