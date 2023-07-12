@@ -2062,8 +2062,8 @@ class Settings:
                 'RelativeIntensityThreshold' : [[1,5],[1.8,5],[1.5,5], [1.5,5]],
 
                 # Path to folder containing images to be analyzed
-                #'Path' : "Y:\\People\\James\\Remyelination Expt (Drugz)\\RNAscope\\p21",
-                'Path' : "Y:/People/James/Remyelination Expt (Drugz)/RNAscope/p21",
+                'Path' : "Y:\\People\\James\\Remyelination Expt (Drugz)\\RNAscope\\p21",
+                #'Path' : "Y:/People/James/Remyelination Expt (Drugz)/RNAscope/p21",
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'RS_OPC', "RS_p21-Olig2", "RS_p21-OPC"],
