@@ -1703,7 +1703,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[44]
+setup = settings.folder_dicts[45]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1753,7 +1753,7 @@ overwrite = False
 overwriteROIS = False 
 overwriteCells_Pred = False
 overwriteProcessing = True
-handAuditoverwrite = False
+handAuditoverwrite = True
 
 debug = False
 debugThreshold = False
@@ -2034,7 +2034,8 @@ for oriImgName in os.listdir(ImgFolderPath):
 		UpdateResultSave = os.path.join(SpecificImgFolder, "ImageCellSpecificResultsUpdate.csv")
 		handAuditpath = os.path.join(SpecificImgFolder, "HandAudited.csv")
 		HandAuditdfsave = os.path.join(SpecificImgFolder, "ImageCellSpecificResultsHandAudit.csv")
-		
+
+
 		if Resultsdf.empty:
 			if os.path.exists(HandAuditdfsave) and not handAuditoverwrite:
 				Resultsdf = pd.read_csv(HandAuditdfsave)
