@@ -1753,7 +1753,7 @@ overwrite = False
 overwriteROIS = False 
 overwriteCells_Pred = False
 overwriteProcessing = True
-handAuditoverwrite = False
+handAuditoverwrite = True
 
 debug = False
 debugThreshold = False
