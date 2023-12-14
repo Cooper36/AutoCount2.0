@@ -1959,7 +1959,7 @@ class Settings:
                 'Path' : "/Volumes/LABDATA/People/James/Remyelination Expt (Drugz)/RNAscope",
                 
                 # Cell types to analyze
-                'cell_types_to_analyze' : ['DAPI', 'RS_Oligodendrocyte', 'RS_OPC', 'RS_Olig2Only', "RS_OL-OPCMixed"],
+                'cell_types_to_analyze' : ['DAPI', 'RS_Oligodendrocyte', 'RS_OPC', 'RS_Olig2Only', "RS_OL-OPCMixed", "RS_PDGFRaOnly"],
 
                 # Do you want to use the keras models (slow)
                 'useKeras' : False,
@@ -1973,7 +1973,7 @@ class Settings:
                 # DataOrganizer type
                 'DataOrganizer' : "KSO_DCOLesion",
 
-                'PercentCalcs' : [['NonOligo','DAPI'],['Mature Oligodendrocyte','OligoLineage'],['OPC','OligoLineage']],
+                'PercentCalcs' : [['NonOligo','DAPI'],['Mature Oligodendrocyte','OligoLineage'],['OPC','OligoLineage'], ['RS_PDGFRaOnly',"RS_OPC"]],
 
                 'PerilesionAnalysis' : False,
 
@@ -1983,7 +1983,7 @@ class Settings:
 
             },
             {
-                'name' : '43_PlP1_Olig2_PDGFRa',
+                'name' : '43_NAWMPlP1_Olig2_PDGFRa', #Added "NAWM" to the title after the analysis
 
                 # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
                 'ROI_Draw_Channel' : 0,

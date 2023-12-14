@@ -1703,7 +1703,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[44]
+setup = settings.folder_dicts[42]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1753,7 +1753,7 @@ overwrite = False
 overwriteROIS = False 
 overwriteCells_Pred = False
 overwriteProcessing = True
-handAuditoverwrite = True
+handAuditoverwrite = False
 
 debug = False
 debugThreshold = False
@@ -2126,6 +2126,8 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'RS_Oligodendrocyte' : [['DAPI_ch', 1], ['RS_PLP1', 1]],
 
 			'RS_OPC' : [['DAPI_ch', 1], ['RS_PDGFRa', 1]],
+
+			'RS_PDGFRaOnly' : [['DAPI_ch', 1], ['RS_Olig2', 0], ['RS_PDGFRa', 1]],
 
 			'RS_Olig2Only' : [['DAPI_ch', 1], ['RS_Olig2', 1], ['RS_PDGFRa', 0], ['RS_PLP1', 0]],
 
