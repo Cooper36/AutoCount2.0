@@ -2144,6 +2144,113 @@ class Settings:
                 'MFIPercAreaAnalysis' : False,
 
             },
+            {
+                'name' : '46_DCOLarge&SmallCoreExclusion',
+
+                # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
+                'ROI_Draw_Channel' : 0,
+
+                # Which channel to use for identifying nuclei, base 0
+                'Nuclei_Identification_Channel' : 0,
+
+                # Define size of individual cell images (in pixels, defines both height and width, so a square)
+                'cropsize' : 46,
+
+                #Change if using anything other then 10x
+                #Average scale for 10x images, pixel/micron
+                'scale' : 1.5385,
+            
+                # Define the number of ROIs you want to draw
+                'ROINumber' : 3,
+                'ROITitles' : ['Core',"Lesion","PLWM"],
+
+                # Name each channel present (must be consistent for all images)
+                'channels' : ["DAPI_ch","CC1","594_ch","Olig2"],
+                'gammas' : [0.75,0.75,1,0.25],
+                'RelativeIntensityThreshold' : [[1,5],[1.2,2],[1.2,2],[2,3]],
+                #'RelativeIntensityThreshold' : [[1,5],[1.2,2],[1.2,2],[1.7,3]],
+
+                # Path to folder containing images to be analyzed
+                #'Path' : "Y:\\People\\James\\Large vs Small Lesion Expt\\__Cell Dynamics\\DCO Large&Small Lesions\\Lesion",
+                'Path' : '/Volumes/LABDATA/People/James/Large vs Small Lesion Expt/__Cell Dynamics/DCO Large&Small Lesions/Lesion/Clemastine paper Core exclusion',
+               
+                
+                # Cell types to analyze
+                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','OPC', 'Mature Oligodendrocyte', 'NonOligo','CC1+Olig2-'],
+
+                # Do you want to use the keras models (slow)
+                'useKeras' : True,
+                
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
+
+                # if true, does not pull images during the ProcessRawResults
+                'FastProcess' : True,
+
+                # DataOrganizer type
+                'DataOrganizer' : 'KSO_DCOLesion',
+
+                'PercentCalcs' : [['NonOligo','DAPI'],['Mature Oligodendrocyte','OligoLineage'],['OPC','OligoLineage']],
+                
+                'PerilesionAnalysis' : False,
+
+                'threshmethod' : 2,
+
+                'MFIPercAreaAnalysis' : False,
+                },
+                {
+                'name' : '47_KSOLarge&SmallCombined',
+
+                # Which channel to use for drawing ROIs, base 0. So channel 1 is 0, channel 2 is 1 etc.
+                'ROI_Draw_Channel' : 0,
+
+                # Which channel to use for identifying nuclei, base 0
+                'Nuclei_Identification_Channel' : 0,
+
+                # Define size of individual cell images (in pixels, defines both height and width, so a square)
+                'cropsize' : 46,
+
+                #Change if using anything other then 10x
+                #Average scale for 10x images, pixel/micron
+                'scale' : 1.5385,
+            
+                # Define the number of ROIs you want to draw
+                'ROINumber' : 3,
+                'ROITitles' : ['Core',"Lesion","PLWM"],
+
+                # Name each channel present, in order (must be consistent for all images)
+
+                'channels' : ["DAPI_ch","Ki67","Sox2","Olig2"],
+                'gammas' : [0.75,0.25,0.25,0.25],
+                'RelativeIntensityThreshold' : [[1,5],[3,5],[3,5],[2,3]],
+                
+
+                # Path to folder containing images to be analyzed
+                'Path' : "/Volumes/LABDATA/People/James/Large vs Small Lesion Expt/__Cell Dynamics/KSO Large&Small Lesions/Core Exclusion for clemastine paper",
+                #'Path' : '/Volumes/labdata/People/James/Large vs Small Lesion Expt/__Cell Dynamics/KSO Large&Small Lesions',    
+                # Cell types to analyze
+                'cell_types_to_analyze' : ['DAPI', 'OligoLineage','ActiveOPC', 'ProlifOPC', 'NonOligo', 'Sox2Astro','ProlifNonOligo', 'Activated-ProliferativeOPCs'],
+
+                # Do you want to use the CC1 keras models (slow)
+                'useKeras' : False,
+
+                # Check files for uniformity? Good idea to do once
+                'checkfiles' : False,
+
+                # if true, does not pull images during the ProcessRawResults
+                'FastProcess' : True,
+
+                # DataOrganizer type
+                'DataOrganizer' : 'KSO_DCOLesion',
+
+                'PercentCalcs' : [['NonOligo','DAPI'],['ProlifNonOligo','NonOligo'],['ActiveOPC','OligoLineage'],['ProlifOPC','OligoLineage'],['Activated-ProliferativeOPCs','ActiveOPC']],
+                
+                'PerilesionAnalysis' : False,
+
+                'threshmethod' : 2,
+
+                'MFIPercAreaAnalysis' : False,
+            }
 
         ]
 
