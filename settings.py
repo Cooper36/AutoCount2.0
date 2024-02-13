@@ -2275,7 +2275,7 @@ class Settings:
                 # Name each channel present (must be consistent for all images)
                 'channels' : ["DAPI_ch",'Sox2','yh2ax','Olig2'],
                 'gammas' : [0.75,0.65, 0.5, 0.5],
-                'RelativeIntensityThreshold' : [[1,5],[999,999],[999,999], [1.2,5]],
+                'RelativeIntensityThreshold' : [[1,5],[1.8,5],[999,999], [1.2,5]],
 
                 # Path to folder containing images to be analyzed
                 #'Path' : "Y:\\People\\James\\Remyelination Expt (Drugz)\\Sox2-h2ax-olig2",
@@ -2329,11 +2329,11 @@ class Settings:
                 # Name each channel present (must be consistent for all images)
                 'channels' : ["DAPI_ch",'Sox2','yh2ax','Olig2'],
                 'gammas' : [0.75,0.65, 0.5, 0.5],
-                'RelativeIntensityThreshold' : [[1,5],[999,999],[999,999], [1.2,5]],
+                'RelativeIntensityThreshold' : [[1,5],[1.8,5],[999,999], [1.2,5]],
 
                 # Path to folder containing images to be analyzed
                 #'Path' : "Y:\\People\\James\\Remyelination Expt (Drugz)\\Sox2-h2ax-olig2",
-                'Path' : "/Volumes/LABDATA/People/James/Remyelination Expt (Drugz)/Sox2-h2ax-olig2",
+                'Path' : "/Volumes/LABDATA/People/James/Remyelination Expt (Drugz)/Sox2-h2ax-olig2/NAWM",
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'OligoLineage', 'ActiveOPC', "yh2ax-ActiveOPC", "yh2ax-Olig2", "yh2ax-Olig2Nonactive", "yh2ax-NonOlig2"],
@@ -2386,7 +2386,7 @@ class Settings:
 
                 # Path to folder containing images to be analyzed
                 #'Path' : "Y:\\People\\James\\Remyelination Expt (Drugz)\\Sox2-h2ax-olig2",
-                'Path' : "/Volumes/LABDATA/People/James/Remyelination Expt (Drugz)/Sox2-h2ax-olig2",
+                'Path' : "/Volumes/LABDATA/People/James/Remyelination Expt (Drugz)/Sox2-Ki67-Pdgfra RNAscope",
                 
                 # Cell types to analyze
                 'cell_types_to_analyze' : ['DAPI', 'RS_ProlifOPC', 'RS_ActiveOPC'],
