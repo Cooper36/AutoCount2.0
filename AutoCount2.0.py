@@ -2144,6 +2144,10 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'yh2ax-Olig2Nonactive' : [['DAPI_ch', 1], ['Olig2', 1], ['Sox2', 0], ['yh2ax', 1]],
 
 			'yh2ax-NonOlig2' : [['DAPI_ch', 1], ['Olig2', 0], ['yh2ax', 1]],
+
+			'RS_ProlifOPC' : [['DAPI_ch', 1], ['RS_PDGFRa', 1], ['RS_KI67',1]],
+
+			'RS_ActiveOPC' : [['DAPI_ch', 1], ['RS_PDGFRa', 1], ['RS_Sox2',1]],
 			}
 
 			
