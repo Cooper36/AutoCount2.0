@@ -1757,7 +1757,7 @@ handAuditoverwrite = False
 
 debug = False
 debugThreshold = False
-debugGamma = True
+debugGamma = False
 debugMarkers = False
 debugChannels = False
 debugMasking = False

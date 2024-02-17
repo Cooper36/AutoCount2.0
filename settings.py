@@ -2381,8 +2381,8 @@ class Settings:
 
                 # Name each channel present (must be consistent for all images)
                 'channels' : ["DAPI_ch",'RS_Sox2','RS_PDGFRa','RS_KI67'],
-                'gammas' : [0.75,0.65, 0.5, 0.5],
-                'RelativeIntensityThreshold' : [[1,5],[1.8,5],[1.8,5],[1.8,5]],
+                'gammas' : [0.75,0.5, 0.5, 0.5],
+                'RelativeIntensityThreshold' : [[1,5],[1.8,5],[1.8,5],[999,999]],
 
                 # Path to folder containing images to be analyzed
                 #'Path' : "Y:\\People\\James\\Remyelination Expt (Drugz)\\Sox2-h2ax-olig2",
