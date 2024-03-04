@@ -1753,7 +1753,7 @@ overwrite = False
 overwriteROIS = False 
 overwriteCells_Pred = False
 overwriteProcessing = True
-handAuditoverwrite = False
+handAuditoverwrite = True
 
 debug = False
 debugThreshold = False
@@ -2147,7 +2147,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 			'RS_ProlifOPC' : [['DAPI_ch', 1], ['RS_PDGFRa', 1], ['RS_KI67',1]],
 
-			'RS_ActiveOPC' : [['DAPI_ch', 1], ['RS_PDGFRa', 1], ['RS_So=x2',1]],
+			'RS_ActiveOPC' : [['DAPI_ch', 1], ['RS_PDGFRa', 1], ['RS_Sox2',1]],
 			}
 
 			
