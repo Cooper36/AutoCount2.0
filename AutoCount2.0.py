@@ -234,10 +234,8 @@ def thresholdSegmentation(
 # NEXT FILTER ON SIZE, CIRCULARITY - GET X-Y centroid
 # https://www.learnopencv.com/blob-detection-using-opencv-python-c/ - for circularity
 
-def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = []):
+def showCentroids(images, df, titles='', save = 0, path = ' ', text_coords = [], celltypes = []):
 	"""Show centroids side-by-side with image."""
-
-	celltypes = cell_types_to_analyze
 	
 	cols = int(len(images) // 2 + len(images) % 2)
 	rows = int(len(images) // cols + len(images) % cols)
@@ -1703,7 +1701,7 @@ def MFI_PerctArea(df,images,UserROIs):
 
 
 
-setup = settings.folder_dicts[50]
+setup = settings.folder_dicts[51]
 RabbitDescriptions = settings.RabbitDescriptions
 Dataname = setup['name']
 ImgFolderPath = setup['Path']
@@ -1747,17 +1745,23 @@ MFIPercAreaAnalysis = setup['MFIPercAreaAnalysis']
 
 ROITitles = setup['ROITitles']
 
+cell_types_to_analyze = setup['cell_types_to_analyze']
+
+celltypesForCellLocations = setup['celltypesForCellLocations']
+if celltypesForCellLocations == ["All"]:
+	celltypesForCellLocations = cell_types_to_analyze
+
 
 
 overwrite = False
 overwriteROIS = False 
 overwriteCells_Pred = False
 overwriteProcessing = True
-handAuditoverwrite = True
+handAuditoverwrite = False
 
 debug = False
 debugThreshold = False
-debugGamma = False
+debugGamma = True
 debugMarkers = False
 debugChannels = False
 debugMasking = False
@@ -1766,7 +1770,7 @@ debugcells = False
 debugLesionIdenification1 = False
 debugLesionIdenification2 = False
 debugProcessRawResults = False     
-debugCellLocations = False
+debugCellLocations = True
 debugperilesion = False
 debugMFI = False
 
@@ -2067,7 +2071,6 @@ for oriImgName in os.listdir(ImgFolderPath):
 
 		if not os.path.exists(UpdateResultSave) or overwriteProcessing or overwrite:			
 			#Define which cell types too look at for this analysis
-			cell_types_to_analyze = setup['cell_types_to_analyze']
 			#Define cell types. Channel names must match those defined in namChannel exactly.
 			#1 indicates positive, 0 indictes negative
 			cell_type_conditions = {
@@ -2148,6 +2151,16 @@ for oriImgName in os.listdir(ImgFolderPath):
 			'RS_ProlifOPC' : [['DAPI_ch', 1], ['RS_PDGFRa', 1], ['RS_KI67',1]],
 
 			'RS_ActiveOPC' : [['DAPI_ch', 1], ['RS_PDGFRa', 1], ['RS_Sox2',1]],
+
+			'RS_RegenM-M_Total' : [['DAPI_ch', 1], ['RS_AIF1', 1], ['RS_IGF1',1]],
+
+			'RS_RegenM-M_Exclusive' : [['DAPI_ch', 1], ['RS_AIF1', 1], ['RS_TNF',0], ['RS_IGF1',1]],
+
+			'RS_InflamM-M_Total' : [['DAPI_ch', 1], ['RS_AIF1', 1], ['RS_TNF',1]],
+
+			'RS_InflamM-M_Exclusive' : [['DAPI_ch', 1], ['RS_AIF1', 1], ['RS_TNF',1], ['RS_IGF1',0]],
+
+			'RS_MixedM-M' : [['DAPI_ch', 1], ['RS_AIF1', 1], ['RS_TNF',1], ['RS_IGF1',1]],
 			}
 
 			
@@ -2166,7 +2179,7 @@ for oriImgName in os.listdir(ImgFolderPath):
 				Vischannels = np.array(Vischannels)
 
 				FigureSavePath = os.path.join(SpecificImgFolder, "Cell_Identification.pdf")
-				showCentroids(images = Vischannels, path = FigureSavePath, df = Resultsdf, titles = namChannels, save = 0)
+				showCentroids(images = Vischannels, path = FigureSavePath, df = Resultsdf, titles = namChannels, save = 0, celltypes = celltypesForCellLocations)
 			
 		#clear Resultsdf
 		Resultsdf = pd.DataFrame()
